@@ -234,6 +234,19 @@ class Type(TypeContainer):
         else:
             raise NotImplementedError
 
+    def __gen_code__(self, gen):
+        if type(self) is Type:
+            # Assume that basic types are created by the code executor.
+            gen.write("Type[")
+            gen.pprint(self.name)
+            gen.write("]")
+        else:
+            gen.gen_code(self)
+
+    def __var_base__(self):
+        # reminder ex. `short int`
+        return "_".join(self.name.split())
+
 
 class Structure(Type):
 
