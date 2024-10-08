@@ -1010,9 +1010,13 @@ class OpDeclareAssign(BinaryOperator):
 
 class OpCombAssign(BinaryOperator):
 
-    def __init__(self, arg1, arg2, op_str, **kw):
+    def __init__(self, arg1, arg2, op_sym, **kw):
         super(OpCombAssign, self).__init__(arg1, arg2, **kw)
-        self.op_str = op_str + "="
+        self.op_sym = op_sym
+
+    @property
+    def op_str(self):
+        return self.op_sym + "="
 
 
 class OpAdd(BinaryOperator):
