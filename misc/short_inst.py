@@ -550,15 +550,17 @@ def merge_statements(heading):
 
     sub_stmnts = list(iter_join_BranchElse(sub_stmnts))
 
-    if sub_stmnts:
-        stmnts = heading.stmnts
-        if stmnts:
-            last_stmnt = stmnts[-1]
-            if not isinstance(last_stmnt, CBlock):
-                stmnts[-1] = last_stmnt = BranchIf(last_stmnt)
-            last_stmnt(*sub_stmnts)
-        else:
-            stmnts[:] = sub_stmnts
+    if not sub_stmnts:
+        return
+
+    stmnts = heading.stmnts
+    if stmnts:
+        last_stmnt = stmnts[-1]
+        if not isinstance(last_stmnt, CBlock):
+            stmnts[-1] = last_stmnt = BranchIf(last_stmnt)
+        last_stmnt(*sub_stmnts)
+    else:
+        stmnts[:] = sub_stmnts
 
 
 def iter_join_BranchElse(stmnts):
