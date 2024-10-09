@@ -162,6 +162,15 @@ class ChunkGenerator(object):
         return file
 
     def provide_chunks(self, origin, **kw):
+        try:
+            return self._provide_chunks(origin, **kw)
+        except:
+            # This adds extra debug information to first exception message.
+            raise RuntimeError("%s %s: failed to provide chunks" % (
+                origin, type(origin)
+            ))
+
+    def _provide_chunks(self, origin, **kw):
         """ Given origin the method returns chunk list generating it on first
         access. """
         current = self.definer
