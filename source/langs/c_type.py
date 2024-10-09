@@ -1,6 +1,6 @@
 __all__ = [
     "CTypeSimple"
-      , "CStructOrUnion"
+  , "CStructOrUnion"
   , "CTypeSpecifier"
   , "CTypeQualifier"
   , "CSpecQualList"
@@ -147,7 +147,7 @@ class CEnum(CWords):
         return enum_specifier
 
 
-class CStructOrUnion(CTypeSimple, CEnum):
+class CStructOrUnion(CWords):
 
     @staticmethod
     def p_type_specifier__struct_or_union(struct_or_union_specifier):
