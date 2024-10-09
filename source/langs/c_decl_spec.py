@@ -34,14 +34,6 @@ See: CDeclSpecEx.
         return STORAGE_CLASS_SPECIFIER
 
     @staticmethod
-    def p_declaration_specifier__type(type_specifier):
-        return type_specifier
-
-    @staticmethod
-    def p_declaration_specifier__type_qualifier(type_qualifier):
-        return type_qualifier
-
-    @staticmethod
     def p_declaration_specifier__function(FUNCTION_SPECIFIER):
         return FUNCTION_SPECIFIER
 
