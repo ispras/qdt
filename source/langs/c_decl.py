@@ -186,18 +186,31 @@ class CDeclaration(CDeclSpec):
     def p_type_qualifier_list__n(type_qualifier_list, type_qualifier):
         return type_qualifier_list + [type_qualifier]
 
-    """
+    # --
 
     @staticmethod
     def p_type_name(specifier_qualifier_list):
-        return specifier_qualifier_list
+        return get_type(specifier_qualifier_list, [])
+
+    @staticmethod
+    def p_type_name__abstract(specifier_qualifier_list, abstract_declarator):
+        return get_type(specifier_qualifier_list, abstract_declarator)
+
+    # --
+
+    @staticmethod
+    def p_abstract_declarator__pointer(pointer):
+        return pointer
 
     # TODO
     @staticmethod
-    def _p_type_name__abstract(specifier_qualifier_list, abstract_declarator):
-        raise NotImplementedError
+    def _p_abstract_declarator__direct(direct_abstract_declarator):
+        return [direct_abstract_declarator]
 
-    """
+    # TODO
+    @staticmethod
+    def _p_abstract_declarator__p_direct(pointer, direct_abstract_declarator):
+        return pointer + [direct_abstract_declarator]
 
 
 @short_ply_grammar(
@@ -313,3 +326,10 @@ def make_pointer(base_type, pointers):
             **dict((q, True) for q in pointer_qualifiers)
         )
     return base_type
+
+
+def get_type(specifier_qualifier_list, abstract_declarator):
+    # specifier_qualifier_list is subset of declaration_specifiers
+    base_type = get_declaration_type(specifier_qualifier_list)
+    # XXX: current impementation allows only pointers in abstract_declarator
+    return make_pointer(base_type, abstract_declarator)
