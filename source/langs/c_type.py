@@ -8,17 +8,9 @@ from .c_words import (
 )
 
 
-class CTypeSimple(CWords):
+class CTypeSpecifier(CWords):
 
-    @staticmethod
-    def p_type_qualifier(TYPE_QUALIFIER):
-        return TYPE_QUALIFIER
-
-    @staticmethod
-    def p_type_qualifier__atomic(ATOMIC):
-        return ATOMIC
-
-    # --
+    # Sourced productions
 
     @staticmethod
     def p_type_specifier__base(BASE_TYPE_SPECIFIER):
@@ -35,6 +27,34 @@ class CTypeSimple(CWords):
             base = False,
         )
 
+    # Extensions to other productions
+
+    @staticmethod
+    def p_specifier_qualifier_item__type_qualifier(type_qualifier):
+        return type_qualifier
+
+
+class CTypeQualifier(CWords):
+
+    # Sourced productions
+
+    @staticmethod
+    def p_type_qualifier(TYPE_QUALIFIER):
+        return TYPE_QUALIFIER
+
+    # Extensions to other productions
+
+    @staticmethod
+    def p_specifier_qualifier_item__type(type_specifier):
+        return type_specifier
+
+
+class CTypeSimple(CTypeSpecifier, CTypeQualifier):
+
+    @staticmethod
+    def p_type_qualifier__atomic(ATOMIC):
+        return ATOMIC
+
     # --
 
     @staticmethod
@@ -47,15 +67,6 @@ class CTypeSimple(CWords):
     ):
         return [specifier_qualifier_item] + specifier_qualifier_list
 
-    # --
-
-    @staticmethod
-    def p_specifier_qualifier_item__type(type_specifier):
-        return type_specifier
-
-    @staticmethod
-    def p_specifier_qualifier_item__type_qualifier(type_qualifier):
-        return type_qualifier
 
 
 class CTypeCompound(CTypeSimple):
