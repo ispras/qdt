@@ -8,6 +8,7 @@ __all__ = [
           , "K_FUNC"
   , "Late"
   , "LateLinker"
+  , "LateLinkingFailure"
 ]
 
 from common import (
@@ -34,6 +35,10 @@ class       K_STRUCT(K_TYPE): pass
 class       K_UNION(K_TYPE): pass
 class       K_ENUM(K_TYPE): pass
 class       K_FUNC(K_TYPE): pass
+
+
+class LateLinkingFailure(RuntimeError):
+    pass
 
 
 class Late(CNode):
@@ -84,7 +89,7 @@ class Late(CNode):
                 writer.write(self.name)
             return
 
-        raise RuntimeError("%s: late linking failed" % self)
+        raise LateLinkingFailure(self)
 
     def __repr__(self):
         return type(self).__name__ + "(%r)" % self.name
