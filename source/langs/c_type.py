@@ -57,13 +57,8 @@ class CTypeQualifier(CWords):
         return type_qualifier
 
 
-class CTypeSimple(CTypeSpecifier, CTypeQualifier):
-
-    @staticmethod
-    def p_type_qualifier__atomic(ATOMIC):
-        return ATOMIC
-
-    # --
+class CSpecQualList:
+    "User must define `specifier_qualifier_item` production."
 
     @staticmethod
     def p_specifier_qualifier_list(specifier_qualifier_item):
@@ -74,6 +69,13 @@ class CTypeSimple(CTypeSpecifier, CTypeQualifier):
         specifier_qualifier_item, specifier_qualifier_list
     ):
         return [specifier_qualifier_item] + specifier_qualifier_list
+
+
+class CTypeSimple(CTypeSpecifier, CTypeQualifier, CSpecQualList):
+
+    @staticmethod
+    def p_type_qualifier__atomic(ATOMIC):
+        return ATOMIC
 
 
 
