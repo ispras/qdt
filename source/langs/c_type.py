@@ -82,6 +82,10 @@ class CAtomic(CWords):
     def p_type_qualifier__atomic(ATOMIC):
         return ATOMIC
 
+    @staticmethod
+    def p_type_specifier__atomic(ATOMIC, LPAREN, type_name, RPAREN):
+        raise NotImplementedError(ATOMIC + "(%s)" % type_name)
+
 
 class CTypeSimple(CTypeSpecifier, CTypeQualifier, CSpecQualList, CAtomic):
     pass
