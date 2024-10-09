@@ -7,12 +7,12 @@ __all__ = [
 from .c_punct import (
     CPunctuation,
 )
-from .c_words import (
-    CWords,
+from .c_type import (
+    CTypeSimple,
 )
 
 
-class CDeclSpec(CWords, CPunctuation):
+class CDeclSpec(CTypeSimple, CPunctuation):
     """ This sub-grammar defines self-sufficient productions only.
 See: CDeclSpecEx.
     """
@@ -45,101 +45,6 @@ See: CDeclSpecEx.
     def p_declaration_specifier__function(FUNCTION_SPECIFIER):
         return FUNCTION_SPECIFIER
 
-    # --
-
-    @staticmethod
-    def p_type_qualifier(TYPE_QUALIFIER):
-        return TYPE_QUALIFIER
-
-    @staticmethod
-    def p_type_qualifier__atomic(ATOMIC):
-        return ATOMIC
-
-    # --
-
-    @staticmethod
-    def p_type_specifier__base(BASE_TYPE_SPECIFIER):
-        return dict(
-            name = BASE_TYPE_SPECIFIER,
-            base = True,
-        )
-
-    @staticmethod
-    def p_type_specifier__typedef_name(IDENTIFIER):
-        # Note that, `typedef_name: identifier` only
-        return dict(
-            name = IDENTIFIER,
-            base = False,
-        )
-
-    @staticmethod
-    def p_type_specifier__enum(enum_specifier):
-        return enum_specifier
-
-    @staticmethod
-    def p_type_specifier__struct_or_union(struct_or_union_specifier):
-        raise NotImplementedError("struct/union ID_opt {...}_opt")
-
-    # --
-
-    @staticmethod
-    def p_struct_or_union__struct(STRUCT):
-        raise NotImplementedError(STRUCT)
-
-    @staticmethod
-    def p_struct_or_union__union(UNION):
-        raise NotImplementedError(UNION)
-
-    @staticmethod
-    def p_struct_or_union_specifier__ref(struct_or_union, IDENTIFIER):
-        raise NotImplementedError("struct/union " + IDENTIFIER)
-
-    # --
-
-    @staticmethod
-    def p_enum_specifier__ref(ENUM, IDENTIFIER):
-        raise NotImplementedError("enum " + IDENTIFIER)
-
-    @staticmethod
-    def p_enum_specifier__anon(ENUM, enumerator_list_block):
-        raise NotImplementedError("enum { ... }")
-
-    @staticmethod
-    def p_enum_specifier__full(ENUM, IDENTIFIER, enumerator_list_block):
-        raise NotImplementedError(
-            "struct/union " + IDENTIFIER + " { ... }"
-        )
-
-    # --
-
-    @staticmethod
-    def p_enumerator_list_block(LBRACE, enumerator_list, RBRACE):
-        return enumerator_list
-
-    @staticmethod
-    def p_enumerator_list_block__comma(LBRACE, enumerator_list, COMMA, RBRACE):
-        return enumerator_list
-
-    # --
-
-    @staticmethod
-    def p_enumerator_list(enumerator):
-        return [enumerator]
-
-    @staticmethod
-    def p_enumerator_list__n(enumerator_list, COMMA, enumerator):
-        return enumerator_list + [enumerator]
-
-    # --
-
-    @staticmethod
-    def p_enumerator__auto(IDENTIFIER):
-        # Note:
-        #    enumerator : enumeration_constant
-        #    but
-        #    enumeration_constant: identifier
-        #    only
-        raise NotImplementedError(IDENTIFIER + " as `enum` item")
 
 
 class CDeclSpecEx(CDeclSpec):
