@@ -74,12 +74,17 @@ class CSpecQualList:
         return [specifier_qualifier_item] + specifier_qualifier_list
 
 
-class CTypeSimple(CTypeSpecifier, CTypeQualifier, CSpecQualList):
+class CAtomic(CWords):
+
+    # Extensions to other productions
 
     @staticmethod
     def p_type_qualifier__atomic(ATOMIC):
         return ATOMIC
 
+
+class CTypeSimple(CTypeSpecifier, CTypeQualifier, CSpecQualList, CAtomic):
+    pass
 
 
 class CTypeCompound(CTypeSimple):
