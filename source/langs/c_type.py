@@ -144,17 +144,7 @@ class CEnum(CWords):
 
 class CStructOrUnion(CWords):
 
-    @staticmethod
-    def p_type_specifier__struct_or_union(struct_or_union_specifier):
-        raise NotImplementedError("struct/union ID_opt {...}_opt")
-
-    # --
-
-    @staticmethod
-    def p_struct_or_union_specifier__ref(struct_or_union, IDENTIFIER):
-        raise NotImplementedError("struct/union " + IDENTIFIER)
-
-    # --
+    # Sourced productions
 
     @staticmethod
     def p_struct_or_union__struct(STRUCT):
@@ -164,3 +154,14 @@ class CStructOrUnion(CWords):
     def p_struct_or_union__union(UNION):
         raise NotImplementedError(UNION)
 
+    # --
+
+    @staticmethod
+    def p_struct_or_union_specifier__ref(struct_or_union, IDENTIFIER):
+        raise NotImplementedError("struct/union " + IDENTIFIER)
+
+    # Extensions to other productions
+
+    @staticmethod
+    def p_type_specifier__struct_or_union(struct_or_union_specifier):
+        raise NotImplementedError("struct/union ID_opt {...}_opt")
