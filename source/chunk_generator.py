@@ -196,15 +196,6 @@ class ChunkGenerator(object):
 
             if isinstance(origin, Type) and foreign:
                 chunks = self._gen_foreign_type_chunks(origin)
-            elif isinstance(origin, Function):
-                if (    self.for_header
-                    and (not origin.static or not origin.inline)
-                ):
-                    chunks = gen_function_declaration_chunks(
-                        origin, self, **kw
-                    )
-                else:
-                    chunks = gen_function_definition_chunks(origin, self, **kw)
             elif isinstance(origin, Variable):
                 if origin.definer is not None or origin.declarer is not None:
                     # It is a global variable
@@ -458,7 +449,6 @@ def gen_function_declaration_chunks(f, generator,
 
     return [ch]
 
-gen_function_chunks = gen_function_declaration_chunks
 
 def gen_function_definition_chunks(f, generator,
     indent = "",
@@ -472,6 +462,17 @@ def gen_function_definition_chunks(f, generator,
 
     ch.add_references(refs)
     return [ch]
+
+
+def gen_function_chunks(f, generator,
+    **kw
+):
+    if f.static and f.inline:
+        return gen_function_definition_chunks(f, generator, **kw)
+    if generator.for_header:
+        return gen_function_declaration_chunks(f, generator, **kw)
+    else:
+        return gen_function_definition_chunks(f, generator, **kw)
 
 
 def gen_macro_chunks(m, generator, **__):
