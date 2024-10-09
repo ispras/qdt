@@ -23,6 +23,7 @@ from source import (
     CBlock,
     CDecl,
     check_cols_fix_up,
+    CINT,
     CSTR,
     Function,
     gen_init_string,
@@ -294,6 +295,8 @@ class Evaluator(NodeVisitor):
     def __leave__(self, o):
         if isinstance(o, CSTR):
             evaluated = str(o)
+        elif isinstance(o, CINT):
+            evaluated = o.v
         elif isinstance(o, Late):
             evaluated = self.ns[o.name]
         elif isinstance(o, BinaryOperator):
