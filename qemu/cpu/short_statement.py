@@ -294,11 +294,10 @@ class ShortStatement(CConstant, CDeclaration):
     def p_unary_expression__sizeof_id(
         SIZEOF,
         LPAREN,
-        identifier,  # type_name, actually
+        type_name,
         RPAREN
     ):
-        identifier.specify(K_TYPE)
-        return OpSizeOf(identifier)
+        return OpSizeOf(type_name)
 
     # TODO: unary-expression: _Alignof ( type-name )
 
@@ -309,12 +308,11 @@ class ShortStatement(CConstant, CDeclaration):
     @staticmethod
     def p_cast_expression__cast_id(
         LPAREN,
-        identifier,  # type_name, actually
+        type_name,
         RPAREN,
         cast_expression
     ):
-        identifier.specify(K_TYPE)
-        return OpCast(identifier, cast_expression)
+        return OpCast(type_name, cast_expression)
 
     @staticmethod
     def p_multiplicative_expression(cast_expression):
