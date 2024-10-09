@@ -7,12 +7,12 @@ __all__ = [
 from .c_punct import (
     CPunctuation,
 )
-from .c_type import (
-    CTypeSimple,
+from .c_words import (
+    CWords,
 )
 
 
-class CDeclSpec(CTypeSimple, CPunctuation):
+class CDeclSpec(CWords, CPunctuation):
     """ This sub-grammar defines self-sufficient productions only.
 See: CDeclSpecEx.
     """
