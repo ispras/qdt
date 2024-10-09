@@ -119,17 +119,6 @@ class ChunkGenerator(object):
         # `TypeFixerVisitor` in `add_type` makes recursion grabbing rest
         # definer-less types and resolving rest `Late` references.
 
-        # Auto `Declare` variables in `Function`s with `BodyTree`.
-        for func in definer.types.values():
-            if not isinstance(func, Function):
-                continue
-            if func.definer is not definer:
-                continue
-            body = func.body
-            if not isinstance(body, BodyTree):
-                continue
-            VarDeclarator(body, func.args).visit()
-
         # This header includes other headers to provide types for includers
         # of self. This is list of references to those types.
         ref_list = []
@@ -143,6 +132,19 @@ class ChunkGenerator(object):
         # Finally, we must fix types just before generation because user can
         # change already added types.
         TypeFixerVisitor(definer, definer).visit()
+
+        # Auto `Declare` variables in `Function`s with `BodyTree`.
+        # Note that, `TypeFixerVisitor` may grab `definer`-less `Function`s.
+        # So, do auto `Variable` declaration after it.
+        for func in definer.types.values():
+            if not isinstance(func, Function):
+                continue
+            if func.definer is not definer:
+                continue
+            body = func.body
+            if not isinstance(body, BodyTree):
+                continue
+            VarDeclarator(body, func.args).visit()
 
         for t in definer.types.values():
             if t.definer is definer:
