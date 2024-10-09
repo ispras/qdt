@@ -1163,6 +1163,13 @@ def machine_register_2_6(mach):
     )
 
 qemu_heuristic_db = {
+    # tcg: Remove tcg_gen_trunc_i64_i32
+    u'ecc7b3aa71f5fdcf9ee87e74ca811d988282641d' : [
+        QEMUVersionParameterDescription("tcg_trunc_func_prefix",
+            new_value = "tcg_gen_extrl",
+            old_value = "tcg_gen_trunc"
+        )
+    ],
     # Use DECLARE_*CHECKER* macros
     u'8110fa1d94f2997badc2af39231a1d279c5bb1ee' : [
         QEMUVersionParameterDescription("QOM type checkers type",
