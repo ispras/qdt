@@ -220,7 +220,7 @@ class CDecl(CDeclaration):
 
 
 def iter_declarations(declaration_specifiers, init_declarator_list):
-    decl_spec_type = get_declaration_type(declaration_specifiers)
+    var_type = None
 
     for declarator, initializer in init_declarator_list:
         if initializer is not None:
@@ -229,24 +229,41 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
         pointers = declarator[:-1]
         direct_declarator = declarator[-1]
 
-        full_decl_spec_type = make_pointer(decl_spec_type, pointers)
-
         dd_type = direct_declarator["type"]
 
         if dd_type is Function:
+            kw = {}
+
+            ret_type_ds = []
+
+            for ds in declaration_specifiers:
+                if ds in ("static",) + CDeclSpec.FUNCTION_SPECIFIERS:
+                    kw[ds] = True
+                else:
+                    ret_type_ds.append(ds)
+
+            if var_type is None:
+                decl_spec_type = get_declaration_type(ret_type_ds)
+                var_type = make_pointer(decl_spec_type, pointers)
+
             name_desc = direct_declarator["name"]
             assert name_desc["type"] is str
 
             yield Function(
                 name = name_desc["name"],
                 args = direct_declarator["args"],
-                ret_type = full_decl_spec_type,
+                ret_type = var_type,
+                **kw
             )
         elif dd_type is str:
             # variable
+            if var_type is None:
+                decl_spec_type = get_declaration_type(declaration_specifiers)
+                var_type = make_pointer(decl_spec_type, pointers)
+
             name = direct_declarator["name"]
             assert isinstance(name, str)
-            yield full_decl_spec_type(name)
+            yield var_type(name)
         else:
             raise NotImplementedError
 
