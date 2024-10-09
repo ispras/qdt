@@ -141,6 +141,16 @@ class CEnum(CWords):
     def p_type_specifier__enum(enum_specifier):
         return enum_specifier
 
+    # TODO: move to `constant_expression` extensions
+    @staticmethod
+    def _p_enumerator__manual(IDENTIFIER, ASSIGN, constant_expression):
+        # Note:
+        #    enumerator : enumeration_constant ASSIGN constant_expression
+        #    but
+        #    enumeration_constant: identifier
+        #    only
+        raise NotImplementedError(IDENTIFIER + " = [value] as `enum` item")
+
 
 class CStructOrUnion(CWords):
     """ User must defile
