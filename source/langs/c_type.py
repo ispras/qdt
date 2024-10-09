@@ -33,6 +33,10 @@ class CTypeSpecifier(CWords):
     def p_specifier_qualifier_item__type_qualifier(type_qualifier):
         return type_qualifier
 
+    @staticmethod
+    def p_declaration_specifier__type(type_specifier):
+        return type_specifier
+
 
 class CTypeQualifier(CWords):
 
