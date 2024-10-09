@@ -91,17 +91,9 @@ class CTypeSimple(CTypeSpecifier, CTypeQualifier, CSpecQualList, CAtomic):
     pass
 
 
-class CTypeCompound(CTypeSimple):
+class CEnum(CWords):
 
-    @staticmethod
-    def p_type_specifier__enum(enum_specifier):
-        return enum_specifier
-
-    @staticmethod
-    def p_type_specifier__struct_or_union(struct_or_union_specifier):
-        raise NotImplementedError("struct/union ID_opt {...}_opt")
-
-    # --
+    # Sourced productions
 
     @staticmethod
     def p_enum_specifier__ref(ENUM, IDENTIFIER):
@@ -147,6 +139,19 @@ class CTypeCompound(CTypeSimple):
         #    enumeration_constant: identifier
         #    only
         raise NotImplementedError(IDENTIFIER + " as `enum` item")
+
+    # Extensions to other productions
+
+    @staticmethod
+    def p_type_specifier__enum(enum_specifier):
+        return enum_specifier
+
+
+class CTypeCompound(CTypeSimple, CEnum):
+
+    @staticmethod
+    def p_type_specifier__struct_or_union(struct_or_union_specifier):
+        raise NotImplementedError("struct/union ID_opt {...}_opt")
 
     # --
 
