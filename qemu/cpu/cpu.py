@@ -393,7 +393,10 @@ class CPUType(QOMCPU):
         with shadow_open(join(src, translate_inc_c_file.path)) as f:
             if translate_cpu_semantics:
                 ast = parse_file(i3s_path)
-                convert_i3s_to_c(ast, DEBUG_I3S_TRANSLATOR)
+                convert_i3s_to_c(ast,
+                    debug = DEBUG_I3S_TRANSLATOR,
+                    trunc_func_prefix = get_vp("tcg_trunc_func_prefix",)
+                )
                 f.write(CGenerator().visit(ast))
                 f.write(ast.suffix + "\n")
             else:
