@@ -1,6 +1,5 @@
 __all__ = [
     "CDeclSpec"
-      , "CDeclSpecEx"
   , "CAlignSpecExts"
 ]
 
@@ -63,20 +62,3 @@ class CAlignSpecExts(CWords):
         ALIGN_AS, LPAREN, constant_expression, RPAREN
     ):
         raise NotImplementedError(ALIGN_AS + "(constant_expression)")
-
-
-class CDeclSpecEx(CDeclSpec):
-    """ This grammar extends CDeclSpec with productions which require external
-productions/tokens to be defined...
-    - constant_expression
-    - ??? (it's not finished yet)
-    """
-
-    @staticmethod
-    def p_enumerator__manual(IDENTIFIER, ASSIGN, constant_expression):
-        # Note:
-        #    enumerator : enumeration_constant ASSIGN constant_expression
-        #    but
-        #    enumeration_constant: identifier
-        #    only
-        raise NotImplementedError(IDENTIFIER + " = [value] as `enum` item")
