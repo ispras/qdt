@@ -141,10 +141,5 @@ productions/tokens to be defined...
     # --
 
     @staticmethod
-    def p_type_specifier__atomic(ATOMIC, LPAREN, type_name, RPAREN):
-        raise NotImplementedError(ATOMIC + "(%s)" % type_name)
-
-
-    @staticmethod
     def p_specifier_qualifier_item__alignment(alignment_specifier):
         return alignment_specifier
