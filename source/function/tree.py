@@ -826,7 +826,7 @@ class OpCast(Operator):
     delim = ")"
 
     def __init__(self, type_or_name, arg):
-        if not isinstance(type_or_name, Type):
+        if isinstance(type_or_name, str):
             type_or_name = Type[type_or_name]
         super(OpCast, self).__init__(type_or_name, arg)
 
