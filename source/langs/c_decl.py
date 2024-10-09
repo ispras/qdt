@@ -7,6 +7,11 @@ __all__ = [
 from .c_decl_spec import (
     CDeclSpec,
 )
+from .c_type import (
+    CTypeSpecifier,
+    CTypeQualifier,
+    CSpecQualList,
+)
 from ..late import (
     Late,
 )
@@ -28,7 +33,12 @@ spec_and_name = set([
     "signed",
 ])
 
-class CDeclaration(CDeclSpec):
+class CDeclaration(
+    CDeclSpec,
+    CTypeSpecifier,
+    CTypeQualifier,
+    CSpecQualList
+):
     t_STAR = r"\*"
 
     @staticmethod
