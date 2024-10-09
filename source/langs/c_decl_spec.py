@@ -1,6 +1,7 @@
 __all__ = [
     "CDeclSpec"
       , "CDeclSpecEx"
+  , "CAlignSpecExts"
 ]
 
 
@@ -38,32 +39,38 @@ See: CDeclSpecEx.
         return FUNCTION_SPECIFIER
 
 
+class CAlignSpecExts(CWords):
+    "User must provide `alignment_specifier`"
 
-class CDeclSpecEx(CDeclSpec):
-    """ This grammar extends CDeclSpec with productions which require external
-productions/tokens to be defined...
-    - constant_expression
-    - type_name
-    - ??? (it's not finished yet)
-    """
+    # Extensions to other productions
+
+    @staticmethod
+    def p_specifier_qualifier_item__alignment(alignment_specifier):
+        return alignment_specifier
 
     @staticmethod
     def p_declaration_specifier__alignment(alignment_specifier):
         return alignment_specifier
 
-    # --
-
+    # TODO: move to `type_name` extensions
     @staticmethod
-    def p_alignment_specifier__by_type(ALIGN_AS, LPAREN, type_name, RPAREN):
+    def _p_alignment_specifier__by_type(ALIGN_AS, LPAREN, type_name, RPAREN):
         raise NotImplementedError(ALIGN_AS + "(%s)" % type_name)
 
+    # TODO: move to `constant_expression` extensions
     @staticmethod
-    def p_alignment_specifier__by_const(
+    def _p_alignment_specifier__by_const(
         ALIGN_AS, LPAREN, constant_expression, RPAREN
     ):
         raise NotImplementedError(ALIGN_AS + "(constant_expression)")
 
-    # --
+
+class CDeclSpecEx(CDeclSpec):
+    """ This grammar extends CDeclSpec with productions which require external
+productions/tokens to be defined...
+    - constant_expression
+    - ??? (it's not finished yet)
+    """
 
     @staticmethod
     def p_enumerator__manual(IDENTIFIER, ASSIGN, constant_expression):
@@ -73,9 +80,3 @@ productions/tokens to be defined...
         #    enumeration_constant: identifier
         #    only
         raise NotImplementedError(IDENTIFIER + " = [value] as `enum` item")
-
-    # --
-
-    @staticmethod
-    def p_specifier_qualifier_item__alignment(alignment_specifier):
-        return alignment_specifier
