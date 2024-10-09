@@ -52,7 +52,6 @@ from source.langs.c_decl import (
 )
 from source.late import (
     K_FUNC,
-    K_TYPE,
     Late,
 )
 from source.model import (
