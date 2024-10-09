@@ -43,8 +43,6 @@ class CDeclSpecEx(CDeclSpec):
     """ This grammar extends CDeclSpec with productions which require external
 productions/tokens to be defined...
     - constant_expression
-    - declarator
-    - static_assert_declaration
     - type_name
     - ??? (it's not finished yet)
     """
