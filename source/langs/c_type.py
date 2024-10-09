@@ -143,6 +143,10 @@ class CEnum(CWords):
 
 
 class CStructOrUnion(CWords):
+    """ User must defile
+  - struct_declarator
+  - struct_declaration
+    """
 
     # Sourced productions
 
@@ -159,6 +163,66 @@ class CStructOrUnion(CWords):
     @staticmethod
     def p_struct_or_union_specifier__ref(struct_or_union, IDENTIFIER):
         raise NotImplementedError("struct/union " + IDENTIFIER)
+
+    @staticmethod
+    def p_struct_or_union_specifier__anon(
+            struct_or_union, struct_declaration_block
+    ):
+        raise NotImplementedError("struct/union { ... }")
+
+    @staticmethod
+    def p_struct_or_union_specifier__full(
+            struct_or_union, IDENTIFIER, struct_declaration_block
+    ):
+        raise NotImplementedError(
+            "struct/union " + IDENTIFIER + " { ... }"
+        )
+
+    # --
+
+    @staticmethod
+    def p_struct_declaration_block(
+        LPAREN, struct_declaration_list, RPAREN
+    ):
+        return struct_declaration_list
+
+    # ..
+
+    @staticmethod
+    def p_struct_declaration_list(struct_declaration):
+        return [struct_declaration]
+
+    @staticmethod
+    def p_struct_declaration_list__n(
+        struct_declaration_list, struct_declaration,
+    ):
+        return struct_declaration_list + [struct_declaration]
+
+    # --
+
+    @staticmethod
+    def p_struct_declarator_list(struct_declarator):
+        return [struct_declarator]
+
+    @staticmethod
+    def p_struct_declarator_list__n(
+        struct_declarator_list, COMMA, struct_declarator
+    ):
+        return struct_declarator_list + [struct_declarator]
+
+    # --
+
+    # TODO: struct_declaration: static_assert_declaration
+    # TODO: struct_declaration:
+    #       specifier_qualifier_list struct_declarator_list SEMI
+    # TODO: struct_declaration:
+    #       specifier_qualifier_list SEMI
+
+    # --
+
+    # TODO: struct_declarator: declarator
+    # TODO: struct_declarator: COLON constant_expression
+    # TODO: struct_declarator: declarator COLON constant_expression
 
     # Extensions to other productions
 
