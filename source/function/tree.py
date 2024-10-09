@@ -165,7 +165,7 @@ class Node(TypeContainer):
         self.add_children(children)
 
     def __gen_code__(self, gen):
-        gen.gen_code(self)
+        gen.gen_code(self, skip_kw = "children")
         if self.children:
             gen.line(gen.nameof(self) + "(")
             gen.push_indent()
