@@ -1,6 +1,5 @@
 __all__ = [
-    "CTypeSimple"
-  , "CStructOrUnion"
+    "CStructOrUnion"
   , "CTypeSpecifier"
   , "CTypeQualifier"
   , "CSpecQualList"
@@ -85,10 +84,6 @@ class CAtomic(CWords):
     @staticmethod
     def p_type_specifier__atomic(ATOMIC, LPAREN, type_name, RPAREN):
         raise NotImplementedError(ATOMIC + "(%s)" % type_name)
-
-
-class CTypeSimple(CTypeSpecifier, CTypeQualifier, CSpecQualList, CAtomic):
-    pass
 
 
 class CEnum(CWords):
