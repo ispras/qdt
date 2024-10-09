@@ -1,6 +1,9 @@
 __all__ = [
     "CTypeSimple"
       , "CTypeCompound"
+  , "CTypeSpecifier"
+  , "CTypeQualifier"
+  , "CSpecQualList"
 ]
 
 from .c_words import (
