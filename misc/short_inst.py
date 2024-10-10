@@ -420,7 +420,7 @@ def specify_instruction_operand(insn, op_name, op_val):
             "No place for opcode '%s' defined" % op_name
         )
 
-    l = eval(op_val)
+    l = op_val
     try:
         sub_insn = Short.parse(l)
     except:
