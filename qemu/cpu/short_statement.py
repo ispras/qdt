@@ -175,7 +175,8 @@ class ShortStatement(CConstant, CDeclaration):
 
     @staticmethod
     def p_primary_expression__str(STR):
-        return CSTR(STR)
+        # strip "
+        return CSTR(STR[1:-1])
 
     @staticmethod
     def p_primary_expression__define(identifier, DEFINE, primary_expression):
