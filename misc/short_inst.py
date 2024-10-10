@@ -485,8 +485,7 @@ def set_attributes(heading):
     block = heading.child
 
     for attr, val_str in attrs.items():
-        val = eval(val_str)
-        setattr(insn, attr, instruction_attributes[attr](val))
+        setattr(insn, attr, instruction_attributes[attr](val_str))
 
     block[:] = iter_block_lines_without_defines(block)
 
