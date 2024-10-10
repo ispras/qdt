@@ -439,7 +439,14 @@ def specify_instruction_operand(insn, op_name, op_val):
         sub_raw_fields = sub_insn
 
     sub_raw_fields_size = sum(f.bitsize for f in sub_raw_fields)
-    assert sub_raw_fields_size == f.bitsize
+
+    if sub_raw_fields_size != f.bitsize:
+        raise ValueError(
+            "%s: %d-bit instruction field is replaced with field(s)"
+            " of different length %d bit(s): %r" % (
+                f.name, f.bitsize, sub_raw_fields_size, l
+            )
+        )
 
     raw_fields = list(insn.raw_fields)
     raw_fields[field_i:(field_i + 1)] = sub_raw_fields
