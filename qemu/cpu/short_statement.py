@@ -501,5 +501,9 @@ class ShortStatement(CConstant, CDeclaration):
         raise NotImplementedError("comma separated expressions")
 
     @staticmethod
+    def t_error(t):
+        raise SyntaxError
+
+    @staticmethod
     def p_error(p):
         raise SyntaxError
