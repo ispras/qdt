@@ -293,9 +293,7 @@ class Evaluator(NodeVisitor):
         self.ns["_evaluated_%d" % id(o)] = v
 
     def __leave__(self, o):
-        if isinstance(o, CSTR):
-            evaluated = str(o)
-        elif isinstance(o, CINT):
+        if isinstance(o, (CSTR, CINT)):
             evaluated = o.v
         elif isinstance(o, Late):
             evaluated = self.ns[o.name]
