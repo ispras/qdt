@@ -680,6 +680,7 @@ Converts short form instructions definitions to script defines them.
     arg("-d", "--print-disas-format",
         action = "store_true",
     )
+    # TODO: option to join consecutive opcodes
 
     args = ap.parse_args()
     read_bitsize = args.read_bitsize
