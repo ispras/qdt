@@ -1,6 +1,7 @@
 from common import (
     CodeWriter,
     DictStack,
+    OrderedSet,
 )
 from common.pygen import (
     dumps,
@@ -214,7 +215,7 @@ def analyze_instruction_block(heading):
 
 
 def find_instruction_specifiers(heading):
-    heading.specs = specs = defaultdict(list)
+    heading.specs = specs = defaultdict(OrderedSet)
 
     insn = heading.insn
 
@@ -252,7 +253,7 @@ def find_instruction_specifiers(heading):
                             % (heading.n, rvalue)
                         )
 
-                    specs[op_name].append(str(rvalue))
+                    specs[op_name].add(str(rvalue))
                     # Do not go deeper right now.
                     # Some definitions can be for choisen instruction variants.
                     # They will be handled later during recursive
@@ -379,7 +380,7 @@ def iter_multiply_instruction_blocks(heading):
 
     if len(op_vals) == 1:
         # can change heading inplace
-        op_val = op_vals[0]
+        op_val = next(iter(op_vals))
         block = heading.child
         block[:] = iter_block_lines_specified(op_name, op_val, block)
         specify_instruction_operand(heading.insn, op_name, op_val)
