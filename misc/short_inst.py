@@ -733,8 +733,6 @@ Converts short form instructions definitions to script defines them.
         list_name = args.list_name,
     )
 
-    # XXX: Currently, duplicates can be produced by the tool.
-    #      This is to be fixed.
     # User can produce duplicates in source code.
     # So, it's error in user code.
     # User to be notified.
