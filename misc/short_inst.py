@@ -640,8 +640,8 @@ def iter_join_BranchElse(stmnts):
 
         if isinstance(stmnt, BranchElse):
             if not isinstance(prev_stmnt, BranchIf):
-                raise SyntaxError("%r must follows be BranchIf, not %r" % (
-                    stmnt, prev_stmnt
+                raise SyntaxError("%s must follow BranchIf, not %s" % (
+                    type(stmnt).__name__, type(prev_stmnt).__name__
                 ))
             prev_stmnt(stmnt)
             continue
