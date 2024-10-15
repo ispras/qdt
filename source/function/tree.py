@@ -357,8 +357,8 @@ class LoopFor(CBlock):
     __type_references__ = ("init", "cond", "step")
     __pygen_deps__ = __node__
 
-    def __init__(self, init = None, cond = None, step = None):
-        super(LoopFor, self).__init__()
+    def __init__(self, init = None, cond = None, step = None, **kw):
+        super(LoopFor, self).__init__(**kw)
         self.init = init
         self.cond = cond
         self.step = step
