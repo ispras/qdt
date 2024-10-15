@@ -230,6 +230,9 @@ class Instruction(object):
 
     __pygen_deps__ = ("semantics",)
 
+    def join_opcodes(self):
+        self.raw_fields = tuple(iter_join_opcodes(self.raw_fields))
+
     def __var_base__(self):
         return self.mnemonic.lower()
 
