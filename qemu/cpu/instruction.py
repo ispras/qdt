@@ -3,6 +3,7 @@ __all__ = [
         "Operand"
       , "Opcode"
       , "Reserved"
+  , "iter_join_opcodes"
   , "re_disas_format"
   , "Instruction"
   , "InstructionTreeNode"
@@ -143,6 +144,35 @@ class Opcode(InstructionField):
 
 class Reserved(InstructionField):
     pass
+
+
+def iter_join_opcodes(fields):
+    fiter = iter(fields)
+
+    while True:
+        # skip fields until next opcode
+        for prev in fiter:
+            if isinstance(prev, Opcode):
+                break
+            yield prev
+        else:
+            # no more fields
+            break
+
+        for f in fiter:
+            if isinstance(f, Opcode):
+                # join neighboring opcodes
+                prev.val += f.val
+                prev.bitsize += f.bitsize
+            else:
+                yield prev
+                yield f
+                # no more neighboring opcodes
+                # find next one
+                break
+        else:
+            # no more fields
+            break
 
 
 re_disas_format = compile("<((?:[a-zA-Z_]).*?)>|(.+?)")
