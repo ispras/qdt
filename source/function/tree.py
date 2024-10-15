@@ -8,6 +8,7 @@ __all__ = [
           , "CId"
           , "Label"
           , "CBlock"
+              , "CCondBlock"
               , "LoopWhile"
               , "LoopDoWhile"
               , "LoopFor"
@@ -315,6 +316,16 @@ class MacroBranch(Node):
 
 class CBlock(CNode):
     pass
+
+
+class CCondBlock(CBlock):
+    __node__ = CBlock.__node__ + ("cond",)
+    __type_references__ = ("cond",)
+    __pygen_deps__ = __node__
+
+    def __init__(self, cond):
+        super(CCondBlock, self).__init__()
+        self.cond = cond
 
 
 class LoopWhile(CBlock):
