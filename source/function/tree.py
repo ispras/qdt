@@ -358,8 +358,8 @@ class BranchIf(CBlock):
     __node__ = ("children", "cond", "else_blocks")
     __type_references__ = ("cond", "else_blocks")
 
-    def __init__(self, cond):
-        super(BranchIf, self).__init__()
+    def __init__(self, cond, **kw):
+        super(BranchIf, self).__init__(**kw)
         self.cond = cond
         self.else_blocks = []
 
