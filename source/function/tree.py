@@ -9,7 +9,7 @@ __all__ = [
           , "Label"
           , "CBlock"
               , "CCondBlock"
-              , "LoopWhile"
+                  , "LoopWhile"
               , "LoopDoWhile"
               , "LoopFor"
               , "BranchIf"
@@ -328,15 +328,7 @@ class CCondBlock(CBlock):
         self.cond = cond
 
 
-class LoopWhile(CBlock):
-
-    __node__ = CBlock.__node__ + ("cond",)
-    __type_references__ = ("cond",)
-    __pygen_deps__ = __node__
-
-    def __init__(self, cond):
-        super(LoopWhile, self).__init__()
-        self.cond = cond
+class LoopWhile(CCondBlock):
 
     def __c__(self, writer):
         writer.write("while (")
