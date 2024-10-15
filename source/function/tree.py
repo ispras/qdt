@@ -825,10 +825,10 @@ class OpCast(Operator):
     prefix = "("
     delim = ")"
 
-    def __init__(self, type_or_name, arg):
+    def __init__(self, type_or_name, arg, **kw):
         if isinstance(type_or_name, str):
             type_or_name = Type[type_or_name]
-        super(OpCast, self).__init__(type_or_name, arg)
+        super(OpCast, self).__init__(type_or_name, arg, **kw)
 
 
 class OpIndex(Operator):
