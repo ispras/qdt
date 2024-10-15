@@ -386,8 +386,8 @@ class BranchIf(CBlock):
     __type_references__ = ("cond", "else_blocks")
     __pygen_deps__ = __node__
 
-    def __init__(self, cond):
-        super(BranchIf, self).__init__()
+    def __init__(self, cond, **kw):
+        super(BranchIf, self).__init__(**kw)
         self.cond = cond
         self.else_blocks = []
 
