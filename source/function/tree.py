@@ -739,8 +739,8 @@ class MCall(SemicolonPresence):
 
 class Return(SemicolonPresence):
 
-    def __init__(self, *child):
-        super(Return, self).__init__()
+    def __init__(self, *child, **kw):
+        super(Return, self).__init__(**kw)
         self(*child)
 
     @property
