@@ -12,7 +12,7 @@ __all__ = [
                   , "LoopWhile"
                   , "LoopDoWhile"
                   , "BranchElse"
-              , "LoopFor"
+                  , "LoopFor"
               , "BranchIf"
               , "BranchSwitch"
               , "SwitchCase"
@@ -348,16 +348,15 @@ class LoopDoWhile(CCondBlock):
         writer.write(");")
 
 
-class LoopFor(CBlock):
+class LoopFor(CCondBlock):
 
-    __node__ = ("children", "init", "cond", "step")
-    __type_references__ = ("init", "cond", "step")
+    __node__ = CCondBlock.__node__ + ("init", "step",)
+    __type_references__ = CCondBlock.__type_references__ + ("init", "step",)
     __pygen_deps__ = __node__
 
     def __init__(self, init = None, cond = None, step = None, **kw):
-        super(LoopFor, self).__init__(**kw)
+        super(LoopFor, self).__init__(cond, **kw)
         self.init = init
-        self.cond = cond
         self.step = step
 
     def __c__(self, writer):
