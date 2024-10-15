@@ -169,8 +169,7 @@ class Node(TypeContainer):
             self.add_child(child)
 
     def __call__(self, *children):
-        for c in children:
-            self.add_child(c)
+        self.add_children(children)
         return self
 
     def add_child(self, child):
