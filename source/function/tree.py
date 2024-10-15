@@ -183,6 +183,11 @@ class Node(TypeContainer):
         else:
             self.children.append(child)
 
+    def add_children(self, children):
+        add_child = self.add_child
+        for c in children:
+            add_child(c)
+
     def out_children(self, writer):
         if self.indent_children:
             writer.push_indent()
