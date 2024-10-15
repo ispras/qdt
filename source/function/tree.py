@@ -540,8 +540,8 @@ class SwitchCase(CBlock):
 
 class SwitchCaseDefault(CBlock):
 
-    def __init__(self, add_break = True):
-        super(SwitchCaseDefault, self).__init__()
+    def __init__(self, add_break = True, **kw):
+        super(SwitchCaseDefault, self).__init__(**kw)
         self.add_break = add_break
 
     @property
