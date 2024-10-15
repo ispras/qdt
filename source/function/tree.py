@@ -147,19 +147,16 @@ class Node(TypeContainer):
     __type_references__ = __node__
     __pygen_deps__ = __node__
 
+    # `val`ue must be defined by descendant class explicitly
     val = ""
     new_line = ""
     indent_children = True
 
     def __init__(self,
-        val = None,
         children = [],
         **kw
     ):
         super(Node, self).__init__(**kw)
-
-        if val is not None:
-            self.val = val
         self.children = []
         for child in children:
             self.add_child(child)
