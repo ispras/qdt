@@ -256,8 +256,8 @@ class CId(CNode):
 
 class Comment(Node):
 
-    def __init__(self, text):
-        super(Comment, self).__init__()
+    def __init__(self, text, **kw):
+        super(Comment, self).__init__(**kw)
         self.text = text
 
     @property
