@@ -1134,8 +1134,8 @@ class CaseRange(BinaryOperator):
 
 class OpTernCond(Operator):
 
-    def __init__(self, cond, true_val, false_val):
-        super(OpTernCond, self).__init__(cond, true_val, false_val)
+    def __init__(self, cond, true_val, false_val, **kw):
+        super(OpTernCond, self).__init__(cond, true_val, false_val, **kw)
 
     def _write_children(self, writer):
         cond, true_val, false_fal = self.children
