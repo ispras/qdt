@@ -572,8 +572,9 @@ class SwitchCaseDefault(CBlock):
 class StrConcat(CNode):
 
     def __init__(self, *children, **kw_args):
-        super(StrConcat, self).__init__(children = children)
-        self.delim = kw_args.get("delim", "")
+        delim = kw_args.get("delim", "")
+        super(StrConcat, self).__init__(children = children, **kw_args)
+        self.delim = delim
 
     def __c__(self, writer):
         writer.join(self.delim, self.children, self.out_child)
