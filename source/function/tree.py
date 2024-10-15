@@ -300,8 +300,8 @@ class MacroBranch(Node):
     __type_references__ = ("macro_call",)
     __pygen_deps__ = __node__
 
-    def __init__(self, macro_call):
-        super(MacroBranch, self).__init__()
+    def __init__(self, macro_call, **kw):
+        super(MacroBranch, self).__init__(**kw)
         self.macro_call = macro_call
 
     def __c__(self, writer):
