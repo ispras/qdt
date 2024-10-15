@@ -454,9 +454,10 @@ class BranchSwitch(CBlock):
     def __init__(self, var,
         add_break_in_default = True,
         cases = [],
-        separate_cases = False
+        separate_cases = False,
+        **kw
     ):
-        super(BranchSwitch, self).__init__()
+        super(BranchSwitch, self).__init__(**kw)
         self.default_case = None
         self.add_break_in_default = add_break_in_default
         self.var = var
