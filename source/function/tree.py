@@ -716,8 +716,8 @@ class MCall(SemicolonPresence):
 
     __type_references__ = ("type",)
 
-    def __init__(self, macro, *args):
-        super(MCall, self).__init__(children = args)
+    def __init__(self, macro, *args, **kw):
+        super(MCall, self).__init__(children = args, **kw)
         self.macro = macro
 
     @property
