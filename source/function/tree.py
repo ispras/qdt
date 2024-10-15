@@ -269,10 +269,10 @@ class Label(CNode):
 
     new_line = ":"
 
-    def __init__(self, name):
+    def __init__(self, name, **kw):
         if not isinstance(name, CId):
             name = CId(name)
-        super(Label, self).__init__(children = [name])
+        super(Label, self).__init__(children = [name], **kw)
 
     def __c__(self, writer):
         # A label must be written without an indent.
