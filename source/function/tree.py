@@ -629,8 +629,8 @@ class Call(SemicolonPresence):
 
 class Declare(SemicolonPresence):
 
-    def __init__(self, *variables):
-        super(Declare, self).__init__(children = variables)
+    def __init__(self, *variables, **kw):
+        super(Declare, self).__init__(children = variables, **kw)
 
     def iter_variables(self):
         for child in self.children:
