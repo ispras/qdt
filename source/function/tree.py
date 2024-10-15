@@ -108,8 +108,8 @@ OPSDEREF_FROM_DEFINITION = ee("QDT_OPSDEREF_FROM_DEFINITION", "True")
 
 class DeclarationSearcher(NodeVisitor):
 
-    def __init__(self, root):
-        super(DeclarationSearcher, self).__init__(root)
+    def __init__(self, root, **kw):
+        super(DeclarationSearcher, self).__init__(root, **kw)
         self.have_declaration = False
 
     def __visit__(self, cur):
