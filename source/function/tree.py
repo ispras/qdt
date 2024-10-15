@@ -313,8 +313,8 @@ class LoopDoWhile(CBlock):
     __node__ = ("children", "cond")
     __type_references__ = ("cond",)
 
-    def __init__(self, cond):
-        super(LoopDoWhile, self).__init__()
+    def __init__(self, cond, **kw):
+        super(LoopDoWhile, self).__init__(**kw)
         self.cond = cond
 
     def __c__(self, writer):
