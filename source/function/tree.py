@@ -435,7 +435,7 @@ class BranchElse(CCondBlock):
 
 class BranchSwitch(CBlock):
 
-    __node__ = ("children", "var")
+    __node__ = CBlock.__node__ + ("var",)
     __type_references__ = ("var",)
     __pygen_deps__ = __node__
 
