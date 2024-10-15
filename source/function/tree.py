@@ -592,7 +592,7 @@ class Break(SemicolonPresence):
 
 class Call(SemicolonPresence):
 
-    def __init__(self, func, *args):
+    def __init__(self, func, *args, **kw):
         if isinstance(func, str):
             func = Type[func]
         elif not isinstance(func, (Variable, Function, CNode)):
@@ -600,7 +600,7 @@ class Call(SemicolonPresence):
                 "Invalid type of func in Call: " + type(func).__name__
             )
 
-        super(Call, self).__init__(children = (func,) + args)
+        super(Call, self).__init__(children = (func,) + args, **kw)
 
     @property
     def func(self):
