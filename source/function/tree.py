@@ -846,7 +846,7 @@ class OpSDeref(Operator):
 
     prior = 1
 
-    def __init__(self, value, field):
+    def __init__(self, value, field, **kw):
         if isinstance(field, CId):
             pass
         elif isinstance(field, str):
@@ -856,7 +856,7 @@ class OpSDeref(Operator):
                 "Invalid type of field in OpSDeref: " + type(field).__name__
             )
 
-        super(OpSDeref, self).__init__(value, field)
+        super(OpSDeref, self).__init__(value, field, **kw)
 
     @property
     def struct(self):
