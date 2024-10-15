@@ -410,7 +410,7 @@ class BranchElse(CBlock):
 
 class BranchSwitch(CBlock):
 
-    __node__ = ("children", "var")
+    __node__ = CBlock.__node__ + ("var",)
     __type_references__ = ("var",)
 
     indent_children = False
