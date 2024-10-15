@@ -11,10 +11,10 @@ __all__ = [
               , "CCondBlock"
                   , "LoopWhile"
                   , "LoopDoWhile"
+                  , "BranchElse"
               , "LoopFor"
               , "BranchIf"
               , "BranchSwitch"
-              , "BranchElse"
               , "SwitchCase"
               , "SwitchCaseDefault"
           , "StrConcat"
@@ -419,16 +419,11 @@ class BranchIf(CBlock):
             gen.line(")")
 
 
-class BranchElse(CBlock):
+class BranchElse(CCondBlock):
     """ BranchElse must be added to parent BranchIf node using `add_else`. """
 
-    __node__ = ("children", "cond")
-    __type_references__ = ("cond",)
-    __pygen_deps__ = __node__
-
     def __init__(self, cond = None, **kw):
-        super(BranchElse, self).__init__(**kw)
-        self.cond = cond
+        super(BranchElse, self).__init__(cond = cond, **kw)
 
     def __c__(self, writer):
         if self.cond is not None:
