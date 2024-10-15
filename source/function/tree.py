@@ -11,9 +11,9 @@ __all__ = [
               , "CCondBlock"
                   , "LoopWhile"
                   , "LoopDoWhile"
+                  , "BranchIf"
                   , "BranchElse"
                   , "LoopFor"
-              , "BranchIf"
               , "BranchSwitch"
               , "SwitchCase"
               , "SwitchCaseDefault"
@@ -376,15 +376,14 @@ class LoopFor(CCondBlock):
         writer.write("}")
 
 
-class BranchIf(CBlock):
+class BranchIf(CCondBlock):
 
-    __node__ = ("children", "cond", "else_blocks")
-    __type_references__ = ("cond", "else_blocks")
+    __node__ = CCondBlock.__node__ + ("else_blocks",)
+    __type_references__ = CCondBlock.__type_references__ + ("else_blocks",)
     __pygen_deps__ = __node__
 
-    def __init__(self, cond, **kw):
-        super(BranchIf, self).__init__(**kw)
-        self.cond = cond
+    def __init__(self, *a, **kw):
+        super(BranchIf, self).__init__(*a, **kw)
         self.else_blocks = []
 
     def add_else(self, else_bl):
