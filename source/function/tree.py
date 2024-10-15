@@ -251,6 +251,10 @@ class CId(CNode):
     "C Identifier"
     new_line = None
 
+    def __init__(self, val, **kw):
+        super(CId, self).__init__(**kw)
+        self.val = val
+
 
 class Comment(Node):
 
