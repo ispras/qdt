@@ -10,7 +10,7 @@ __all__ = [
           , "CBlock"
               , "CCondBlock"
                   , "LoopWhile"
-              , "LoopDoWhile"
+                  , "LoopDoWhile"
               , "LoopFor"
               , "BranchIf"
               , "BranchSwitch"
@@ -338,15 +338,7 @@ class LoopWhile(CCondBlock):
         writer.write("}")
 
 
-class LoopDoWhile(CBlock):
-
-    __node__ = ("children", "cond")
-    __type_references__ = ("cond",)
-    __pygen_deps__ = __node__
-
-    def __init__(self, cond, **kw):
-        super(LoopDoWhile, self).__init__(**kw)
-        self.cond = cond
+class LoopDoWhile(CCondBlock):
 
     def __c__(self, writer):
         writer.line("do@b{")
