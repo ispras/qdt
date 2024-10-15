@@ -319,7 +319,7 @@ class CBlock(CNode):
 
 class LoopWhile(CBlock):
 
-    __node__ = ("children", "cond")
+    __node__ = CBlock.__node__ + ("cond",)
     __type_references__ = ("cond",)
     __pygen_deps__ = __node__
 
