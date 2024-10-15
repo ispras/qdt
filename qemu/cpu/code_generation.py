@@ -60,6 +60,7 @@ from source import (
     CINT,
     Call,
     CaseRange,
+    CId,
     Comment,
     Declare,
     Function,
@@ -73,7 +74,6 @@ from source import (
     MCall,
     MacroBranch,
     NewLine,
-    Node,
     OpAdd,
     OpAddr,
     OpAnd,
@@ -581,7 +581,7 @@ def fill_env_get_cpu_body(cputype, function):
                 "container_of",
                 function.args[0],
                 Type[cputype.struct_instance_name],
-                Node("env")
+                CId("env")
             )
         )
     )
@@ -810,7 +810,7 @@ def fill_gen_intermediate_code_body(cputype, function, cpu_env):
                 )
             )(
                 MacroBranch(
-                    MCall("QTAILQ_FOREACH", bp, cs_bp, Node("entry"))
+                    MCall("QTAILQ_FOREACH", bp, cs_bp, CId("entry"))
                 )(BranchIf(OpEq(ctx_pc, OpSDeref(bp, "pc")))(
                     set_pc,
                     gen_helper_debug,
@@ -1328,7 +1328,7 @@ def fill_reset_body(cputype, function):
                 MCall(
                     "offsetof",
                     Type[cputype.struct_name],
-                    Node("end_reset_fields")
+                    CId("end_reset_fields")
                 )
             ),
             OpAssign(
@@ -1429,12 +1429,12 @@ def fill_tcg_init_body(cputype, function, reg_vars, cpu_env):
             )
             body(parent_node)
             v = OpIndex(var, i)
-            state_field = OpIndex(Node(r.name), i)
+            state_field = OpIndex(CId(r.name), i)
             string_name = OpIndex(names_array, i)
         else:
             parent_node = body
             v = var
-            state_field = Node(r.name)
+            state_field = CId(r.name)
             string_name = r.name
 
         parent_node(
