@@ -681,6 +681,10 @@ Converts short form instructions definitions to script defines them.
     arg("-d", "--print-disas-format",
         action = "store_true",
     )
+    arg("-J", "--no-join",
+        action = "store_true",
+        help = "do not join neighboring opcodes",
+    )
     # TODO: option to join consecutive opcodes
 
     args = ap.parse_args()
@@ -733,6 +737,8 @@ Converts short form instructions definitions to script defines them.
         list_name = args.list_name,
     )
 
+    join_op = not args.no_join
+
     # User can produce duplicates in source code.
     # So, it's error in user code.
     # User to be notified.
@@ -745,6 +751,9 @@ Converts short form instructions definitions to script defines them.
 
         if i.mnemonic == "skip":
             continue
+
+        if join_op:
+            i.join_opcodes()
 
         merge_statements(heading)
 
