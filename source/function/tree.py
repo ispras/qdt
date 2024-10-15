@@ -274,7 +274,7 @@ class NewLine(Node):
 class MacroBranch(Node):
     """ MacroBranch describes construction like MACRO(x, y) { ... } """
 
-    __node__ = ("children", "macro_call")
+    __node__ = Node.__node__ + ("macro_call",)
     __type_references__ = ("macro_call",)
 
     def __init__(self, macro_call, **kw):
