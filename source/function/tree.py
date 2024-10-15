@@ -393,8 +393,8 @@ class BranchElse(CBlock):
     __node__ = ("children", "cond")
     __type_references__ = ("cond",)
 
-    def __init__(self, cond = None):
-        super(BranchElse, self).__init__()
+    def __init__(self, cond = None, **kw):
+        super(BranchElse, self).__init__(**kw)
         self.cond = cond
 
     def __c__(self, writer):
