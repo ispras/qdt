@@ -501,8 +501,8 @@ class BranchSwitch(CBlock):
 
 class SwitchCase(CBlock):
 
-    def __init__(self, const, add_break = True):
-        super(SwitchCase, self).__init__()
+    def __init__(self, const, add_break = True, **kw):
+        super(SwitchCase, self).__init__(**kw)
         self.add_break = add_break
 
         if isinstance(const, integer_types):
