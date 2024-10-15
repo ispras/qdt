@@ -153,9 +153,10 @@ class Node(TypeContainer):
 
     def __init__(self,
         val = None,
-        children = []
+        children = [],
+        **kw
     ):
-        super(Node, self).__init__()
+        super(Node, self).__init__(**kw)
 
         if val is not None:
             self.val = val
