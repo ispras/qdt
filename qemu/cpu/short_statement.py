@@ -8,6 +8,7 @@ from source.function.tree import (
     BranchElse,
     Call,
     Declare,
+    LoopFor,
     OpAdd,
     OpAddr,
     OpAnd,
@@ -160,6 +161,14 @@ class ShortStatement(CConstant, CDeclaration):
     @staticmethod
     def p_statement__elif(ELSE, expression):
         return BranchElse(expression)
+
+    @staticmethod
+    def p_statement__for(FOR, expression):
+        return LoopFor(step = expression)
+
+    @staticmethod
+    def p_statement__for_no_expr(FOR):
+        return LoopFor()
 
     @staticmethod
     def p_identifier(IDENTIFIER):
