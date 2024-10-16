@@ -30,6 +30,7 @@ from source import (
     gen_init_string,
     Late,
     LateLinker,
+    LoopFor,
     Variable,
     VarUsageAnalyzer,
 )
@@ -608,30 +609,62 @@ def parse_lines(heading):
             parse_lines(line)
 
 
-def merge_statements(heading):
-    block = heading.child
+class MergeContext(object):
 
-    if block is None:
-        return
+    def __init__(self):
+        self.for_loops = set()
 
-    sub_stmnts = []
-    for line in block:
-        merge_statements(line)
-        sub_stmnts.extend(line.stmnts)
+    def merge_statements(self, heading):
+        block = heading.child
 
-    sub_stmnts = list(iter_join_BranchElse(sub_stmnts))
+        if block is None:
+            return
 
-    if not sub_stmnts:
-        return
+        sub_stmnts = []
+        for line in block:
+            self.merge_statements(line)
+            sub_stmnts.extend(line.stmnts)
 
-    stmnts = heading.stmnts
-    if stmnts:
-        last_stmnt = stmnts[-1]
-        if not isinstance(last_stmnt, CBlock):
-            stmnts[-1] = last_stmnt = BranchIf(last_stmnt)
-        last_stmnt(*sub_stmnts)
-    else:
-        stmnts[:] = sub_stmnts
+        sub_stmnts = list(iter_join_BranchElse(sub_stmnts))
+
+        if not sub_stmnts:
+            return
+
+        stmnts = heading.stmnts
+        if stmnts:
+            last_stmnt = stmnts[-1]
+            if not isinstance(last_stmnt, CBlock):
+
+                for_stmnt = None
+                for i, s in enumerate(sub_stmnts):
+                    if isinstance(s, LoopFor) and s not in self.for_loops:
+                        if for_stmnt is not None:
+                            raise SyntaxError(
+                    "%s: multiple loop statements in block" % (heading.n,)
+                            )
+                        for_stmnt = i, s
+
+                if for_stmnt is None:
+                    last_stmnt = BranchIf(last_stmnt)
+                else:
+                    i, s = for_stmnt
+                    del sub_stmnts[i]
+                    s.cond = last_stmnt
+                    last_stmnt = s
+                    if s.children:
+                        raise NotImplementedError(
+                    "%s: children of `for` block are to be moved to `step`" % (
+                                heading.n,
+                            )
+                        )
+
+                    self.for_loops.add(s)
+
+                stmnts[-1] = last_stmnt
+
+            last_stmnt(*sub_stmnts)
+        else:
+            stmnts[:] = sub_stmnts
 
 
 def iter_join_BranchElse(stmnts):
@@ -726,7 +759,7 @@ Converts short form instructions definitions to script defines them.
         for t in heading.decls:
 
             if isinstance(t, Function):
-                merge_statements(heading)
+                MergeContext().merge_statements(heading)
                 t.body = BodyTree(children = heading.stmnts)
 
             types.append(t)
@@ -755,7 +788,7 @@ Converts short form instructions definitions to script defines them.
         if join_op:
             i.join_opcodes()
 
-        merge_statements(heading)
+        MergeContext().merge_statements(heading)
 
         i.semantics = heading.stmnts
 
