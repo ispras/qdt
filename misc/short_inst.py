@@ -319,7 +319,7 @@ def eval_def_rvalue(rvalue, ns = {}):
     return val
 
 
-def iter_block_lines_specified(op_name, op_val, block):
+def iter_block_lines_specified(op_name, op_val, block, new_block):
     for line in block:
         for d in find_defines(line.stmnts):
             # find_instruction_specifiers missed it
@@ -327,37 +327,44 @@ def iter_block_lines_specified(op_name, op_val, block):
 
             l_op_name = d.name.name
 
-            if l_op_name == op_name:
-                # find_instruction_specifiers missed it
-                assert isinstance(d.value, CSTR)
+            if l_op_name != op_name:
+                continue
 
-                l_op_val = str(d.value)
+            # find_instruction_specifiers missed it
+            assert isinstance(d.value, CSTR)
 
-                if l_op_val == op_val:
+            l_op_val = str(d.value)
 
-                    prefix_line = type(line)()
-                    prefix_line.stmnts = []
-                    yield prefix_line
+            if l_op_val == op_val:
 
-                    if line.child:
-                        for sline in iter_block_lines_specified(
-                            op_name, op_val, line.child
-                        ):
-                            yield sline
+                prefix_line = type(line)()
+                prefix_line.stmnts = []
+                prefix_line.parent = new_block
+                prefix_line.n = line.n
+                # TODO: is content to be copied?
 
-                break
+                yield prefix_line
+
+                if line.child:
+                    for sline in iter_block_lines_specified(
+                        op_name, op_val, line.child, new_block
+                    ):
+                        yield sline
+
+            break
         else:
-            if line.child:
-                specified_line = type(line)()
-                specified_line.stmnts = line.stmnts
+            specified_line = type(line)()
+            specified_line.stmnts = deepcopy(line.stmnts)
+            specified_line.n = line.n
+            specified_line.parent = new_block
+            # TODO: is content to be copied?
 
-                specified_line.child = type(line.child)(
-                    iter_block_lines_specified(
-                        op_name, op_val, line.child
-                    )
+            if line.child:
+                specified_line.child = sblock = type(line.child)()
+                sblock.heading = specified_line
+                sblock[:] = iter_block_lines_specified(
+                    op_name, op_val, line.child, sblock
                 )
-            else:
-                specified_line = line
 
             yield specified_line
 
@@ -383,7 +390,7 @@ def iter_multiply_instruction_blocks(heading):
         # can change heading inplace
         op_val = next(iter(op_vals))
         block = heading.child
-        block[:] = iter_block_lines_specified(op_name, op_val, block)
+        block[:] = iter_block_lines_specified(op_name, op_val, block, block)
         specify_instruction_operand(heading.insn, op_name, op_val)
         for subspec in iter_multiply_instruction_blocks(heading):
             yield subspec
@@ -392,13 +399,18 @@ def iter_multiply_instruction_blocks(heading):
     # don't deepcopy of parent
     heading.parent = None
 
+    # Don't deepcopy child block.
+    # It will be rebuilt by `iter_block_lines_specified`.
+    block = heading.child
+    heading.child = None
+
     for op_val in op_vals:
         specified = deepcopy(heading)
 
-        block = specified.child
-
-        # TODO: it might be not so simple
-        block[:] = iter_block_lines_specified(op_name, op_val, block)
+        sblock = type(block)()
+        sblock.heading = specified
+        specified.child = sblock
+        sblock[:] = iter_block_lines_specified(op_name, op_val, block, sblock)
 
         insn = specified.insn
 
@@ -406,6 +418,9 @@ def iter_multiply_instruction_blocks(heading):
 
         for subspec in iter_multiply_instruction_blocks(specified):
             yield subspec
+
+    # revert it back
+    heading.child = block
 
 
 def specify_instruction_operand(insn, op_name, op_val):
