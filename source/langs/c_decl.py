@@ -173,6 +173,18 @@ class CDeclaration(
         )
 
     @staticmethod
+    def p_direct_declarator__func_void_args(
+        direct_declarator, LPAREN, IDENTIFIER, RPAREN
+    ):
+        if IDENTIFIER != "void":
+            raise SyntaxError("void is expected")
+        return dict(
+            type = Function,
+            name = direct_declarator,
+            args = (),
+        )
+
+    @staticmethod
     def p_pointer__qualified(STAR, type_qualifier_list):
         return [type_qualifier_list]
 
