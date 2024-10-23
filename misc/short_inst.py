@@ -168,6 +168,15 @@ class NamedList(list):
         g.pprint(instructions)
 
 
+# Note, `int i` is a valid `Short` instruction encoding.
+# I.e. mnemonic = "int", bit lenght = 1 bit, i is an operand.
+# So, first try to parse line as C declaration.
+line_parsers = [
+    ("decls", CDecl),
+    ("insn", Short),
+]
+
+
 def analyze_instruction_block(heading):
     heading.insn = None
 
@@ -178,35 +187,24 @@ def analyze_instruction_block(heading):
     if not l:
         return
 
-    # Note, `int i` is a valid `Short` instruction encoding.
-    # I.e. mnemonic = "int", bit lenght = 1 bit, i is an operand.
-    # So, first try to parse line as C declaration.
+    errors = []
 
-    try:
-        decls = CDecl.parse(l)
-    except SyntaxError:
-        func_msg = format_exc()
-        decls = None
-    else:
-        func_msg = None
-
-    insn = None
-    if decls is None:
+    for target, parser in line_parsers:
         try:
-            insn = Short.parse(l)
+            val = parser.parse(l)
+            if val is None:
+                # Sometimes `SyntaxError` results in None return instead of
+                # exception raising,
+                errors.append(("[parser returned None]", parser))
         except SyntaxError:
-            # before debug call stack another exception
-            insn_msg = format_exc()
+            msg = format_exc()
+            errors.append((msg, parser))
+            setattr(heading, target, None)
         else:
-            insn_msg = None
+            setattr(heading, target, val)
 
-    if (insn or decls) is None:
-        for msg, parser in (
-            (insn_msg, Short),
-            (func_msg, CDecl),
-        ):
-            if not msg:
-                continue
+    if len(errors) == len(line_parsers):
+        for msg, parser in errors:
             print("parser: " + str(parser))
             try:
                 parser.parse(l, debug = True)
@@ -215,10 +213,9 @@ def analyze_instruction_block(heading):
             # after parser log printed
             print(msg)
 
-        raise SyntaxError("%d: bad block (all parsers failed)" % (heading.n,))
-
-    heading.insn = insn
-    heading.decls = decls
+        raise SyntaxError("%d: '%s': bad line (all parsers failed)" % (
+            heading.n, heading
+        ))
 
 
 def find_instruction_specifiers(heading):
