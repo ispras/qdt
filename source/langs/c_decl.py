@@ -169,6 +169,7 @@ class CDeclaration(
         return dict(
             type = Function,
             name = direct_declarator,
+            # This results in `... old_style_function_decl()`
             args = (),
         )
 
@@ -181,7 +182,8 @@ class CDeclaration(
         return dict(
             type = Function,
             name = direct_declarator,
-            args = (),
+            # This results in `... new_style_function_decl(void)`
+            args = None,
         )
 
     @staticmethod
