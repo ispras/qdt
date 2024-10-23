@@ -826,7 +826,8 @@ Converts short form instructions definitions to script defines them.
                 print("%s %s(%s)\n{\n%s}\n" % (
                     t.ret_type.name,
                     t.c_name,
-                    ", ".join((a.type.name + " " + a.name) for a in t.args),
+                    ", ".join((a.type.name + " " + a.name) for a in t.args) \
+                        if t.args is not None else "void",
                     str_as_function_body(t.body.children),
                 ))
             elif isinstance(t, Variable):
