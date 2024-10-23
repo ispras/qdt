@@ -213,8 +213,8 @@ def analyze_instruction_block(heading):
             # after parser log printed
             print(msg)
 
-        raise SyntaxError("%d: '%s': bad line (all parsers failed)" % (
-            heading.n, heading
+        raise SyntaxError("%d: %r: bad line (all parsers failed)" % (
+            heading.n, str(heading)
         ))
 
 
@@ -243,8 +243,8 @@ def find_instruction_specifiers(heading):
                 lvalue = d.name
                 if not isinstance(lvalue, Late):
                     raise SyntaxError(
-                        "%d: lvalue of `:=` must be an ID, not %r"
-                        % (sline.n, lvalue)
+                        "%d: %r: lvalue of `:=` must be an ID, not %r"
+                        % (sline.n, str(sline), lvalue)
                     )
                 op_name = lvalue.name
 
@@ -252,9 +252,9 @@ def find_instruction_specifiers(heading):
                     rvalue = d.value
                     if not isinstance(rvalue, CSTR):
                         raise SyntaxError(
-                '%d: instruction operand replacement (rvalue of `:=`) must be'
-                ' a "C-string", not %r'
-                            % (heading.n, rvalue)
+        '%d: %r: instruction operand replacement (rvalue of `:=`) must be'
+        ' a "C-string", not %r'
+                            % (heading.n, str(heading), rvalue)
                         )
 
                     specs[op_name].add(str(rvalue))
@@ -608,12 +608,12 @@ def parse_lines(heading):
             except SyntaxError:
                 # before debug call stack another exception
                 msg = format_exc()
-                print("line: " + str(line))
                 try:
                     parse_short_statement(line, debug = True)
                 except SyntaxError:
                     pass
                 # after parser log printed
+                print("%d: %r:" % (line.n, str(line)))
                 print(msg)
                 raise
 
@@ -658,7 +658,7 @@ class MergeContext(object):
                     if isinstance(s, LoopFor) and s not in self.for_loops:
                         if for_stmnt is not None:
                             raise SyntaxError(
-                    "%s: multiple loop statements in block" % (heading.n,)
+        "%s: %r: multiple loop statements in block" % (heading.n, str(heading))
                             )
                         for_stmnt = i, s
 
@@ -671,8 +671,8 @@ class MergeContext(object):
                     last_stmnt = s
                     if s.children:
                         raise NotImplementedError(
-                    "%s: children of `for` block are to be moved to `step`" % (
-                                heading.n,
+                "%s: %r: children of `for` block are to be moved to `step`" % (
+                                heading.n, heading
                             )
                         )
 
