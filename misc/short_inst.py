@@ -187,6 +187,8 @@ def analyze_instruction_block(heading):
     except SyntaxError:
         func_msg = format_exc()
         decls = None
+    else:
+        func_msg = None
 
     insn = None
     if decls is None:
@@ -195,12 +197,16 @@ def analyze_instruction_block(heading):
         except SyntaxError:
             # before debug call stack another exception
             insn_msg = format_exc()
+        else:
+            insn_msg = None
 
     if (insn or decls) is None:
         for msg, parser in (
             (insn_msg, Short),
             (func_msg, CDecl),
         ):
+            if not msg:
+                continue
             print("parser: " + str(parser))
             try:
                 parser.parse(l, debug = True)
