@@ -501,7 +501,13 @@ def set_attributes(heading):
 
                 def_name = d.name.name
 
-                op_val = eval_def_rvalue(d.value, ns)
+                try:
+                    op_val = eval_def_rvalue(d.value, ns)
+                except:
+                    print("%d: %r: exception during evaluation" % (
+                        sline.n, str(sline)
+                    ))
+                    raise
 
                 ns[def_name] = op_val
                 if def_name in instruction_attributes:
