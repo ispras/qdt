@@ -577,15 +577,14 @@ def iter_block_lines_without_defines(block):
             yield line
 
 
-def parse_short_statement(heading, **parse_kw):
+def parse_multiline(parser, heading, **parse_kw):
     code = str(heading)
-    stmnts = []
 
     if not code:
-        return stmnts
+        return None, None
 
     try:
-        stmnt = ShortStatement.parse(code, **parse_kw)
+        return parser.parse(code, **parse_kw), False
     except SyntaxError:
         # try to parse line with it's block as multiline statement
         block = heading.child
@@ -608,18 +607,27 @@ def parse_short_statement(heading, **parse_kw):
             raise
 
         try:
-            stmnt = ShortStatement.parse(block_code, **parse_kw)
+            res = parser.parse(block_code, **parse_kw)
         except SyntaxError:
-            stmnt = None
+            res = None
         else:
-            heading.multiline = True
+            return res, True
 
-        if stmnt is None:
+        if res is None:
             # need to `raise` first `SyntaxError`
             raise
 
-    stmnts.append(stmnt)
-    return stmnts
+
+def parse_short_statement(heading, **parse_kw):
+    stmnt, multiline = parse_multiline(
+        ShortStatement, heading, **parse_kw
+    )
+    if stmnt:
+        if multiline:
+            heading.multiline = True
+        return [stmnt]
+    else:
+        return []
 
 
 def parse_lines(heading):
