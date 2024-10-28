@@ -239,6 +239,8 @@ def analyze_instruction_block(heading):
             setattr(heading, target, None)
         else:
             setattr(heading, target, val)
+            # try until first success
+            break
 
     if len(errors) == len(line_parsers):
         for msg, parser in errors:
