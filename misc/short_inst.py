@@ -50,13 +50,52 @@ from copy import (
 from difflib import (
     unified_diff
 )
+from itertools import (
+    chain,
+)
 from traceback import (
     format_exc,
 )
 
 
+def strip_comments(heading):
+    try:
+        i = heading.index("#")
+    except ValueError:
+        pass
+    else:
+        comment = heading[i + 1:]
+        del heading[i:]
+        heading.comment = comment
+
+    child = heading.child
+    if child is None:
+        return
+    for line in child:
+        strip_comments(line)
+
+
+def iter_comments(heading):
+    comment = heading.comment
+    if comment is not None:
+        yield comment
+    if not heading.multiline:
+        return
+    for line in heading.child:
+        for sub_comment in iter_comments(line):
+            yield sub_comment
+
+
+iter_comment = lambda heading: chain(*iter_comments(heading))
+
+
 class Cline(BlockParser.Line):
     multiline = False
+    comment = None
+
+    strip_comments = strip_comments
+    iter_comments = iter_comments
+    iter_comment = iter_comment
 
 
 class CBlockParser(BlockParser):
