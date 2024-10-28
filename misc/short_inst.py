@@ -233,7 +233,7 @@ def analyze_instruction_block(heading):
 
     for target, parser in line_parsers:
         try:
-            val = parser.parse(l)
+            val, multiline = parse_multiline(parser, heading)
             if val is None:
                 # Sometimes `SyntaxError` results in None return instead of
                 # exception raising,
@@ -244,6 +244,8 @@ def analyze_instruction_block(heading):
             setattr(heading, target, None)
         else:
             setattr(heading, target, val)
+            if multiline:
+                heading.multiline = True
             # try until first success
             break
 
@@ -251,7 +253,7 @@ def analyze_instruction_block(heading):
         for msg, parser in errors:
             print("parser: " + str(parser))
             try:
-                parser.parse(l, debug = True)
+                parse_multiline(parser, heading, debug = True)
             except:
                 pass
             # after parser log printed
@@ -644,35 +646,28 @@ def parse_lines(heading):
         return
 
     for line in block:
-        if heading.parent is None:
-            # Don't try to parse `Short` instruction encoding.
-            stmnts = None
-        else:
+        try:
+            stmnts = parse_short_statement(line, debug = False)
+        except SyntaxError:
+            # before debug call stack another exception
+            msg = format_exc()
             try:
-                stmnts = parse_short_statement(line, debug = False)
+                parse_short_statement(line, debug = True)
             except SyntaxError:
-                # before debug call stack another exception
-                msg = format_exc()
-                try:
-                    parse_short_statement(line, debug = True)
-                except SyntaxError:
-                    pass
-                # after parser log printed
-                print("%d: %r:" % (line.n, str(line)))
-                print(msg)
-                raise
-            else:
-                comment = "".join(line.iter_comment()).strip()
-                if comment:
-                    stmnts.insert(0, Comment(comment))
-
-        if stmnts:
-            line.stmnts = stmnts
-
-        if line.multiline:
-            parse_lines(line.child[-1])
+                pass
+            # after parser log printed
+            print("%d: %r:" % (line.n, str(line)))
+            print(msg)
+            raise
         else:
-            parse_lines(line)
+            comment = "".join(line.iter_comment()).strip()
+            if comment:
+                stmnts.insert(0, Comment(comment))
+
+            if stmnts:
+                line.stmnts = stmnts
+
+        parse_lines(line.root)
 
 
 class MergeContext(object):
@@ -800,13 +795,13 @@ Converts short form instructions definitions to script defines them.
 
     # analyze instructions
 
-    parse_lines(top)
-
     insn_lines = []
     decl_lines = []
 
     for top_line in top.child:
         analyze_instruction_block(top_line)
+
+        parse_lines(top_line.root)
 
         insn = top_line.insn
         if insn is not None:
@@ -824,11 +819,12 @@ Converts short form instructions definitions to script defines them.
     )
 
     for heading in decl_lines:
+        root = heading.root
         for t in heading.decls:
 
             if isinstance(t, Function):
-                MergeContext().merge_statements(heading)
-                t.body = BodyTree(children = heading.stmnts)
+                MergeContext().merge_statements(root)
+                t.body = BodyTree(children = root.stmnts)
 
             types.append(t)
 
@@ -847,8 +843,9 @@ Converts short form instructions definitions to script defines them.
 
     for heading in insn_lines:
         i = heading.insn
+        root = heading.root
 
-        set_attributes(heading)
+        set_attributes(root)
 
         if i.mnemonic == "skip":
             continue
@@ -856,9 +853,9 @@ Converts short form instructions definitions to script defines them.
         if join_op:
             i.join_opcodes()
 
-        MergeContext().merge_statements(heading)
+        MergeContext().merge_statements(root)
 
-        i.semantics = heading.stmnts
+        i.semantics = root.stmnts
 
         code = dump_insn(i)
         same_insts = duplicates[code]
