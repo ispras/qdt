@@ -98,6 +98,10 @@ class Cline(BlockParser.Line):
     iter_comments = iter_comments
     iter_comment = iter_comment
 
+    @property
+    def root(self):
+        return self.child[-1] if self.multiline else self
+
 
 class CBlockParser(BlockParser):
     Line = Cline
