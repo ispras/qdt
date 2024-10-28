@@ -92,6 +92,7 @@ iter_comment = lambda heading: chain(*iter_comments(heading))
 class Cline(BlockParser.Line):
     multiline = False
     comment = None
+    stmnts = ()
 
     strip_comments = strip_comments
     iter_comments = iter_comments
@@ -380,7 +381,6 @@ def iter_block_lines_specified(op_name, op_val, block, new_block):
             if l_op_val == op_val:
 
                 prefix_line = type(line)()
-                prefix_line.stmnts = []
                 prefix_line.parent = new_block
                 prefix_line.n = line.n
                 # TODO: is content to be copied?
@@ -396,7 +396,8 @@ def iter_block_lines_specified(op_name, op_val, block, new_block):
             break
         else:
             specified_line = type(line)()
-            specified_line.stmnts = deepcopy(line.stmnts)
+            if line.stmnts:
+                specified_line.stmnts = deepcopy(line.stmnts)
             specified_line.n = line.n
             specified_line.parent = new_block
             # TODO: is content to be copied?
@@ -641,7 +642,7 @@ def parse_lines(heading):
     for line in block:
         if heading.parent is None:
             # Don't try to parse `Short` instruction encoding.
-            stmnts = []
+            stmnts = None
         else:
             try:
                 stmnts = parse_short_statement(line, debug = False)
@@ -661,12 +662,11 @@ def parse_lines(heading):
                 if comment:
                     stmnts.insert(0, Comment(comment))
 
-        line.stmnts = stmnts
+        if stmnts:
+            line.stmnts = stmnts
 
         if line.multiline:
-            for subline in line.child:
-                subline.stmnts = []
-            parse_lines(subline)  # line.child[-1]
+            parse_lines(line.child[-1])
         else:
             parse_lines(line)
 
@@ -726,7 +726,7 @@ class MergeContext(object):
 
             last_stmnt(*sub_stmnts)
         else:
-            stmnts[:] = sub_stmnts
+            heading.stmnts = sub_stmnts
 
 
 def iter_join_BranchElse(stmnts):
