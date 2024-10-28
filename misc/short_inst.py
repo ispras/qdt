@@ -220,8 +220,6 @@ def analyze_instruction_block(heading):
     heading.insn = None
 
     l = str(heading)
-    # remove comments from top block lines
-    l = l.split("#")[0]
 
     if not l:
         return
@@ -580,15 +578,8 @@ def iter_block_lines_without_defines(block):
 
 
 def parse_short_statement(heading, **parse_kw):
-    # strip comment
-    parts = str(heading).split("#", 1)
-    code = parts[0].strip()
-
-    if len(parts) > 1:
-        comment = parts[1].strip()
-        stmnts = [Comment(comment)]
-    else:
-        stmnts = []
+    code = str(heading)
+    stmnts = []
 
     if not code:
         return stmnts
@@ -611,13 +602,7 @@ def parse_short_statement(heading, **parse_kw):
                     raise
                 prev_have_child = True
 
-            line_parts = str(line).split("#", 1)
-            line_code = line_parts[0].strip()
-            block_code += " " + line_code
-
-            if len(line_parts) > 1:
-                comment = line_parts[1].strip()
-                stmnts.append(Comment(comment))
+            block_code += " " + str(line)
 
         if block_code == code:
             raise
@@ -661,6 +646,10 @@ def parse_lines(heading):
                 print("%d: %r:" % (line.n, str(line)))
                 print(msg)
                 raise
+            else:
+                comment = "".join(line.iter_comment()).strip()
+                if comment:
+                    stmnts.insert(0, Comment(comment))
 
         line.stmnts = stmnts
 
@@ -792,6 +781,8 @@ Converts short form instructions definitions to script defines them.
 
     bp = CBlockParser()
     top = bp.parse(short_desc)
+
+    top.strip_comments()
 
     # analyze instructions
 
