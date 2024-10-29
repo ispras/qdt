@@ -753,7 +753,9 @@ Converts short form instructions definitions to script defines them.
     )
     arg = ap.add_argument
 
-    arg("short_desc_file_name")
+    arg("short_desc_file_names",
+        nargs = "+",
+    )
     arg("-r", "--read-bitsize",
         default = 32,
         type = int,
@@ -785,8 +787,13 @@ Converts short form instructions definitions to script defines them.
     read_bitsize = args.read_bitsize
     output_file_name = args.output_file_name
 
-    with open(args.short_desc_file_name, "r") as f:
-        short_desc = f.read()
+    short_desc = ""
+
+    for file_name in args.short_desc_file_names:
+        with open(file_name, "r") as f:
+            if not short_desc.endswith("\n"):
+                short_desc += "\n"
+            short_desc += f.read()
 
     bp = CBlockParser()
     top = bp.parse(short_desc)
