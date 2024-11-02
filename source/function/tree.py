@@ -1189,8 +1189,7 @@ construction simpler. Can be a class @decorator.
     """
     for attr, value in PYTHON_OPERATORS.items():
         if hasattr(cls, attr):
-            print("%s.%s: is already defined" % (cls, attr))
-            return
+            print("%s.%s: redefined" % (cls, attr))
         setattr(cls, attr, value)
     return cls
 
