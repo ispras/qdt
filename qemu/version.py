@@ -133,7 +133,24 @@ def define_only_qemu_2_6_0_types():
         memop_header = tcg_header
     memop_header.add_type(
         # These are required elements only
-        Enumeration(["MO_UB", "MO_UW", "MO_UL", "MO_TE"],
+        Enumeration([
+                "MO_8",
+                "MO_16",
+                "MO_32",
+                "MO_64",
+                "MO_SIGN",
+                "MO_BSWAP",
+                "MO_UB",
+                "MO_UW",
+                "MO_UL",
+                "MO_SB",
+                "MO_SW",
+                "MO_SL",
+                "MO_Q",
+                "MO_TE",
+                "MO_BE",
+                "MO_LE",
+            ],
             typedef_name = memop_type_name
         )
     )
