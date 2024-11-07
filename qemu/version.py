@@ -165,6 +165,10 @@ def define_only_qemu_2_6_0_types():
         Function(name = "tcg_gen_insn_start"),
         Function(name = "tcg_gen_goto_tb"),
         Function(name = "tcg_gen_exit_tb"),
+        Function(name = "tcg_gen_qemu_ld_i32"),
+        Function(name = "tcg_gen_qemu_ld_i64"),
+        Function(name = "tcg_gen_qemu_st_i32"),
+        Function(name = "tcg_gen_qemu_st_i64"),
         # `tcg_op_fake_type` is a fake type used to add the `tcg-op.h` header
         # inclusion into the `translate.inc.c` header. This inclusion is
         # necessary for future function bodies.
