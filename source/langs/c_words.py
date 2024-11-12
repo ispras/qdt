@@ -175,6 +175,13 @@ class CWords:
         return t
 
     @staticmethod
+    @word(
+        "return",
+    )
+    def t_RETURN(t):
+        return t
+
+    @staticmethod
     def t_IDENTIFIER(t):
         "[_a-zA-Z][_a-zA-Z0-9]*"
         return t
