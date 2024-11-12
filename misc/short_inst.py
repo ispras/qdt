@@ -892,13 +892,18 @@ Converts short form instructions definitions to script defines them.
 
     if args.print_semantics:
         for t in types:
+            # After output was produced, it's safe to do some chacnges.
+            LateLinker(t).visit()
+
             if isinstance(t, Function):
                 # Note: can't use regular chunks mechanism until fully linked.
                 print("%s %s(%s)\n{\n%s}\n" % (
                     t.ret_type.name,
                     t.c_name,
-                    ", ".join((a.type.name + " " + a.name) for a in t.args) \
-                        if t.args is not None else "void",
+                    ", ".join(
+                            check_cols_fix_up(a.declaration_string)
+                                for a in t.args
+                        ) if t.args is not None else "void",
                     str_as_function_body(t.body.children),
                 ))
             elif isinstance(t, Variable):
