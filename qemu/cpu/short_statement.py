@@ -44,6 +44,7 @@ from source.function.tree import (
     OpSub,
     OpTernCond,
     OpXor,
+    Return,
 )
 from source.langs.c_const import (
     CConstant,
@@ -169,6 +170,14 @@ class ShortStatement(CConstant, CDeclaration):
     @staticmethod
     def p_statement__for_no_expr(FOR):
         return LoopFor()
+
+    @staticmethod
+    def p_statement__return(RETURN):
+        return Return()
+
+    @staticmethod
+    def p_statement__return_expr(RETURN, expression):
+        return Return(expression)
 
     @staticmethod
     def p_identifier(IDENTIFIER):
