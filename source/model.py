@@ -662,9 +662,10 @@ class Pointer(Type):
                 "A constant pointer is not fully implemented"
             )
 
+        # pygen compatible way
+        kw.setdefault("incomplete", False)
         super(Pointer, self).__init__(
             name = name,
-            incomplete = False,
             **kw
         )
 
