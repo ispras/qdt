@@ -716,6 +716,21 @@ class Pointer(Type):
         else:
             writer.write(self.declaration_string)
 
+    def __get_init_arg_val__(self, name):
+        if name == "_type":
+            return self.type
+        else:
+            return getattr(self, name)
+
+    def __var_base__(self):
+        if self.is_named:
+            return super(Pointer, self).__var_base__()
+        else:
+            return (
+                self.asterisks.replace("*", "p")
+                + "_" + self.full_deref.__var_base__()
+            )
+
     __type_references__ = ["type"]
 
 
