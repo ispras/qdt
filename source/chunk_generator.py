@@ -106,6 +106,8 @@ class ChunkGenerator(object):
         # So, LateLinker did not resolve them during `add_type`.
         # At moment of `generate` all types must be created.
         glob_ns = DictStack(Type.reg)
+        for h in Header.reg.values():
+            glob_ns.update(h.global_variables)
         glob_ns.update(definer.types)
         glob_ns.update(definer.global_variables)
 
