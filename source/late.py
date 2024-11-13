@@ -142,7 +142,7 @@ class LateLinker(TypeReferencesVisitor):
 
     def __visit__(self, cur):
         if isinstance(cur, Type):
-            if cur.definer is not self.root:
+            if cur.definer not in (None, self.root):
                 raise SkipVisiting
             # Some `Type`s have `Variable`s inside (Structure, Function).
             # Those `Variable`s are only visible in `Type`'s scope.
@@ -177,7 +177,7 @@ class LateLinker(TypeReferencesVisitor):
 
     def __leave__(self, cur):
         if isinstance(cur, Type):
-            if cur.definer is not self.root:
+            if cur.definer not in (None, self.root):
                 return
             self._pop_ns()
 
