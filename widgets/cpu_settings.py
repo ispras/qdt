@@ -16,11 +16,15 @@ from qemu import (
     MachineNodeOperation,
     MOp_SetCPUAttr,
 )
+from .device_tree_widget import (
+    QOMTypeSelectDialog,
+)
 from .settings_window import (
     QOMInstanceSettingsWidget,
     SettingsWindow,
 )
 from .var_widgets import (
+    VarButton,
     VarLabel,
 )
 
@@ -42,12 +46,19 @@ class CPUSettingsWidget(QOMInstanceSettingsWidget, object):
 
         fr.columnconfigure(0, weight = 0)
         fr.columnconfigure(1, weight = 1)
+        fr.columnconfigure(2, weight = 0)
         fr.rowconfigure(0, weight = 0)
 
         l = VarLabel(fr, text = _("QOM type"))
         v = self.qom_type_var = StringVar()
         e = HKEntry(fr, textvariable = v)
         v.trace_variable("w", self._on_qom_type_var_changed)
+
+        b = VarButton(fr,
+            text = _("Select"),
+            command = self.on_press_select_qom_type
+        )
+        b.grid(row = 0, column = 2, sticky = "EW")
 
         l.grid(row = 0, column = 0, sticky = "W")
         e.grid(row = 0, column = 1, sticky = "EW")
@@ -83,6 +94,13 @@ class CPUSettingsWidget(QOMInstanceSettingsWidget, object):
                 self.destroy()
             else:
                 self.refresh()
+
+    def on_press_select_qom_type(self):
+        device_tree = next(self.mach.project.qom_tree.find(name = "cpu"))
+
+        device_type = QOMTypeSelectDialog(self, qom_tree = device_tree).wait()
+        if device_type:
+            self.qom_type_var.set(device_type)
 
 
 class CPUSettingsWindow(SettingsWindow):
