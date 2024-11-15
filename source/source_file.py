@@ -271,6 +271,8 @@ class Source(TypeContainer):
             self.types[".anonymous" + str(id(_type))] = _type
 
         glob_ns = DictStack(Type.reg)
+        for h in Header.reg.values():
+            glob_ns.update(h.global_variables)
         glob_ns.update(self.types)
         glob_ns.update(self.global_variables)
 
