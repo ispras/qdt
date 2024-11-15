@@ -175,7 +175,13 @@ def handle_insn(insn,
     if print_disas_format:
         print("disas_format: %r" % insn.disas_format)
     if print_semantics:
-        print("semantics {\n%s}\n" % str_as_function_body(insn.semantics))
+        try:
+            sem = str_as_function_body(insn.semantics)
+        except:
+            # Sometimes, likely because of Late, a C code cannot be generated.
+            print("semantics stringification failed:\n" + format_exc())
+        else:
+            print("semantics {\n%s}\n" % sem)
 
 
 def str_as_function_body(stmnts):
