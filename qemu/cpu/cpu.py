@@ -1256,7 +1256,10 @@ class CPUType(QOMCPU):
                     if fmt is not None:
                         fill_disas_write_helper_body(f)
 
-                c.add_type(f)
+                # Don't add the function explicitly.
+                # It will be added by TypeFixerVisitor, if used.
+                # Else, unused static function error is avoided.
+                # c.add_type(f)
 
                 added[adapter_name] = (arg_count, fmt is None)
             elif added[adapter_name] != (arg_count, fmt is None):
