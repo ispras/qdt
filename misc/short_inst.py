@@ -165,6 +165,24 @@ def print_layout(insn):
         offset += f.bitsize
 
 
+def print_function(t):
+    try:
+        print("%s %s(%s)\n{\n%s}\n" % (
+            t.ret_type.name,
+            t.c_name,
+            ", ".join(
+                    check_cols_fix_up(a.declaration_string)
+                        for a in t.args
+                ) if t.args is not None else "void",
+            str_as_function_body(t.body.children),
+        ))
+    except:
+        # Sometimes, likely because of Late, a C code cannot be generated.
+        print("%s: function stringification failed:\n%s" % (
+            t.c_name, format_exc()
+        ))
+
+
 def handle_insn(insn,
     print_disas_format = False,
     print_semantics = False,
@@ -903,15 +921,7 @@ Converts short form instructions definitions to script defines them.
 
             if isinstance(t, Function):
                 # Note: can't use regular chunks mechanism until fully linked.
-                print("%s %s(%s)\n{\n%s}\n" % (
-                    t.ret_type.name,
-                    t.c_name,
-                    ", ".join(
-                            check_cols_fix_up(a.declaration_string)
-                                for a in t.args
-                        ) if t.args is not None else "void",
-                    str_as_function_body(t.body.children),
-                ))
+                print_function(t)
             elif isinstance(t, Variable):
                 print(check_cols_fix_up(
                     t.declaration_string
