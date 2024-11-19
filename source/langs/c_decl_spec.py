@@ -12,7 +12,7 @@ from .c_words import (
 )
 
 
-class CDeclSpec(CWords, CPunctuation):
+class CDeclSpec(CPunctuation, CWords):
     """ This sub-grammar defines self-sufficient productions only.
 See: CDeclSpecEx.
     """
