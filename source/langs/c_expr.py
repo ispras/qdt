@@ -403,3 +403,9 @@ class CExpr(
     @staticmethod
     def p_expression__n(expression, COMMA, assignment_expression):
         raise NotImplementedError("comma separated expressions")
+
+    # contributions
+
+    @staticmethod
+    def p_constant_expression(conditional_expression):
+        return conditional_expression
