@@ -157,7 +157,7 @@ class CDeclaration(
         )
 
     @staticmethod
-    def _p_direct_declarator__paranthized(
+    def _p_direct_declarator__parenthesed(
         LPAREN, declarator, RPAREN
     ):
         raise NotImplementedError
