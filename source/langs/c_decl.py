@@ -7,6 +7,9 @@ __all__ = [
 from .c_decl_spec import (
     CDeclSpec,
 )
+from .c_expr import (
+    CExpr,
+)
 from .c_type import (
     CTypeSpecifier,
     CTypeQualifier,
@@ -28,6 +31,9 @@ from ..short_ply_grammar import (
     short_ply_grammar,
 )
 
+from collections import (
+    OrderedDict,
+)
 
 spec_and_name = set([
     "short",
@@ -106,11 +112,6 @@ class CDeclaration(
     @staticmethod
     def p_init_declarator(declarator):
         return (declarator, None)
-
-    # TODO
-    @staticmethod
-    def _p_init_declarator__with_init(declarator, ASSIGN, initializer):
-        pass
 
     @staticmethod
     def p_direct_declarator__func_with_args(
@@ -238,6 +239,55 @@ class CDeclaration(
     @staticmethod
     def _p_abstract_declarator__p_direct(pointer, direct_abstract_declarator):
         return pointer + [direct_abstract_declarator]
+
+
+class CDeclaration2(CDeclaration, CExpr):
+
+    @staticmethod
+    def p_init_declarator__with_init(declarator, ASSIGN, initializer):
+        return (declarator, initializer)
+
+    @staticmethod
+    def p_initializer_list(initializer_list_item):
+        return initializer_list_item
+
+    @staticmethod
+    def p_initializer_list__n(initializer_list, COMMA, initializer_list_item):
+        return initializer_list.update(initializer_list_item)
+
+    @staticmethod
+    def p_initializer_list_item(initializer):
+        return OrderedDict({ None : initializer })
+
+    @staticmethod
+    def p_initializer_list_item__designated(designation, initializer):
+        return OrderedDict({ designation : initializer })
+
+    @staticmethod
+    def p_designation(designator_list, ASSIGN):
+        return designator_list
+
+    @staticmethod
+    def p_designator_list(designator):
+        return (designator) # must be hashable
+
+    @staticmethod
+    def p_designator_list__n(designator_list, designator):
+        return designator_list + (designator,) # must be hashable
+
+    @staticmethod
+    def p_designator__id(DOT, IDENTIFIER):
+        return IDENTIFIER
+
+    # requires CExpr
+
+    @staticmethod
+    def p_initializer__expr(assignment_expression):
+        return assignment_expression
+
+    @staticmethod
+    def p_designator__expr(LBRACKET, constant_expression, RBRACKET):
+        return constant_expression
 
 
 @short_ply_grammar(
