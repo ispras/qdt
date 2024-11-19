@@ -63,15 +63,18 @@ from re import (
 from source import (
     ChunkGenerator,
     Enumeration,
+    EnumerationElement,
     Function,
     Header,
     Initializer,
     Macro,
+    MacroUsage,
     Pointer,
     Source,
     Structure,
     Type,
     TypeAlias,
+    TypeNotRegistered,
     BodyTree,
     OpIndex,
 )
@@ -87,6 +90,9 @@ with pypath("...I3S"):
     )
     from pycparser.c_generator import (
         CGenerator
+    )
+    from pycparser.c_parser import (
+        CParser,
     )
     from pycparser.i3s_processing import (
         convert_i3s_to_c
@@ -392,7 +398,39 @@ class CPUType(QOMCPU):
 
         with shadow_open(join(src, translate_inc_c_file.path)) as f:
             if translate_cpu_semantics:
-                ast = parse_file(i3s_path)
+                cparser = CParser()
+
+                # CLexer.t_ID tries to distinguish ID and TYPEID using
+                #     CParser._is_type_in_scope.
+                # They are different tokens in the grammar.
+                # CParser does not see many types outside translate.inc.i3s.c.
+                # They must be confirmed for correct parsing.
+                # Keep in mind that CParser uses `_is_type_in_scope` too,
+                # while realizing patched `_is_type_in_scope`.
+                _is_type_in_scope_orig = cparser._is_type_in_scope
+
+                def _is_type_in_scope(name):
+                    try:
+                        t = Type.lookup(name)
+                    except TypeNotRegistered:
+                        return _is_type_in_scope_orig(name)
+                    if t.definer is translate_inc_c_file:
+                        # CParser must find the name byself.
+                        return _is_type_in_scope_orig(name)
+                    if issubclass(type(t), (
+                        # Those are not "types" in C.
+                        Enumeration,
+                        EnumerationElement,
+                        Function,
+                        Macro,
+                        MacroUsage,
+                    )):
+                        return _is_type_in_scope_orig(name)
+                    return True
+
+                cparser._is_type_in_scope = _is_type_in_scope
+
+                ast = parse_file(i3s_path, parser = cparser)
                 convert_i3s_to_c(ast,
                     debug = DEBUG_I3S_TRANSLATOR,
                     trunc_func_prefix = get_vp("tcg_trunc_func_prefix",)
