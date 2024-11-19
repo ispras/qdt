@@ -294,7 +294,7 @@ class CDeclaration2(CDeclaration, CExpr):
     debugfile = True,
     start = "declaration",
 )
-class CDecl(CDeclaration):
+class CDecl(CDeclaration2):
 
     @staticmethod
     def t_WS(t):
