@@ -5,13 +5,11 @@ from source.function.tree import (
     BranchElse,
     Declare,
     LoopFor,
+    OpDeclareAssign,
     Return,
 )
 from source.langs.c_decl import (
-    CDeclaration,
-)
-from source.langs.c_expr import (
-    CExpr,
+    CDeclaration2,
 )
 from source.model import (
     NodeVisitor,
@@ -51,10 +49,7 @@ class DefineFinder(NodeVisitor):
     debugfile = True,
     start = "block_item",
 )
-class ShortStatement(
-    CDeclaration,
-    CExpr,
-):
+class ShortStatement(CDeclaration2):
 
     t_DEFINE = ":="
 
@@ -69,13 +64,11 @@ class ShortStatement(
     @staticmethod
     def p_block_item__decl(declaration):
         for decl in declaration:
-            if not isinstance(decl, Variable):
+            if not isinstance(decl, (Variable, OpDeclareAssign)):
                 raise SyntaxError(
                     "Only variable declaration is alowed inside block"
                 )
-            if decl.initializer is not None:
-                # TODO: convert to OpDeclareAssign?
-                raise NotImplementedError
+
         return Declare(*declaration)
 
     @staticmethod
