@@ -37,7 +37,7 @@ class CDeclaration(
     CDeclSpec,
     CTypeSpecifier,
     CTypeQualifier,
-    CSpecQualList
+    CSpecQualList,
 ):
     t_STAR = r"\*"
 
