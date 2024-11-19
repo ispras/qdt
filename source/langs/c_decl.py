@@ -12,6 +12,9 @@ from .c_type import (
     CTypeQualifier,
     CSpecQualList,
 )
+from ..function.tree import (
+    OpDeclareAssign,
+)
 from ..late import (
     Late,
 )
@@ -260,15 +263,15 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
     var_type = None
 
     for declarator, initializer in init_declarator_list:
-        if initializer is not None:
-            raise NotImplementedError
-
         pointers = declarator[:-1]
         direct_declarator = declarator[-1]
 
         dd_type = direct_declarator["type"]
 
         if dd_type is Function:
+            if initializer is not None:
+                raise SyntaxError("initializer to a function")
+
             kw = {}
 
             ret_type_ds = []
@@ -300,7 +303,11 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
 
             name = direct_declarator["name"]
             assert isinstance(name, str)
-            yield var_type(name)
+            var = var_type(name)
+            if initializer is None:
+                yield var
+            else:
+                yield OpDeclareAssign(var, initializer)
         else:
             raise NotImplementedError
 
