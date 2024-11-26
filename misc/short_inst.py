@@ -947,6 +947,15 @@ Converts short form instructions definitions to script defines them.
 
     print("Total instructions: %d" % len(insts))
 
+    mnemonic_cnt = defaultdict(int)
+    for i in insts:
+        mnemonic_cnt[i.mnemonic] += 1
+
+    if mnemonic_cnt:
+        max_len = max(len(n) for n in mnemonic_cnt)
+        fmt = " %%%ds: %%d" % max_len
+        for n, c in sorted(mnemonic_cnt.items()):
+            print(fmt % (n, c))
 
 if __name__ == "__main__":
     exit(main() or 0)
