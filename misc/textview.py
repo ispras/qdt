@@ -1,6 +1,17 @@
+#!/usr/bin/env python3
 from argparse import (
     ArgumentParser,
 )
+from os.path import (
+	abspath,
+	dirname,
+)
+from sys import (
+	path as PYTHONPATH,
+)
+
+PYTHONPATH.insert(0, dirname(dirname(abspath(__file__))))
+
 from widgets import (
     QDTUserSettings,
     TextViewerTk,
