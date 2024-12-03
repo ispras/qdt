@@ -193,6 +193,17 @@ def define_only_qemu_2_6_0_types():
         )
 
     Header["exec/cpu_ldst.h"].add_types([
+        Function(name = "cpu_ldub_data"),
+        Function(name = "cpu_ldsb_data"),
+        Function(name = "cpu_stb_data"),
+        # Those are Macro, actually
+        # Function(name = "cpu_lduw_data"),
+        # Function(name = "cpu_ldsw_data"),
+        # Function(name = "cpu_stw_data"),
+        # Function(name = "cpu_ldl_data"),
+        # Function(name = "cpu_stl_data"),
+        # Function(name = "cpu_ldq_data"),
+        # Function(name = "cpu_stq_data"),
         Function(name = "cpu_ldub_code", ret_type = Type["uint8_t"]),
         Function(name = "cpu_lduw_code", ret_type = Type["uint16_t"]),
         Function(name = "cpu_ldl_code", ret_type = Type["uint32_t"]),
