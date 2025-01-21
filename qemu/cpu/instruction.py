@@ -451,11 +451,12 @@ def format_instructions(instructions, indent = "", max_bitsize = None):
     if max_bitsize is None:
         max_bitsize = max(i.bitsize for i in instructions)
     return "\n".join(
-        "{0}{2:<{1}} (priority {3}) {4}".format(
+        "{0}{2:<{1}} (priority {3}) mnemonic: {4}; comment: {5}".format(
             indent,
             max_bitsize,
             i.opcode_bits_string,
             i.priority,
+            i.mnemonic,
             i.comment
         ) for i in instructions
     )
