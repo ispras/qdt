@@ -162,6 +162,7 @@ def gen_raw_instructions(min_ins_size, max_ins_size, ins_count):
 def process_instructions(raw_instructions, read_size,
     check_hypothesis = example_hypothesis,
     print_only_true = False,
+    lookahead = False,
 ):
     read_bitsize = read_size * BYTE_BITSIZE
 
@@ -190,11 +191,13 @@ def process_instructions(raw_instructions, read_size,
     try:
         non_opt_tree = InstructionTreeNode()
         build_instruction_tree(non_opt_tree, instructions, read_bitsize,
-            optimizations = False
+            optimizations = False,
+            lookahead = lookahead,
         )
         opt_tree = InstructionTreeNode()
         build_instruction_tree(opt_tree, instructions, read_bitsize,
-            optimizations = True
+            optimizations = True,
+            lookahead = lookahead,
         )
     except RuntimeError:
         print("Instructions set resulting in exception: %s" % raw_instructions)
@@ -218,7 +221,7 @@ def process_instructions(raw_instructions, read_size,
 
 def main():
     print("Fixed instructions")
-    for raw_instructions, read_size, check_hypothesis in (
+    for raw_instructions, read_size, check_hypothesis, lookahead in (
         # There you can specify a `list` of fixed instructions.
         # Each instruction must be aligned by the read_size.
         # Each instruction is written as a tuple of a unique bit-string and
@@ -235,6 +238,7 @@ def main():
             ],
             1, # read_size
             example_hypothesis,
+            False,
         ),
 
         # See "i2" instruction in tree.
@@ -247,6 +251,7 @@ def main():
             ],
             1,
             example_hypothesis,
+            False,
         ),
 
         # See "i1" and "i2" instructions in tree.
@@ -260,6 +265,7 @@ def main():
             ],
             1,
             example_hypothesis,
+            False,
         ),
 
         # See "i2" and "i3" instructions in tree.
@@ -273,6 +279,7 @@ def main():
             ],
             1,
             example_hypothesis,
+            False,
         ),
 
         # Example of 64 bit interval.
@@ -283,12 +290,26 @@ def main():
             ],
             8,
             example_hypothesis,
+            False,
+        ),
+
+        # Example of lookahead approach.
+        (
+            [
+                '1111xxxx',
+                '1111xxxx00000000',
+                '1111xxxx11111111',
+            ],
+            1,
+            example_hypothesis,
+            True,
         ),
     ):
         print("\n")
 
         process_fixed_instructions(raw_instructions, read_size,
-            check_hypothesis = check_hypothesis
+            check_hypothesis = check_hypothesis,
+            lookahead = lookahead,
         )
 
     print("\n\nRandom instructions\n\n")

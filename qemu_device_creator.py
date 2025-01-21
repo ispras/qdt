@@ -87,6 +87,12 @@ def main():
     )
 
     parser.add_argument(
+        "--instruction-tree-lookahead",
+        action = "store_true",
+        help = "Enable lookahead approach when building an instruction tree."
+    )
+
+    parser.add_argument(
         "script",
         help = "A Python script containing definition of a project to generate."
     )
@@ -146,6 +152,7 @@ def main():
         instruction_tree_optimizations = (
             not arguments.no_instruction_tree_optimizations
         ),
+        instruction_tree_lookahead = arguments.instruction_tree_lookahead,
         include_paths = tuple(path for path, __ in qvd.include_paths)
     )
 
