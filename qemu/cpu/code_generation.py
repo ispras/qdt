@@ -456,7 +456,7 @@ def fill_decode_opc_body(cputype, function, cpu_env):
                 )
             )
 
-        node(OpAssign(result, total_read))
+        node(OpAssign(result, instruction.bitsize // BYTE_BITSIZE))
 
     unknown_instruction_case_nodes = [
         Call("set_pc", ctx_pc),
@@ -1183,7 +1183,7 @@ def fill_print_insn_body(cputype, function):
         if format_line:
             node(Call(fpr, stream, format_line, *call_args))
 
-        node(OpAssign(length, total_read))
+        node(OpAssign(length, instruction.bitsize // BYTE_BITSIZE))
 
     unknown_instruction_case_nodes = [
         Call("fprintf", MCall("stderr"), "Unknown instruction\\n"),

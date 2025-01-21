@@ -297,6 +297,8 @@ class Instruction(object):
     def get_opcode_part(self, interval):
         bitoffset, bitsize = interval
         res = self.opcode_bits_string[bitoffset:bitoffset + bitsize]
+        if not res:
+            return None
         if NON_OPCODE_BIT in res:
             return None
         return res
@@ -616,6 +618,7 @@ def build_subtree_for_instruction(node, i, read_bitsize, checked_bits):
 
 def build_instruction_tree(node, instructions, read_bitsize,
     optimizations = True,
+    lookahead = False,
     checked_bits = set(),
     depth = 0 # for debugging purposes
 ):
@@ -702,57 +705,104 @@ def build_instruction_tree(node, instructions, read_bitsize,
         else:
             # No intervals left to distinguish instructions.
 
-            # Third approach: select the instruction whose opcode is a superset
-            # for the rest.
+            # Lookahead approach (optional): a longer instruction may have
+            # opcodes after the end of a shorter instruction. This approach
+            # checks for the presence of these opcodes. If they are there,
+            # then we choose the long instruction, and if not,
+            # then the short one.
+            if lookahead:
+                max_bitsize = max(i.bitsize for i in instructions)
+                non_opcode_bits = non_opcode_bits.union(
+                    integer_set(min_bitsize, max_bitsize - min_bitsize)
+                )
+                unchecked_bits = (
+                    ((opcode_bits & non_opcode_bits) - checked_bits)
+                )
 
-            instructions_iter = iter(instructions)
-            superset_i = next(instructions_iter)
-            superset_b = superset_i.opcode_bits
-            for i in instructions_iter:
-                i_b = i.opcode_bits
-                if superset_b <= i_b:
-                    superset_i = i
-                    superset_b = i_b
-                elif not (i_b <= superset_b):
-                    # not found instruction
-                    break
+                unchecked_intervals = split_intervals_by_boundaries(
+                    split_intervals(
+                        bits_to_intervals(unchecked_bits),
+                        read_bitsize
+                    ),
+                    boundaries
+                )
             else:
+                unchecked_intervals = []
+
+            for interval in unchecked_intervals:
+                instructions_iter = iter(instructions)
+                opc = next(instructions_iter).get_opcode_part(interval)
+                for i in instructions_iter:
+                    if i.get_opcode_part(interval) != opc:
+                        # found `interval`
+                        if BUILD_INSTRUCTION_TREE_DEBUG:
+                            print("Lookahead approach applied")
+                        # temporary info for reading sequence calculation
+                        bitoffset, bitsize = interval
+                        node.limit_read = (
+                            bitoffset + bitsize - 1 + read_bitsize
+                        ) // read_bitsize * read_bitsize
+                        break
+                else:
+                    # not found `interval` yet
+                    continue
+                # found `interval`
+                break
+            else:
+                # Third approach: select the instruction whose opcode is a
+                # superset for the rest.
+
+                instructions_iter = iter(instructions)
+                superset_i = next(instructions_iter)
+                superset_b = superset_i.opcode_bits
+                for i in instructions_iter:
+                    i_b = i.opcode_bits
+                    if superset_b <= i_b:
+                        superset_i = i
+                        superset_b = i_b
+                    elif not (i_b <= superset_b):
+                        # not found instruction
+                        break
+                else:
+                    if BUILD_INSTRUCTION_TREE_DEBUG:
+                        print("Third approach applied")
+                    build_subtree_for_instruction(
+                        node, superset_i, read_bitsize, checked_bits
+                    )
+                    return
+
+                # No instruction with superset opcode.
+
+                # Fourth approach: select the instruction with the highest
+                # `priority`.
+
+                instructions = sorted(instructions,
+                    key = lambda i: i.priority,
+                    reverse = True
+                )
+                max_priority = instructions[0].priority
+                max_priority_count = sum(
+                    i.priority == max_priority for i in instructions
+                )
+
+                if (    BUILD_INSTRUCTION_TREE_WARNINGS
+                    and max_priority_count > 1
+                ):
+                    print("WARNING: indistinguishable instructions - the first"
+                        " instruction with the highest priority is used (check"
+                        " instructions encoding or priority):"
+                    )
+                    print_instructions(instructions,
+                        indent = "    ",
+                        max_bitsize = max_bitsize
+                    )
+
                 if BUILD_INSTRUCTION_TREE_DEBUG:
-                    print("Third approach applied")
+                    print("Fourth approach applied")
                 build_subtree_for_instruction(
-                    node, superset_i, read_bitsize, checked_bits
+                    node, instructions[0], read_bitsize, checked_bits
                 )
                 return
-
-            # No instruction with superset opcode.
-
-            # Fourth approach: select the instruction with the highest
-            # `priority`.
-
-            instructions = sorted(instructions,
-                key = lambda i: i.priority,
-                reverse = True
-            )
-            max_priority = instructions[0].priority
-
-            if (    BUILD_INSTRUCTION_TREE_WARNINGS
-                and sum(i.priority == max_priority for i in instructions) > 1
-            ):
-                print("WARNING: indistinguishable instructions - the first"
-                    " instruction with the highest priority is used (check"
-                    " instructions encoding or priority):"
-                )
-                print_instructions(instructions,
-                    indent = "    ",
-                    max_bitsize = max_bitsize
-                )
-
-            if BUILD_INSTRUCTION_TREE_DEBUG:
-                print("Fourth approach applied")
-            build_subtree_for_instruction(
-                node, instructions[0], read_bitsize, checked_bits
-            )
-            return
 
     if BUILD_INSTRUCTION_TREE_DEBUG:
         print("{1:<{0}} chosed interval ({2}, {3})".format(
@@ -760,7 +810,7 @@ def build_instruction_tree(node, instructions, read_bitsize,
             "".join(
                 ["-"] * interval[0] +
                 ["C"] * interval[1] +
-                ["-"] * (min_bitsize - interval[0] - interval[1])
+                ["-"] * (node.limit_read - interval[0] - interval[1])
             ),
             interval[0],
             interval[1]
@@ -804,6 +854,7 @@ def build_instruction_tree(node, instructions, read_bitsize,
         build_instruction_tree(n, infix_instructions,
             read_bitsize,
             optimizations = optimizations,
+            lookahead = lookahead,
             checked_bits = checked_bits,
             depth = depth
         )

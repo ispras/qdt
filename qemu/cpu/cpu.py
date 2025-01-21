@@ -286,6 +286,7 @@ class CPUType(QOMCPU):
         with_debug_comments = False,
         translate_cpu_semantics = True,
         instruction_tree_optimizations = True,
+        instruction_tree_lookahead = False,
         include_paths = tuple(),
         **_
     ):
@@ -363,7 +364,9 @@ class CPUType(QOMCPU):
             )
         ))
 
-        yield self._co_gen_target_code(src, instruction_tree_optimizations)
+        yield self._co_gen_target_code(src, instruction_tree_optimizations,
+            instruction_tree_lookahead,
+        )
 
         translate_inc_c_file = self.gen_files["translate.inc.c"]
         for f in self.gen_files.values():
@@ -451,12 +454,15 @@ class CPUType(QOMCPU):
 #endif /* INCLUDE_TEMPORARY_TRANSLATE_INC_C */
 """)
 
-    def _co_gen_target_code(self, src, instruction_tree_optimizations):
+    def _co_gen_target_code(self, src, instruction_tree_optimizations,
+        instruction_tree_lookahead,
+    ):
         if self.instructions:
             read_bitsize = self.read_bitsize
             node = InstructionTreeNode()
             build_instruction_tree(node, self.instructions, read_bitsize,
-                optimizations = instruction_tree_optimizations
+                optimizations = instruction_tree_optimizations,
+                lookahead = instruction_tree_lookahead,
             )
             check_unreachable_instructions(self.instructions)
             fill_tree_reading_seq(node, read_bitsize)
