@@ -916,7 +916,7 @@ Converts short form instructions definitions to script defines them.
 
     if args.print_semantics:
         for t in types:
-            # After output was produced, it's safe to do some chacnges.
+            # After output was produced, it's safe to do some changes.
             LateLinker(t).visit()
 
             if isinstance(t, Function):
