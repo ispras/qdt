@@ -267,6 +267,7 @@ class CPUType(QOMCPU):
         super(CPUType, self).__init__(name, directory, **qom_kw)
 
         self.target_bigendian = target_bigendian
+        self.target_long_bits = target_long_bits
 
         self.attributes = {
             "TARGET_LONG_BITS": target_long_bits,
@@ -832,8 +833,15 @@ class CPUType(QOMCPU):
 
     def _gen_translate_inc_c(self, h):
         for reg in self.registers:
+            if reg.field_bitsize == self.target_long_bits:
+                type_name = "tcg"
+            elif reg.field_bitsize == 32:
+                type_name = "short tcg"
+            else:
+                type_name = "long tcg"
+
             h.add_global_variable(
-                Type["tcg"](reg.name, array_size = reg.bank_size)
+                Type[type_name](reg.name, array_size = reg.bank_size)
             )
 
         disas_context = Structure("DisasContext",
@@ -1062,7 +1070,12 @@ class CPUType(QOMCPU):
 
         reg_vars = []
         for reg in self.registers:
-            var = Type["TCGv"](reg.name, array_size = reg.bank_size)
+            if reg.field_bitsize == self.target_long_bits:
+                type_name = "TCGv"
+            else:
+                type_name = "TCGv_i" + str(reg.field_bitsize)
+
+            var = Type[type_name](reg.name, array_size = reg.bank_size)
             c.add_global_variable(var)
 
             if reg.bank_size:
