@@ -49,6 +49,7 @@ from common import (
 )
 from itertools import (
     count,
+    chain,
 )
 from os.path import (
     basename,
@@ -434,10 +435,18 @@ class CPUType(QOMCPU):
 
                 cparser._is_type_in_scope = _is_type_in_scope
 
+                replaced_funcs = list(chain(
+                    # Note, every item is an iterable over pairs or an empty
+                    # iterable.
+                    get_vp("tcg_gen_trunc_i64_i32 removed"),
+                ))
+
                 ast = parse_file(i3s_path, parser = cparser)
                 convert_i3s_to_c(ast,
                     debug = DEBUG_I3S_TRANSLATOR,
-                    trunc_func_prefix = get_vp("tcg_trunc_func_prefix",)
+                    replaced_funcs = (
+                        dict(replaced_funcs) if replaced_funcs else None
+                    )
                 )
                 f.write(CGenerator().visit(ast))
                 f.write(ast.suffix + "\n")
