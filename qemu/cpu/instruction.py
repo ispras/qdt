@@ -644,6 +644,10 @@ def build_instruction_tree(node, instructions, read_bitsize,
     # First approach: try to find distinguishable interval among the bits that
     # are opcodes for all instructions.
 
+    # TODO: There are too many (fallback) approaches already...
+    #       The order of appliance may affect resulting parse tree.
+    #       An order configuration mechanism for a user is to be involved.
+
     common_bits = common_bits_for_opcodes(instructions)
     unchecked_bits = common_bits - checked_bits
     unchecked_intervals = split_intervals(
