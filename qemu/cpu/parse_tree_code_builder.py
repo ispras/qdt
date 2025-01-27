@@ -159,6 +159,8 @@ class ParseTreeCodeBuilder(object):
             )
         else:
             operands = self.get_operands(gen_node, ins, vars_desc)
+            # TODO: Looks like `total_read` is not required.
+            #       Is it to be eliminated?
             total_read = (vars_desc[-1][1] + vars_desc[-1][2]) // BYTE_BITSIZE
             self.epilogue_cb(gen_node, ins, operands, total_read, comment)
 
