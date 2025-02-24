@@ -7,6 +7,9 @@ from ..build import (
     register_in_build_system,
     register_src_in_build_system,
 )
+from .encoding import (
+    separate_instructions,
+)
 from ..qom import (
     QOMCPU,
 )
@@ -23,11 +26,6 @@ from .constants import (
 )
 from .info import (
     CPUInfo,
-)
-from .instruction import (
-    InstructionTreeNode,
-    build_instruction_tree,
-    check_unreachable_instructions,
 )
 from bisect import (
     insort,
@@ -466,17 +464,15 @@ class CPUType(QOMCPU):
         instruction_tree_lookahead,
     ):
         if self.instructions:
+            self.encodings = encodings = separate_instructions(self.instructions)
             read_bitsize = self.read_bitsize
-            node = InstructionTreeNode()
-            build_instruction_tree(node, self.instructions, read_bitsize,
-                optimizations = instruction_tree_optimizations,
-                lookahead = instruction_tree_lookahead,
-            )
-            check_unreachable_instructions(self.instructions)
-            fill_tree_reading_seq(node, read_bitsize)
-            self.instruction_tree_root = node
+            for e in encodings.values():
+                e.build_tree(read_bitsize,
+                    optimizations = instruction_tree_optimizations,
+                    lookahead = instruction_tree_lookahead,
+                )
         else:
-            self.instruction_tree_root = None
+            self.encodings = None
 
         yield True
 
