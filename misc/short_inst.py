@@ -11,6 +11,7 @@ from qemu import (
     Instruction,
     NodeVisitor,
     Operand,
+    separate_instructions,
     Short,
     ShortStatement,
 )
@@ -116,6 +117,7 @@ instruction_attributes = dict(
     # "semantics,
     mnemonic = str,
     priority = int,
+    encoding = str,
 )
 
 
@@ -956,15 +958,22 @@ Converts short form instructions definitions to script defines them.
 
     print("Total instructions: %d" % len(insts))
 
-    mnemonic_cnt = defaultdict(int)
-    for i in insts:
-        mnemonic_cnt[i.mnemonic] += 1
+    encodings = separate_instructions(insts)
 
-    if mnemonic_cnt:
-        max_len = max(len(n) for n in mnemonic_cnt)
-        fmt = " %%%ds: %%d" % max_len
-        for n, c in sorted(mnemonic_cnt.items()):
-            print(fmt % (n, c))
+    for e in encodings.values():
+        mnemonic_cnt = defaultdict(int)
+        for i in e.instructions:
+            mnemonic_cnt[i.mnemonic] += 1
+
+        if mnemonic_cnt:
+            print(" Encoding: %s\n Instructions: %d" % (
+                e.name,
+                sum(mnemonic_cnt.values())
+            ))
+            max_len = max(len(n) for n in mnemonic_cnt)
+            fmt = "  %%%ds: %%d" % max_len
+            for n, c in sorted(mnemonic_cnt.items()):
+                print(fmt % (n, c))
 
 if __name__ == "__main__":
     exit(main() or 0)
