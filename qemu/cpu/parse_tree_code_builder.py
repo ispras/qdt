@@ -12,7 +12,6 @@ from source import (
     Comment,
     Declare,
     OpAnd,
-    OpAssign,
     OpDeclareAssign,
     OpLShift,
     OpOr,
