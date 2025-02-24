@@ -208,6 +208,11 @@ class Instruction(object):
 :param priority:
     number that determines which instruction will be selected if the encoding
     matches multiple instructions
+
+:param encoding:
+    A CPU may have several instruction encodings.
+    `None` is a "main" encoding.
+    Other must have a `"string"` name.
     """
 
 # TODO: an ASCII-art schematic with field layout (bit enumeration) relative to
@@ -224,6 +229,7 @@ class Instruction(object):
         self.comment = kw_args.get("comment", self.disas_format)
         self.semantics = kw_args.get("semantics", no_semantics)
         self.priority = kw_args.get("priority", 0)
+        self.encoding = kw_args.get("encoding", None)
 
         # mark for finding unreachable instructions
         self.used = False
@@ -247,6 +253,7 @@ class Instruction(object):
             "comment",
             "semantics",
             "priority",
+            "encoding",
         ):
             gen.gen_field(a + " = "); gen.pprint(getattr(self, a))
         gen.gen_end()
