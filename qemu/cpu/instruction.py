@@ -172,6 +172,7 @@ def iter_join_opcodes(fields):
                 break
         else:
             # no more fields
+            yield prev
             break
 
 
