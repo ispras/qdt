@@ -278,7 +278,7 @@ class CPUType(QOMCPU):
         translate_cpu_semantics = True,
         instruction_tree_optimizations = True,
         include_paths = tuple(),
-        **_
+        **__
     ):
         import cpu_imports
         loaded = dict(cpu_imports.__dict__)
