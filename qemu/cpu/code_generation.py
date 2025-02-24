@@ -467,7 +467,13 @@ def fill_decode_opc_body(cputype, function, cpu_env):
         )
     ]
 
-    ParseTreeCodeBuilder(cputype, body, gen_field_read, decode_opc_epilogue,
+    ParseTreeCodeBuilder(
+        cputype.instruction_tree_root,
+        cputype.target_bigendian,
+        cputype.read_bitsize,
+        body,
+        gen_field_read,
+        decode_opc_epilogue,
         unknown_instruction_case_nodes
     )
 
@@ -1190,8 +1196,14 @@ def fill_print_insn_body(cputype, function):
         Call("abort")
     ]
 
-    ParseTreeCodeBuilder(cputype, body, gen_disas_opcode_read,
-        print_ins_epilogue, unknown_instruction_case_nodes,
+    ParseTreeCodeBuilder(
+        cputype.instruction_tree_root,
+        cputype.target_bigendian,
+        cputype.read_bitsize,
+        body,
+        gen_disas_opcode_read,
+        print_ins_epilogue,
+        unknown_instruction_case_nodes,
         add_break = False
     )
 
