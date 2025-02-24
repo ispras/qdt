@@ -468,7 +468,7 @@ def fill_decode_opc_body(cputype, function, cpu_env):
     ]
 
     ParseTreeCodeBuilder(
-        cputype.instruction_tree_root,
+        cputype.encodings[None].tree,
         cputype.target_bigendian,
         cputype.read_bitsize,
         body,
@@ -1197,7 +1197,7 @@ def fill_print_insn_body(cputype, function):
     ]
 
     ParseTreeCodeBuilder(
-        cputype.instruction_tree_root,
+        cputype.encodings[None].tree,
         cputype.target_bigendian,
         cputype.read_bitsize,
         body,
