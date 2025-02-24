@@ -223,7 +223,7 @@ class Instruction(object):
         self.disas_format = kw_args.get("disas_format", mnemonic)
         self.comment = kw_args.get("comment", self.disas_format)
         self.semantics = kw_args.get("semantics", no_semantics)
-        self.priority =  kw_args.get("priority", 0)
+        self.priority = kw_args.get("priority", 0)
 
         # mark for finding unreachable instructions
         self.used = False
