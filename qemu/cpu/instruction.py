@@ -211,8 +211,7 @@ class Instruction(object):
 
 :param encoding:
     A CPU may have several instruction encodings.
-    `None` is a "main" encoding.
-    Other must have a `"string"` name.
+    One is `"default"` other must have different `"string"` name.
     """
 
 # TODO: an ASCII-art schematic with field layout (bit enumeration) relative to
@@ -229,7 +228,7 @@ class Instruction(object):
         self.comment = kw_args.get("comment", self.disas_format)
         self.semantics = kw_args.get("semantics", no_semantics)
         self.priority = kw_args.get("priority", 0)
-        self.encoding = kw_args.get("encoding", None)
+        self.encoding = kw_args.get("encoding", "default")
 
         # mark for finding unreachable instructions
         self.used = False
