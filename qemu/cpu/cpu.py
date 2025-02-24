@@ -159,46 +159,6 @@ re_format_specifier = compile("(?<!%)(?:%%)*(%(?:"
 )
 
 
-def fill_tree_reading_seq(node, read_bitsize, already_read = 0):
-    ins = node.instruction
-    limit_read = node.limit_read
-    del node.limit_read
-
-    if ins:
-        node.reading_seq = calc_node_reading_seq(ins.bitsize, already_read,
-            limit_read
-        )
-    else:
-        bitoffset, bitsize = node.interval
-
-        reading_seq = calc_node_reading_seq(bitoffset + bitsize, already_read,
-            limit_read
-        )
-
-        if reading_seq:
-            node.reading_seq = reading_seq
-            already_read = reading_seq[-1][0] + reading_seq[-1][1]
-
-        for subnode in node.subtree.values():
-            fill_tree_reading_seq(subnode, read_bitsize, already_read)
-
-
-def calc_node_reading_seq(need_read, already_read, limit_read):
-    if need_read <= already_read:
-        return []
-
-    result = []
-
-    for r_bitsize in SUPPORTED_READ_BITSIZES:
-        while (    need_read > already_read
-               and already_read + r_bitsize <= limit_read
-        ):
-            result.append((already_read, r_bitsize))
-            already_read += r_bitsize
-
-    return result
-
-
 def add_global_array_with_reg_names(reg, arr_name, f):
     names_array = Pointer(Type["const char"])(arr_name,
         initializer = Initializer(
