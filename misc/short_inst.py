@@ -154,9 +154,18 @@ def check_dump(insn):
 
 
 def print_layout(insn):
-    print("%s.bitsize == %d" % (insn.mnemonic, insn.bitsize))
+    try:
+        bitsize = insn.bitsize
+    except:
+        bitsize = "[exception]"
+    print("%s.bitsize == %s" % (insn.mnemonic, bitsize))
+    try:
+        fields = insn.fields
+    except:
+        print("[exception during fields printing]")
+        return
     offset = 0
-    for f in insn.fields:
+    for f in fields:
         print("\t%2d %2d %s" % (
             offset,
             f.bitsize,
