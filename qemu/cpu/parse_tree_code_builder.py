@@ -25,13 +25,25 @@ from source import (
 class ParseTreeCodeBuilder(object):
     "This class traverses the instruction tree and builds the parsing code."
 
-    def __init__(self, cputype, gen_node, gen_field_read_cb, epilogue_cb,
+    def __init__(self,
+        tree,
+        bigendian,
+        read_bitsize,
+        gen_node,
+        gen_field_read_cb,
+        epilogue_cb,
         unknown_instruction_case_nodes,
         add_break = True
     ):
         """
-    :param cputype:
-        instance of `CPUType`
+    :param tree:
+        Root of instructions tree (`InstructionTreeNode`).
+
+    :param bigendian:
+        Endianess of instruction operands.
+
+    :param read_bitsize:
+        Size of instruction reading chunk.
 
     :param gen_node:
         source.function.tree Node where to add code
@@ -51,13 +63,13 @@ class ParseTreeCodeBuilder(object):
         from `unknown_instruction_case_nodes` list
         """
 
-        instruction_tree_root = cputype.instruction_tree_root
+        instruction_tree_root = tree
         if not instruction_tree_root:
             gen_node(*unknown_instruction_case_nodes)
             return
 
-        self.target_bigendian = cputype.target_bigendian
-        self.read_bitsize = cputype.read_bitsize
+        self.target_bigendian = bigendian
+        self.read_bitsize = read_bitsize
         self.gen_field_read_cb = gen_field_read_cb
         self.epilogue_cb = epilogue_cb
         self.unknown_instruction_case = SwitchCaseDefault(
