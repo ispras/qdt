@@ -809,6 +809,7 @@ Converts short form instructions definitions to script defines them.
     arg("-r", "--read-bitsize",
         default = 32,
         type = int,
+        help = "bitsize of word",
     )
     arg("-o", "--output-file-name")
     arg("-n", "--list-name",
