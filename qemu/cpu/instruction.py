@@ -3,6 +3,13 @@ __all__ = [
         "Operand"
       , "Opcode"
       , "Reserved"
+  , "operand_num"
+  , "operand_num_to_bitoffset"
+  , "operand_num_from_bitoffset"
+  , "iter_split_fields"
+  , "split_fields"
+  , "iter_field_words"
+  , "iter_swap_fields_by_word"
   , "iter_join_opcodes"
   , "re_disas_format"
   , "Instruction"
@@ -146,6 +153,127 @@ class Reserved(InstructionField):
     pass
 
 
+
+def operand_num(o):
+    return o.num
+
+
+def operand_num_to_bitoffset(fields):
+    """ Given `.num` attribute storing operand part sequence number
+make it store LSb offset in the operand.
+
+:returns:
+    `Operand.name` to operand parts `list` intermediate `defaultdict`.
+    """
+    # find out same named operands
+    name2ops = defaultdict(list)
+    for o in fields:
+        if not isinstance(o, Operand):
+            continue
+        name2ops[o.name].append(o)
+
+    for ops in name2ops.values():
+        ops.sort(key = operand_num)
+        bitoffset = 0
+        for o in ops:
+            o.num = bitoffset
+            bitoffset += o.bitsize
+
+    return name2ops
+
+
+def operand_num_from_bitoffset(fields):
+    """ Given `.num` attribute storing LSb offset in the operand
+make it store operand part sequence number.
+
+:returns:
+    `Operand.name` to operand parts `list` intermediate `defaultdict`.
+    """
+    # find out same named operands
+    name2ops = defaultdict(list)
+    for o in fields:
+        if not isinstance(o, Operand):
+            continue
+        name2ops[o.name].append(o)
+
+    for ops in name2ops.values():
+        ops.sort(key = operand_num)
+
+        bitoffset = 0
+        for i, o in enumerate(ops):
+            if o.num != bitoffset:
+                raise ValueError("operand %s bits [%u:%u] missed" % (
+                    o.name, o.num - 1, bitoffset
+                ))
+            o.num = i
+            bitoffset += o.bitsize
+
+    return name2ops
+
+
+def iter_split_fields(fields, word_bitsize):
+    operand_num_to_bitoffset(fields)
+
+    bitoffset = 0
+
+    for f in fields:
+        if isinstance(f, Opcode):
+            for sf_off, sf_size in iter_split_interval(
+                (bitoffset, f.bitsize),
+                word_bitsize
+            ):
+                v_off = sf_off - bitoffset
+                yield Opcode(sf_size, f.val[v_off:(v_off + sf_size)])
+        elif isinstance(f, Operand):
+            msb = f.num + f.bitsize
+            for sf_off, sf_size in iter_split_interval(
+                (bitoffset, f.bitsize),
+                word_bitsize
+            ):
+                f_off = sf_off - bitoffset
+                yield Operand(sf_size, f.name,
+                    num = msb - (f_off + sf_size)
+                )
+        elif isinstance(f, InstructionField):
+            for sf_off, sf_size in iter_split_interval(
+                (bitoffset, f.bitsize),
+                word_bitsize
+            ):
+                yield type(f)(sf_size)
+        else:
+            raise ValueError("Wrong field type %s" % type(f))
+
+        bitoffset += f.bitsize
+
+    operand_num_from_bitoffset(fields)
+
+
+def split_fields(fields, word_bitsize):
+    new_fields = list(iter_split_fields(fields, word_bitsize))
+    operand_num_from_bitoffset(new_fields)
+    return new_fields
+
+
+def iter_field_words(fields, word_bitsize):
+    wordoffset = 0
+    word = []
+    for f in split_fields(fields, word_bitsize):
+        word.append(f)
+        wordoffset += f.bitsize
+        if wordoffset < word_bitsize:
+            continue
+        assert wordoffset == word_bitsize
+        yield word
+        word = []
+        wordoffset = 0
+
+
+def iter_swap_fields_by_word(fields, word_bitsize):
+    for w in reversed(tuple(iter_field_words(fields, word_bitsize))):
+        for f in w:
+            yield f
+
+
 def iter_join_opcodes(fields):
     fiter = iter(fields)
 
@@ -238,6 +366,11 @@ class Instruction(object):
 
     def join_opcodes(self):
         self.raw_fields = tuple(iter_join_opcodes(self.raw_fields))
+
+    def swap_fields_by_word(self, word_bitsize):
+        self.raw_fields = tuple(iter_swap_fields_by_word(
+            self.raw_fields, word_bitsize
+        ))
 
     def __var_base__(self):
         return self.mnemonic.lower()
