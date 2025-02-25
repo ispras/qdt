@@ -4,15 +4,9 @@ from source.short_ply_grammar import (
 from .instruction import (
     Instruction,
     Operand,
+    operand_num_from_bitoffset,
     Opcode,
 )
-
-from collections import (
-    defaultdict,
-)
-
-
-_operand_part_min_bit = lambda operand : operand.num
 
 @short_ply_grammar(
     debugfile = True,
@@ -162,25 +156,7 @@ class Short(object):
 
     @staticmethod
     def p_fields(fields_list):
-        # find out same named operands
-        operands = defaultdict(list)
-        for f in fields_list:
-            if isinstance(f, Opcode):
-                continue
-            operands[f.name].append(f)
-
-        for same_named_opers in operands.values():
-            same_named_opers.sort(key = _operand_part_min_bit)
-
-            offset = 0
-            for i, o in enumerate(same_named_opers):
-                if o.num != offset:
-                    raise ValueError("operand %s bits [%u:%u] missed" % (
-                        o.name, o.num - 1, offset
-                    ))
-                o.num = i
-                offset += o.bitsize
-
+        operand_num_from_bitoffset(fields_list)
         return fields_list
 
     @staticmethod
