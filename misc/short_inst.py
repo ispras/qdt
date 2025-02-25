@@ -11,6 +11,8 @@ from qemu import (
     Instruction,
     NodeVisitor,
     Operand,
+    operand_num_from_bitoffset,
+    operand_num_to_bitoffset,
     separate_instructions,
     Short,
     ShortStatement,
@@ -166,14 +168,27 @@ def print_layout(insn):
     except:
         print("[exception during fields printing]")
         return
+    name2ops = operand_num_to_bitoffset(fields)
     offset = 0
-    for f in fields:
-        print("\t%2d %2d %s" % (
-            offset,
-            f.bitsize,
-            f.name if isinstance(f, Operand) else f.val,
-        ))
-        offset += f.bitsize
+    try:
+        for f in fields:
+            if isinstance(f, Operand):
+                if len(name2ops[f.name]) > 1:
+                    pretty = f.name + "[%d:%d]" % (
+                        f.num + f.bitsize - 1, f.num
+                    )
+                else:
+                    pretty = f.name
+            else:
+                pretty = f.val
+            print("\t%2d %2d %s" % (
+                offset,
+                f.bitsize,
+                pretty,
+            ))
+            offset += f.bitsize
+    finally:
+        operand_num_from_bitoffset(fields)
 
 
 def print_function(t):
