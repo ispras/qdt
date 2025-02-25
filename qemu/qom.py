@@ -1073,6 +1073,8 @@ class QOMCPU(QOMType):
         self.get_class_macro =  self.qtn.for_macros + "_GET_CLASS"
         self.target_arch = "TARGET_" + self.target_name.upper()
         self.config_arch_dis = "CONFIG_" + self.target_name.upper() + "_DIS"
+        self.encoding_enum_name = self.cpu_name.upper() + "Encoding"
+        self.encoding_fmt = self.cpu_name.upper() + "_ENC_%s"
 
         self.state.vmsd_min_version_id = 1
         self.state.vmsd_state_name = "cpu"
