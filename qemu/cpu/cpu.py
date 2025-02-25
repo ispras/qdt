@@ -612,6 +612,27 @@ class CPUType(QOMCPU):
         ])
         Header["exec/exec-all.h"].add_reference(arch_state)
 
+        encodings = self.encodings
+        if len(encodings) > 1:
+            elems = list(sorted(list(map(
+                self.encoding_fmt.__mod__, (e.upper() for e in encodings)
+            ))))
+
+            # default encoding to the top
+            default_enc = self.encoding_fmt.__mod__("DEFAULT")
+            try:
+                elems.remove(default_enc)
+            except:
+                # User renamed all encodings
+                pass
+            else:
+                elems.insert(0, (default_enc, 0))
+
+            e_encs = Enumeration(elems,
+                typedef_name = self.encoding_enum_name
+            )
+            h.add_type(e_encs)
+
         h.add_global_variable(Type["VMStateDescription"](
             "vmstate_" + self.qtn.for_id_name,
             const = True
