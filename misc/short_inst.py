@@ -811,6 +811,11 @@ Converts short form instructions definitions to script defines them.
         type = int,
         help = "bitsize of word",
     )
+    arg("--swap",
+        action = "store_true",
+        help = "split instructions encoding fields by word boundary"
+            " and swap words",
+    )
     arg("-o", "--output-file-name")
     arg("-n", "--list-name",
         default = "instructions",
@@ -893,6 +898,7 @@ Converts short form instructions definitions to script defines them.
     )
 
     join_op = not args.no_join
+    swap = args.swap
 
     # User can produce duplicates in source code.
     # So, it's error in user code.
@@ -907,6 +913,9 @@ Converts short form instructions definitions to script defines them.
 
         if i.mnemonic == "skip":
             continue
+
+        if swap:
+            i.swap_fields_by_word(read_bitsize)
 
         if join_op:
             i.join_opcodes()
