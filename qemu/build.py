@@ -30,8 +30,8 @@ from re import (
 )
 
 
-re_meson_ss_add = compile(b"(\w+)\s*[.]\s*add\s*[(]")
-re_meson_ss_new = compile(b"(\w+)\s*=\s*\w+\s*[.]\s*source_set\s*[(]")
+re_meson_ss_add = compile(br"(\w+)\s*[.]\s*add\s*[(]")
+re_meson_ss_new = compile(br"(\w+)\s*=\s*\w+\s*[.]\s*source_set\s*[(]")
 
 # TODO: Selection of configuration flag and accumulator variable
 # name is Qemu version specific. Version API must be used there.
