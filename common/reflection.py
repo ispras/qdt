@@ -3,9 +3,12 @@ __all__ = [
   , "get_class_total_args"
 ]
 
+from .compat import (
+    getargspec,
+)
+
 from inspect import (
     getmro,
-    getargspec
 )
 from collections import (
     OrderedDict
