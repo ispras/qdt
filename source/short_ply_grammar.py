@@ -6,6 +6,9 @@ __all__ = [
   , "short_ply_grammar"
 ]
 
+from common.compat import (
+    getargspec,
+)
 from common.ply_tools import (
     iter_class_tokens,
 )
@@ -20,10 +23,6 @@ with pypath("..ply"):
     from ply.lex import (
         lex
     )
-
-from inspect import (
-    getargspec,
-)
 
 
 def short_ply_rule(p_func, is_method = None):
