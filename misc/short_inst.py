@@ -10,9 +10,12 @@ from qemu import (
     DefineFinder,
     Instruction,
     NodeVisitor,
+    Opcode,
     Operand,
+    operand_num,
     operand_num_from_bitoffset,
     operand_num_to_bitoffset,
+    Reserved,
     separate_instructions,
     Short,
     ShortStatement,
@@ -524,12 +527,14 @@ def iter_multiply_instruction_blocks(heading):
 
 def specify_instruction_operand(insn, op_name, op_val):
     # find place to substitute
-    for field_i, f in enumerate(insn.raw_fields):
+    op_parts = []
+    for f in insn.raw_fields:
         if not isinstance(f, Operand):
             continue
         if f.name == op_name:
-            break
-    else:
+            op_parts.append(f)
+
+    if not op_parts:
         raise ValueError(
             "No place for opcode '%s' defined" % op_name
         )
@@ -554,9 +559,10 @@ def specify_instruction_operand(insn, op_name, op_val):
     else:
         sub_raw_fields = sub_insn
 
+    prev_field_size = sum(f.bitsize for f in op_parts)
     sub_raw_fields_size = sum(f.bitsize for f in sub_raw_fields)
 
-    if sub_raw_fields_size != f.bitsize:
+    if sub_raw_fields_size != prev_field_size:
         raise ValueError(
             "%s: %d-bit instruction field is replaced with field(s)"
             " of different length %d bit(s): %r" % (
@@ -564,8 +570,45 @@ def specify_instruction_operand(insn, op_name, op_val):
             )
         )
 
+    sub_raw_fields = list(sub_raw_fields)
+    op_parts.sort(key = operand_num)
+
+    replacements = {}
+
+    for f in op_parts:
+        replacement = []
+        replacements[f] = replacement
+        rest = f.bitsize
+        while rest:
+            r = sub_raw_fields.pop()
+            if rest < r.bitsize:
+                left_size = r.bitsize - rest
+                if isinstance(r, Opcode):
+                    split_i = left_size
+                    sub_raw_fields.append(Opcode(left_size, r.val[:split_i]))
+                    r.val = r.val[split_i:]
+                elif isinstance(r, Operand):
+                    sub_raw_fields.append(
+                        Operand(left_size, r.name, num = r.num)
+                    )
+                    # compensate operand split
+                    for rr in sub_raw_fields:
+                        if isinstance(rr, Operand) and rr.name == r.name:
+                            rr.num += 1
+                elif isinstance(r, Reserved):
+                    sub_raw_fields.append(type(r)(left_size))
+                else:
+                    raise ValueError("Wrong field type %s" % type(f))
+                r.bitsize = rest
+            replacement.append(r)
+            rest -= r.bitsize
+
     raw_fields = list(insn.raw_fields)
-    raw_fields[field_i:(field_i + 1)] = sub_raw_fields
+    for i, f in reversed(tuple(enumerate(raw_fields))):
+        replacement = replacements.get(f)
+        if replacement is None:
+            continue
+        raw_fields[i:(i + 1)] = replacement
     insn.raw_fields = tuple(raw_fields)
 
 
