@@ -1,0 +1,9 @@
+gitpython
+six
+graphviz
+path.py
+construct
+serial
+psutil
+appdirs
+scons
