@@ -3,6 +3,7 @@ __all__ = [
   , "bstr"
   , "charcodes"
   , "characters"
+  , "getargspec"
   , "HelpFormatter"
   , "uname"
   , "RecursionError"
@@ -110,3 +111,11 @@ else:
     # Under Py3 `RecursionError` is builtin.
     # This assignment adds that name to module as declared by `__all__`.
     RecursionError = RecursionError
+
+# getargspec function has been seen in at most Py3.10
+try:
+    from inspect import getargspec
+except ImportError:
+    from inspect import getfullargspec
+    def getargspec(*a, **kw):
+        return getfullargspec(*a, **kw)[:4]
