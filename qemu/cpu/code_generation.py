@@ -372,7 +372,82 @@ def fill_cpuclass_tlb_fill_body(function):
         Return(Type["true"])
     )
 
+def fill_default_identify_encoding(cputype, function):
+    function.body = body = BodyTree()
+
+    body(Return(next(iter(Type[cputype.encoding_enum_name].elems.values()))))
+
 def fill_decode_opc_body(cputype, function, cpu_env):
+    ctx = function.args[1]
+    ctx_pc = OpSDeref(ctx, "pc")
+
+    unknown_instruction_case_nodes = [
+        Call("set_pc", ctx_pc),
+        Call("gen_helper_illegal", cpu_env),
+        OpAssign(
+            OpSDeref(ctx, "bstate"),
+            Type["BS_EXCP"]
+        )
+    ]
+
+    encodings = cputype.encodings
+    if len(encodings) == 1:
+        return fill_decode_opc_encoding_body(cputype, function,
+            next(iter(encodings)), unknown_instruction_case_nodes
+        )
+
+    function.body = body = BodyTree()
+    result = function.ret_type("result")
+
+    body(Declare(result))
+
+    e_enc = Type[cputype.encoding_enum_name]
+
+    f_identify_encoding = Function(
+        name = "identify_encoding",
+        ret_type = e_enc,
+        args = function.args,
+        static = True,
+    )
+    fill_default_identify_encoding(cputype, f_identify_encoding)
+
+    v_encoding = e_enc("encoding")
+    body(Declare(v_encoding))
+
+    body(OpAssign(v_encoding, Call(f_identify_encoding, *function.args)))
+
+    switch = BranchSwitch(v_encoding)
+    body(switch)
+
+    enum_name2enc = dict((enc.enum_name, enc) for enc in encodings.values())
+
+    for e_enc_elem in e_enc.elems.values():
+        enc = enum_name2enc[e_enc_elem.name]
+
+        enc_case = SwitchCase(e_enc_elem)
+        switch(enc_case)
+
+        f_decode_opc_encoding = Function(
+            name = "decode_opc_" + enc.name.lower(),
+            ret_type = result.type,
+            args = function.args,
+            static = True,
+        )
+        fill_decode_opc_encoding_body(cputype, f_decode_opc_encoding,
+            enc.name, unknown_instruction_case_nodes
+        )
+
+        enc_case(
+            OpAssign(result, Call(f_decode_opc_encoding, *function.args))
+        )
+
+    switch(SwitchCaseDefault()(*unknown_instruction_case_nodes))
+
+    body(Return(result))
+
+def fill_decode_opc_encoding_body(cputype, function, encoding,
+    unknown_instruction_case_nodes,
+):
     function.body = body = BodyTree()
 
     result = Type["int"]("result")
@@ -458,17 +533,8 @@ def fill_decode_opc_body(cputype, function, cpu_env):
 
         node(OpAssign(result, instruction.bitsize // BYTE_BITSIZE))
 
-    unknown_instruction_case_nodes = [
-        Call("set_pc", ctx_pc),
-        Call("gen_helper_illegal", cpu_env),
-        OpAssign(
-            OpSDeref(ctx, "bstate"),
-            Type["BS_EXCP"]
-        )
-    ]
-
     ParseTreeCodeBuilder(
-        cputype.encodings["default"].tree,
+        cputype.encodings[encoding].tree,
         cputype.target_bigendian,
         cputype.read_bitsize,
         body,
