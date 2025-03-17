@@ -424,7 +424,8 @@ class CPUType(QOMCPU):
         instruction_tree_lookahead,
     ):
         if self.instructions:
-            self.encodings = encodings = separate_instructions(self.instructions)
+            encodings = separate_instructions(self.instructions)
+            self.encodings = encodings
             read_bitsize = self.read_bitsize
             for e in encodings.values():
                 e.build_tree(read_bitsize,
