@@ -608,7 +608,7 @@ def specify_instruction_operand(insn, op_name, op_val):
         replacement = replacements.get(f)
         if replacement is None:
             continue
-        raw_fields[i:(i + 1)] = replacement
+        raw_fields[i:(i + 1)] = reversed(replacement)
     insn.raw_fields = tuple(raw_fields)
 
 
