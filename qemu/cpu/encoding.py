@@ -47,6 +47,9 @@ class InstructionEncoding(object):
         check_unreachable_instructions(self.instructions)
         fill_tree_reading_seq(node, read_bitsize)
 
+    def __lt__(self, enc):
+        return self.name < enc.name
+
 
 def fill_tree_reading_seq(node, read_bitsize, already_read=0):
     ins = node.instruction
