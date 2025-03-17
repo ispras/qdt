@@ -21,8 +21,8 @@ __all__ = [
 from .constants import (
     BYTE_BITSIZE,
 )
-from ..qtn import (
-    QemuTypeName,
+from source import (
+    CIdGen,
 )
 
 from bisect import (
@@ -377,9 +377,7 @@ class Instruction(object):
         ))
 
     def __var_base__(self):
-        # This is not a Qemu type.
-        # But use QemuTypeName to handle forbidden characters in mnemonic.
-        return QemuTypeName(self.mnemonic).for_id_name
+        return CIdGen.generate(self.mnemonic).id
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
