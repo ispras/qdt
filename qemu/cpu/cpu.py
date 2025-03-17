@@ -618,9 +618,12 @@ class CPUType(QOMCPU):
 
         encodings = self.encodings
         if len(encodings) > 1:
-            elems = list(sorted(list(map(
-                self.encoding_fmt.__mod__, (e.upper() for e in encodings)
-            ))))
+            for enc in encodings.values():
+                enc.enum_name = self.encoding_fmt % enc.name.upper()
+
+            elems = list(enc.enum_name for enc in sorted(tuple(
+                encodings.values()
+            )))
 
             # default encoding to the top
             default_enc = self.encoding_fmt.__mod__("DEFAULT")
