@@ -61,6 +61,7 @@ from re import (
 )
 from source import (
     ChunkGenerator,
+    CIdGen,
     Enumeration,
     EnumerationElement,
     Function,
@@ -293,8 +294,10 @@ class CPUType(QOMCPU):
 
         existing_instruction_names = defaultdict(lambda : count(0))
         for i in instructions:
+            name_base = CIdGen.generate(i.mnemonic).safe
             i.name = "%s_%d" % (
-                i.mnemonic, next(existing_instruction_names[i.mnemonic])
+                name_base,
+                next(existing_instruction_names[name_base])
             )
             i.read_bitsize = read_bitsize
 
