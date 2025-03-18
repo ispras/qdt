@@ -16,8 +16,10 @@ from collections import (
 # Different character forms are used for generation of different entities.
 # I.e. name of function or variable must use lower case. A MACRO must use
 # upper case. A structure must have upper camel case name.
-cidchar = nt("cidchar", "id_char file_char struct_char macro_char")
-cid = nt("cid", "id file struct macro")
+# There is a safe form of character, which is as close to the original
+# as possible.
+cidchar = nt("cidchar", "id_char file_char struct_char macro_char safe_char")
+cid = nt("cid", "id file struct macro safe")
 
 @short_ply_grammar()
 class CIdGen(object):
@@ -27,19 +29,19 @@ class CIdGen(object):
     def t_NUMBER(t):
         r"[0-9]+"
         c = t.value
-        t.value = cidchar(c, c, c, c)
+        t.value = cidchar(c, c, c, c, c)
         return t
 
     def t_LOWER(t):
         r"[a-z]"
         c = t.value
-        t.value = cidchar(c, c, c, c.upper())
+        t.value = cidchar(c, c, c, c.upper(), c)
         return t
 
     def t_UPPER(t):
         r"[A-Z]"
         c = t.value
-        t.value = cidchar(c.lower(), c.lower(), c, c)
+        t.value = cidchar(c.lower(), c.lower(), c, c, c)
         return t
 
     # Special replacements for forbidden characters.
@@ -48,14 +50,14 @@ class CIdGen(object):
     # Ex.: "I/O" ("Input/Output") should be handled as IO, etc.
     def t_SLASH(t):
         r"[/\\]"
-        t.value = cidchar('', '', '', '')
+        t.value = cidchar('', '', '', '', '_')
         return t
 
     # Replace forbidden characters with '_'.
     # But `struct` name must not have `_`.
     def t_FORBIDDEN(t):
         r"."
-        t.value = cidchar('_', '_', '', '_')
+        t.value = cidchar('_', '_', '', '_', '_')
         return t
 
     def t_error(t):
@@ -70,7 +72,7 @@ class CIdGen(object):
         return base
 
     def p_result__empty():
-        return [cidchar('', '', '', '')]
+        return [cidchar('', '', '', '', '_')]
 
     def p_result__discard_leading_digits(digits, base):
         return base

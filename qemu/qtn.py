@@ -29,7 +29,7 @@ class QemuTypeName(object):
         self.for_header_name, \
         self.for_struct_name, \
         self.for_macros, \
-            = result
+            = result[:4]
 
         self.type_macro = "TYPE_" + self.for_macros
 
