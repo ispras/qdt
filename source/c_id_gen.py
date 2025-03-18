@@ -58,7 +58,7 @@ class CIdGen(object):
 
     def t_error(t):
         raise NotImplementedError(
-            "You just found a bug in Qemu type name generator!"
+            "You just found a bug in C Id generator!"
         )
 
     # Parser produces list of `cidchar`s those will be used for thing
