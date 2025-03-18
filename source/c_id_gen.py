@@ -48,6 +48,8 @@ class CIdGen(object):
     # Ex.: "I/O" ("Input/Output") should be handled as IO, etc.
     def t_SLASH(t):
         r"[/\\]"
+        t.value = cidchar('', '', '', '')
+        return t
 
     # Replace forbidden characters with '_'.
     # But `struct` name must not have `_`.
@@ -64,54 +66,76 @@ class CIdGen(object):
     # Parser produces list of `cidchar`s those will be used for thing
     # construction.
 
-    def p_stripped__empty_or_forbidden_only(prefix):
-        return [cidchar("", "", "", "")]
+    def p_result(base):
+        return base
 
-    def p_stripped__left(prefix, partial):
-        # Prefix discards unused junk.
-        return partial
+    def p_result__empty():
+        return [cidchar('', '', '', '')]
 
-    def p_stripped__right(prefix, head):
-        # Discard separators to the right.
-        # Note, multiple separators are discarded by `head` rule.
-        return head[:-1]
+    def p_result__discard_leading_digits(digits, base):
+        return base
 
-    def p_prefix():
-        pass
+    def p_result__discard_leading_separators(separators, base):
+        return base
 
-    def p_prefix__discard_leading_digits(prefix, digits):
-        return prefix
+    def p_base__0(capitalized):
+        return capitalized
 
-    def p_prefix__discard_leading_separators(prefix, separators):
-        return prefix
-
-    def p_head(partial, separators):
-        # Take only first separator, discard rest.
-        return partial + separators[:1]
-
-    def p_partial(word):
+    def p_base__1(word):
         return word
 
-    def p_partial__join_digits(head, digits):
-        return head + digits
+    def p_base__2(separated):
+        # Strip separator to the right.
+        return separated[:-1]
 
-    def p_partial__join_word(head, word):
+    def p_base__3(enumerated):
+        return enumerated
+
+    def p_capitalized(capitalizer, word):
         # Capitalize structure name.
-        return head + [
+        return capitalizer + [
             word[0]._replace(struct_char = word[0].struct_char.capitalize())
         ] + word[1:]
 
-    def p_partial__concat(partial, word):
-        return partial + word
+    def p_separated(separatible, separators):
+        # Take only first separator, discard rest.
+        return separatible + separators[:1]
+
+    def p_enumerated(enumeratible, digits):
+        return enumeratible + digits
+
+    def p_capitalizer__0(separated):
+        return separated
+
+    def p_capitalizer__1(enumerated):
+        return enumerated
+
+    def p_separatible__0(capitalized):
+        return capitalized
+
+    def p_separatible__1(word):
+        return word
+
+    def p_separatible__2(enumerated):
+        return enumerated
+
+    def p_enumeratible__0(capitalized):
+        return capitalized
+
+    def p_enumeratible__1(word):
+        return word
+
+    def p_enumeratible__2(separated):
+        return separated
+
+    def p_word(word__0, word__1):
+        return word__0 + word__1
 
     def p_word__LOWER(LOWER):
         return [LOWER]
 
     def p_word__UPPER(UPPER):
         return [UPPER]
-
-    def p_word__digits(word, digits):
-        return word + digits
 
     def p_separators(separators__0, separators__1):
         return separators__0 + separators__1
@@ -122,7 +146,6 @@ class CIdGen(object):
     def p_separators__FORBIDDEN(FORBIDDEN):
         return [FORBIDDEN]
 
-    # numbers may be separated by ignored tokens (like SLASH)
     def p_digits(digits__0, digits__1):
         return digits__0 + digits__1
 
@@ -133,5 +156,13 @@ class CIdGen(object):
 
     @classmethod
     def generate(cls, raw, *parse_args, **parse_kw):
-        result = cls.parse(raw, *parse_args, **parse_kw)
-        return cid(*map("".join, zip(*result)))
+        try:
+            result = cls.parse(raw, *parse_args, **parse_kw)
+        except:
+            pass
+        else:
+            return cid(*map("".join, zip(*result)))
+
+        print("%s: failed to parse %r" % (cls, raw))
+        parse_kw["debug"] = True
+        cls.parse(raw, *parse_args, **parse_kw)
