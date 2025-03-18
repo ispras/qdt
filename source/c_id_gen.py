@@ -72,7 +72,7 @@ class CIdGen(object):
         return partial
 
     def p_stripped__right(prefix, head):
-        # Discard separator to the right.
+        # Discard separators to the right.
         # Note, multiple separators are discarded by `head` rule.
         return head[:-1]
 
@@ -82,15 +82,12 @@ class CIdGen(object):
     def p_prefix__discard_leading_digits(prefix, NUMBER):
         return prefix
 
-    def p_prefix__discard_leading_separators(prefix, separator):
+    def p_prefix__discard_leading_separators(prefix, separators):
         return prefix
 
-    def p_head(partial, separator):
-        return partial + separator
-
-    def p_head__2(head, separator):
+    def p_head(partial, separators):
         # Take only first separator, discard rest.
-        return head
+        return partial + separators[:1]
 
     def p_partial(word):
         return word
@@ -116,10 +113,13 @@ class CIdGen(object):
     def p_word__digits(word, digits):
         return word + digits
 
-    def p_separator__SLASH(SLASH):
+    def p_separators(separators__0, separators__1):
+        return separators__0 + separators__1
+
+    def p_separators__SLASH(SLASH):
         return [SLASH]
 
-    def p_separator__FORBIDDEN(FORBIDDEN):
+    def p_separators__FORBIDDEN(FORBIDDEN):
         return [FORBIDDEN]
 
     # numbers may be separated by an ignored token (like SLASH)
