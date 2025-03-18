@@ -18,8 +18,8 @@ from collections import (
 # upper case. A structure must have upper camel case name.
 # There is a safe form of character, which is as close to the original
 # as possible.
-cidchar = nt("cidchar", "id_char file_char struct_char macro_char safe_char")
-cid = nt("cid", "id file struct macro safe")
+cidchar = nt("cidchar", "instance file struct macro safe")
+cid = nt("cid", "instance file struct macro safe")
 
 @short_ply_grammar()
 class CIdGen(object):
@@ -96,7 +96,7 @@ class CIdGen(object):
     def p_capitalized(capitalizer, word):
         # Capitalize structure name.
         return capitalizer + [
-            word[0]._replace(struct_char = word[0].struct_char.capitalize())
+            word[0]._replace(struct = word[0].struct.capitalize())
         ] + word[1:]
 
     def p_separated(separatible, separators):
