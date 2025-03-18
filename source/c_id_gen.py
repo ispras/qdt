@@ -79,7 +79,7 @@ class CIdGen(object):
     def p_prefix():
         pass
 
-    def p_prefix__discard_leading_digits(prefix, NUMBER):
+    def p_prefix__discard_leading_digits(prefix, digits):
         return prefix
 
     def p_prefix__discard_leading_separators(prefix, separators):
