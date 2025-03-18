@@ -26,11 +26,11 @@ class QemuTypeName(object):
         result = CIdGen.generate(value, debug = QTN_DEBUG)
 
         self.for_id_name, \
-        self.for_header_name, \
         self.for_struct_name, \
         self.for_macros, \
-            = result[:4]
+            = result[:3]
 
+        self.for_header_name = self.for_id_name
         self.type_macro = "TYPE_" + self.for_macros
 
         self._name = value
