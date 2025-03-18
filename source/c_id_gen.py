@@ -122,11 +122,11 @@ class CIdGen(object):
     def p_separators__FORBIDDEN(FORBIDDEN):
         return [FORBIDDEN]
 
-    # numbers may be separated by an ignored token (like SLASH)
-    def p_digits__join(digits, NUMBER):
-        return digits + [NUMBER]
+    # numbers may be separated by ignored tokens (like SLASH)
+    def p_digits(digits__0, digits__1):
+        return digits__0 + digits__1
 
-    def p_digits(NUMBER):
+    def p_digits__NUMBER(NUMBER):
         return [NUMBER]
 
     p_error = t_error
