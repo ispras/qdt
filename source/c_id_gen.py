@@ -61,7 +61,7 @@ class CIdGen(object):
             "You just found a bug in Qemu type name generator!"
         )
 
-    # Parser produces list of `qtnchar`s those will be used for thing
+    # Parser produces list of `cidchar`s those will be used for thing
     # construction.
 
     def p_stripped__empty_or_forbidden_only(prefix):
