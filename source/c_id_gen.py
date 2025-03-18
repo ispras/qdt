@@ -71,6 +71,11 @@ class CIdGen(object):
         # Prefix discards unused junk.
         return partial
 
+    def p_stripped__right(prefix, head):
+        # Discard separator to the right.
+        # Note, multiple separators are discarded by `head` rule.
+        return head[:-1]
+
     def p_prefix():
         pass
 
@@ -80,23 +85,15 @@ class CIdGen(object):
     def p_prefix__discard_leading_separators(prefix, separator):
         return prefix
 
-    def p_stripped__right(prefix, head):
-        # Discard separator to the right.
-        # Note, multiple separators are discarded by `head` rule.
-        return head[:-1]
-
-    def p_partial(word):
-        return word
-
-    def p_partial__concat(partial, word):
-        return partial + word
-
     def p_head(partial, separator):
         return partial + separator
 
     def p_head__2(head, separator):
         # Take only first separator, discard rest.
         return head
+
+    def p_partial(word):
+        return word
 
     def p_partial__join_digits(head, digits):
         return head + digits
@@ -106,6 +103,9 @@ class CIdGen(object):
         return head + [
             word[0]._replace(struct_char = word[0].struct_char.capitalize())
         ] + word[1:]
+
+    def p_partial__concat(partial, word):
+        return partial + word
 
     def p_word__LOWER(LOWER):
         return [LOWER]
