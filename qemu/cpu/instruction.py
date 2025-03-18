@@ -377,7 +377,7 @@ class Instruction(object):
         ))
 
     def __var_base__(self):
-        return CIdGen.generate(self.mnemonic).id
+        return CIdGen.generate(self.mnemonic).instance
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
