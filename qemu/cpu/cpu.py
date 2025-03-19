@@ -155,8 +155,8 @@ spec_and_len2typename = {
 
 re_format_specifier = compile("(?<!%)(?:%%)*(%(?:"
     "(?:[-+ #0]{0,5})"         # flags
-    "(?:\d+|\*)?"              # width
-    "(?:\.(?:\d+|\*))?"        # precision
+    r"(?:\d+|\*)?"              # width
+    r"(?:\.(?:\d+|\*))?"        # precision
     "(hh|h|l|ll|j|z|t|L)?"     # length
     "([diuoxXfFeEgGaAcspn])))" # specifier
 )
@@ -1420,7 +1420,7 @@ def patch_configure(src, arch_bigendian, target_name):
             f.write("".join(lines))
 
 
-re_arch_enum_definition = compile("^    (\w+) = \(1 << (\d+)\),\n$")
+re_arch_enum_definition = compile(r"^    (\w+) = \(1 << (\d+)\),\n$")
 
 def patch_arch_init_header(src, target_name):
     arch_init_header = join(src, "include", "sysemu", "arch_init.h")
@@ -1548,7 +1548,9 @@ def patch_disas_header(src, print_insn_name, bfd_arch_name):
     print_insn = "int {:28}(bfd_vma, disassemble_info*);\n".format(
         print_insn_name
     )
-    r = compile("^int %s *\(bfd_vma, disassemble_info\*\);$" % print_insn_name)
+    r = compile(
+        r"^int %s *\(bfd_vma, disassemble_info\*\);$" % print_insn_name
+    )
     inserted_print_insn = any(r.match(line) for line in lines)
 
     if inserted_bfd_arch and inserted_print_insn:
