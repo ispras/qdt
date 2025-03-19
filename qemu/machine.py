@@ -149,6 +149,8 @@ class IRQHubLayout(object):
 
 class MachineType(QOMType):
 
+    __qom_prefix__ = ("hw",)
+
     def __init__(self, name, directory,
             cpus = [],
             devices = [],
