@@ -2,6 +2,7 @@ __all__ = [
     "pypath"
   , "iter_submodules"
   , "pythonpath"
+  , "caller_file_name"
 ]
 
 from contextlib import (
