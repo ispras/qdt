@@ -925,7 +925,7 @@ later.").get()
                 else:
                     raise Exception("No project object was loaded")
 
-            v.replace_relpaths_to_abspaths(abspath(dirname(file_name)))
+            v.file_name = file_name  # it's known exactly
             self.set_project(v)
             self.set_current_file_name(None)
             self.set_build_path(None)
@@ -948,12 +948,7 @@ later.").get()
             if isinstance(d, MachineNode):
                 d.link(handle_system_bus = False)
 
-        file_path = abspath(dirname(file_name))
-        project.replace_abspaths_to_relpaths(file_path)
-
         pythonize(project, file_name)
-
-        project.replace_relpaths_to_abspaths(file_path)
 
         settings = self._user_settings
         if settings:
