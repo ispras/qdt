@@ -704,6 +704,8 @@ class QOMType(object):
 
 class QOMDevice(QOMType):
 
+    __qom_prefix__ = ("hw",)
+
     __attribute_info__ = OrderedDict([
         ("block_num", { "short": _("Block driver quantity"), "input": int }),
         ("char_num", {
