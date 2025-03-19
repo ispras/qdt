@@ -183,6 +183,9 @@ class QOMType(object):
         "extra_types",
     )
 
+    # Common path in Qemu source tree for all such QOM types.
+    __qom_prefix__ = ()
+
     def __init__(self, name, directory,
         extra_fields = tuple(),
         extra_types = tuple(),
