@@ -119,7 +119,9 @@ def descriptionOf(QOMTemplate):
                 val = getattr(self, key)
                 kwa[key] = val
 
-            return __class(*[ getattr(self, arg) for arg in __pa ], **kwa)
+            r = __class(*[ getattr(self, arg) for arg in __pa ], **kwa)
+            r.project = self.project
+            return r
 
         # default method to save description to Python script
         def __gen_code__(self, gen, __pa = pa, __kwa = list(kwa.keys())):
