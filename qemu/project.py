@@ -34,13 +34,10 @@ from itertools import (
     count,
 )
 from os.path import (
-    isabs,
     abspath,
     dirname,
     exists,
     join,
-    normpath,
-    relpath,
     split,
 )
 
@@ -225,24 +222,6 @@ class QProject(object):
 
             yield True
             register_src_in_build_system(src, sname, directory)
-
-    def replace_relpaths_to_abspaths(self, path):
-        for desc in self.descriptions:
-            if isinstance(desc, CPUDescription):
-                info_path = desc.info_path
-                if not info_path:
-                    continue
-                if not isabs(info_path):
-                    desc.info_path = normpath(join(path, info_path))
-
-    def replace_abspaths_to_relpaths(self, path):
-        for desc in self.descriptions:
-            if isinstance(desc, CPUDescription):
-                info_path = desc.info_path
-                if not info_path:
-                    continue
-                if isabs(info_path):
-                    desc.info_path = relpath(info_path, start = path)
 
     def __var_base__(self):
         return "project"
