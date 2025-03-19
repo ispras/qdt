@@ -101,6 +101,7 @@ def define_only_qemu_2_6_0_types():
         Type("TCGv_i64", incomplete = False),
         Type("TCGv_ptr", incomplete = False),
         Type("TCGv_env", incomplete = False),
+        Type("TCGOp", incomplete = False),
         Pointer(Type["void"], name = "TCGv"),
         Structure("TCGContext"),
         Function(name = "tcg_global_mem_new_i32"),
@@ -506,7 +507,16 @@ def define_only_qemu_2_6_0_types():
     Header["exec/gen-icount.h"].add_types([
         Function(name = "gen_tb_start"),
         Function(name = "gen_tb_end")
-    ]).add_reference(osdep_fake_type)
+    ]).add_references((
+        osdep_fake_type,
+
+        # HINT:
+        # This reference has been added by patch
+        #     tcg: Dynamically allocate TCGOps
+        #     15fa08f8451babc88d733bd411d4c94976f9d0f8
+        # between v2.11.0 and v2.12.0-rc0
+        Type["TCGOp"],  # icount_start_insn
+    ))
 
     Header["exec/address-spaces.h"].add_types([
         Function(name = "get_system_memory")
