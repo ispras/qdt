@@ -251,9 +251,9 @@ class CPUType(QOMCPU):
     ):
         import cpu_imports
         loaded = dict(cpu_imports.__dict__)
+        info_path = self.project.lookup_path(self.info_path)
         try:
-            # TODO: use `QProject.lookup_path`
-            execfile(self.info_path, loaded)
+            execfile(info_path, loaded)
         except:
             print_exc()
             raise RuntimeError(
