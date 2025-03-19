@@ -215,7 +215,7 @@ class QProject(object):
             if type(s) is not Source:
                 continue
 
-            directory = join("hw", desc.directory)
+            directory = join(*(qom_t.__qom_prefix__ + (desc.directory,)))
 
             yield
             register_in_build_system(src, directory, known_targets)
