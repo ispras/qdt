@@ -9,6 +9,7 @@ from .build import (
 from common import (
     callco,
     co_find_eq,
+    caller_file_name,
     makedirs,
     same_sets,
 )
@@ -36,6 +37,9 @@ from itertools import (
 )
 from os.path import (
     isabs,
+    abspath,
+    dirname,
+    exists,
     join,
     normpath,
     relpath,
@@ -46,8 +50,14 @@ from os.path import (
 class QProject(object):
 
     def __init__(self,
-        descriptions = None
+        descriptions = None,
+        file_name = None,
     ):
+        if file_name is None:
+            file_name = caller_file_name()
+
+        self.file_name = file_name
+
         self.descriptions = []
 
         if descriptions is not None:
@@ -58,6 +68,34 @@ class QProject(object):
                     )
                 else:
                     self.add_description(d)
+
+    @property
+    def file_name(self):
+        return self._file_name
+
+    @file_name.setter
+    def file_name(self, file_name):
+        self._file_name = file_name
+        if file_name is None:
+            self._project_root = None
+        else:
+            self._project_root = dirname(abspath(file_name))
+
+    @property
+    def project_root(self):
+        return self._project_root
+
+    def lookup_path(self, suffix):
+        for path in self.iter_possible_paths(suffix):
+            if exists(path):
+                return abspath(path)
+        raise ValueError("can't lookup path %r" % suffix)
+
+    def iter_possible_paths(self, suffix):
+        root = self.project_root
+        if root is not None:
+            yield join(root, suffix)
+        yield suffix
 
     def add_description(self, desc):
         desc.project = self
@@ -189,9 +227,6 @@ class QProject(object):
 
             yield True
             register_src_in_build_system(src, sname, directory)
-
-    # TODO: add path to `QProject`
-    # TODO: def lookup_path
 
     def replace_relpaths_to_abspaths(self, path):
         for desc in self.descriptions:
