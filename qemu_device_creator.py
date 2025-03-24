@@ -149,6 +149,11 @@ def main():
             if isinstance(desc, CPUDescription):
                 desc.instruction_tree_optimizations = False
 
+    if arguments.instruction_tree_lookahead:
+        for desc in project:
+            if isinstance(desc, CPUDescription):
+                desc.instruction_tree_lookahead = True
+
     project.gen_all(qvd.src_path,
         intermediate_chunk_graphs = arguments.gen_intermediate_chunk_graphs,
         with_chunk_graph = arguments.gen_chunk_graphs,

@@ -207,6 +207,10 @@ class CPUType(QOMCPU):
             "short": _("Instruction tree optimizations"),
             "input": bool,
         }),
+        ("instruction_tree_lookahead", {
+            "short": _("Allow lookahead for instruction identification"),
+            "input": bool,
+        }),
     ])
 
     def __init__(self, name, directory,
@@ -218,6 +222,7 @@ class CPUType(QOMCPU):
         nb_mmu_modes = 1,
         info_path = None,
         instruction_tree_optimizations = True,
+        instruction_tree_lookahead = False,
         **qom_kw
     ):
         """ CPU description.
@@ -244,13 +249,13 @@ class CPUType(QOMCPU):
 
         self.info_path = info_path
         self.instruction_tree_optimizations = instruction_tree_optimizations
+        self.instruction_tree_lookahead = instruction_tree_lookahead
 
     def co_gen(self, src,
         with_chunk_graph = False,
         intermediate_chunk_graphs = False,
         with_debug_comments = False,
         translate_cpu_semantics = True,
-        instruction_tree_lookahead = False,
         include_paths = tuple(),
         **__
     ):
@@ -330,9 +335,7 @@ class CPUType(QOMCPU):
             )
         ))
 
-        yield self._co_gen_target_code(src,
-            instruction_tree_lookahead,
-        )
+        yield self._co_gen_target_code(src)
 
         translate_inc_c_file = self.gen_files["translate.inc.c"]
         for f in self.gen_files.values():
@@ -428,9 +431,7 @@ class CPUType(QOMCPU):
 #endif /* INCLUDE_TEMPORARY_TRANSLATE_INC_C */
 """)
 
-    def _co_gen_target_code(self, src,
-        instruction_tree_lookahead,
-    ):
+    def _co_gen_target_code(self, src):
         if self.instructions:
             encodings = separate_instructions(self.instructions)
             self.encodings = encodings
@@ -438,7 +439,7 @@ class CPUType(QOMCPU):
             for e in encodings.values():
                 e.build_tree(read_bitsize,
                     optimizations = self.instruction_tree_optimizations,
-                    lookahead = instruction_tree_lookahead,
+                    lookahead = self.instruction_tree_lookahead,
                 )
         else:
             self.encodings = None
