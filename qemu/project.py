@@ -12,9 +12,6 @@ from common import (
 from .cpu import (
     CPUDescription,
 )
-from .machine_description import (
-    MachineNode,
-)
 from source import (
     disable_auto_lock_inclusions,
     enable_auto_lock_inclusions,
@@ -123,20 +120,8 @@ class QProject(object):
                 gen_cfg.get("known_targets", set()) | new_targets
             )
 
-        # Firstly, generate all CPUs
-        for desc in self.descriptions:
-            if isinstance(desc, CPUDescription):
-                yield desc.co_gen(qemu_src, **gen_cfg)
-
-        # Secondly, generate all devices
-        for desc in self.descriptions:
-            if not isinstance(desc, (CPUDescription, MachineNode)):
-                yield desc.co_gen(qemu_src, **gen_cfg)
-
-        # Lastly, generate machines
-        for desc in self.descriptions:
-            if isinstance(desc, MachineNode):
-                yield desc.co_gen(qemu_src, **gen_cfg)
+        for desc in sorted(self.descriptions):
+            yield desc.co_gen(qemu_src, **gen_cfg)
 
         enable_auto_lock_inclusions()
 
