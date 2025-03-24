@@ -47,6 +47,10 @@ class NodeIdIsAlreadyInUse(RuntimeError):
 @descriptionOf(MachineType)
 class MachineDescription(QOMDescription):
 
+    def co_gen(self, *a, **kw):
+        self.link()
+        yield super(MachineDescription, self).co_gen(*a, **kw)
+
     def iter_nodes(self):
         return chain(
             self.cpus,

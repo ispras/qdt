@@ -148,7 +148,6 @@ class QProject(object):
         # Lastly, generate machines
         for desc in self.descriptions:
             if isinstance(desc, MachineNode):
-                desc.link()
                 yield desc.co_gen(qemu_src, **gen_cfg)
 
         enable_auto_lock_inclusions()
