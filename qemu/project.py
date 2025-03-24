@@ -47,6 +47,7 @@ class QProject(object):
     def __init__(self,
         descriptions = None,
         file_name = None,
+        **compat
     ):
         if file_name is None:
             file_name = caller_file_name()
@@ -63,6 +64,8 @@ class QProject(object):
                     )
                 else:
                     self.add_description(d)
+
+        self.compat = compat
 
     @property
     def file_name(self):
@@ -235,7 +238,16 @@ class QProject(object):
             return True
         return False
 
-    __pygen_deps__ = ("descriptions",)
+    __pygen_deps__ = (
+        "compat",
+        "descriptions",
+    )
 
     def __gen_code__(self, gen):
-        gen.gen_code(self)
+        gen.reset_gen(self)
+        gen.gen_args(self)
+        if self.compat:
+            for attr, val in self.compat.items():
+                gen.gen_field(attr + " = ")
+                gen.pprint(val)
+        gen.gen_end()
