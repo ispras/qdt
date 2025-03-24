@@ -10,7 +10,8 @@ from os.path import (
     isdir
 )
 from qemu import (
-    qvd_load_with_cache
+    CPUDescription,
+    qvd_load_with_cache,
 )
 from common import (
     execfile
@@ -143,15 +144,17 @@ def main():
     if arguments.gen_header_tree is not None:
         qvd.qvc.stc.gen_header_inclusion_dot_file(arguments.gen_header_tree)
 
+    if arguments.no_instruction_tree_optimizations:
+        for desc in project:
+            if isinstance(desc, CPUDescription):
+                desc.instruction_tree_optimizations = False
+
     project.gen_all(qvd.src_path,
         intermediate_chunk_graphs = arguments.gen_intermediate_chunk_graphs,
         with_chunk_graph = arguments.gen_chunk_graphs,
         known_targets = qvd.qvc.known_targets,
         with_debug_comments = arguments.gen_debug_comments,
         translate_cpu_semantics = not arguments.no_i3s,
-        instruction_tree_optimizations = (
-            not arguments.no_instruction_tree_optimizations
-        ),
         instruction_tree_lookahead = arguments.instruction_tree_lookahead,
         include_paths = tuple(path for path, __ in qvd.include_paths)
     )
