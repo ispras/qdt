@@ -263,7 +263,11 @@ require reference to the current object.
             self.line(",")
             self.write(string)
 
-    def gen_args(self, obj, pa_names = False, skip_kw = []):
+    def gen_args(self, obj,
+        pa_names = False,
+        skip_kw = [],
+        skip_def_vals = True,
+    ):
         """
             Given object, this method generates positional and keyword argument
         assignments for `__init__` method of object's class. Lists of arguments
@@ -277,9 +281,11 @@ require reference to the current object.
         define `__get_init_arg_val__`. Given an argument name, it must either
         return the value or raise an `AttributeError`.
 
-            Keyword assignment is only generated when the value differs from the
-        default.  Both `is` and `==` operators are used to compare values. `is`
-        is used first (optimization).
+            `if skip_def_vals`, keyword assignment is only generated when
+        curent value differs from the default.
+        Else, all keyword assignment assignments are generated.
+        Both `is` and `==` operators are used to compare values.
+        `is` is used first (optimization).
 
             If an `AttributeError` raised for a _keyword_ argument name, the
         argument assignment is skipped. Positional argument assignments cannot
@@ -315,7 +321,7 @@ require reference to the current object.
                 continue
 
             # generate only arguments with non-default values
-            if (v is default) or (v == default):
+            if skip_def_vals and ((v is default) or (v == default)):
                 continue
 
             self.gen_field(kwa + " = ")
