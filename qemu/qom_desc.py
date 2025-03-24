@@ -124,13 +124,9 @@ def descriptionOf(QOMTemplate):
             return r
 
         # default method to save description to Python script
-        def __gen_code__(self, gen, __pa = pa, __kwa = list(kwa.keys())):
+        def __gen_code__(self, gen):
             gen.reset_gen(self)
-
-            for attr in __pa + __kwa:
-                val = getattr(self, attr)
-                gen.gen_field(attr + " = ")
-                gen.pprint(val)
+            gen.gen_args(self, pa_names = True, skip_def_vals = False)
 
             if self.compat:
                 for attr, val in self.compat.items():
