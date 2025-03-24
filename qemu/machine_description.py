@@ -47,6 +47,8 @@ class NodeIdIsAlreadyInUse(RuntimeError):
 @descriptionOf(MachineType)
 class MachineDescription(QOMDescription):
 
+    gen_order = 1
+
     def co_gen(self, *a, **kw):
         self.link()
         yield super(MachineDescription, self).co_gen(*a, **kw)
