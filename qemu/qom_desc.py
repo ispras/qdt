@@ -41,6 +41,9 @@ _EMPTY = tuple()
 
 
 class QOMDescription(object):
+
+    gen_order = 0
+
     def __init__(self):
         self.project = None
 
@@ -53,6 +56,9 @@ class QOMDescription(object):
 
     def remove_from_project(self):
         self.project.remove_description(self)
+
+    def __lt__(self, d):
+        return self.gen_order < d.gen_order
 
     def co_gen(self, src,
         with_chunk_graph = False,
