@@ -202,7 +202,11 @@ class CPUType(QOMCPU):
         ("info_path", {
             "short": _("Path to file with CPU information"),
             "input": str
-        })
+        }),
+        ("instruction_tree_optimizations", {
+            "short": _("Instruction tree optimizations"),
+            "input": bool,
+        }),
     ])
 
     def __init__(self, name, directory,
@@ -213,6 +217,7 @@ class CPUType(QOMCPU):
         target_virt_addr_space_bits = 32,
         nb_mmu_modes = 1,
         info_path = None,
+        instruction_tree_optimizations = True,
         **qom_kw
     ):
         """ CPU description.
@@ -238,13 +243,13 @@ class CPUType(QOMCPU):
         }
 
         self.info_path = info_path
+        self.instruction_tree_optimizations = instruction_tree_optimizations
 
     def co_gen(self, src,
         with_chunk_graph = False,
         intermediate_chunk_graphs = False,
         with_debug_comments = False,
         translate_cpu_semantics = True,
-        instruction_tree_optimizations = True,
         instruction_tree_lookahead = False,
         include_paths = tuple(),
         **__
@@ -325,7 +330,7 @@ class CPUType(QOMCPU):
             )
         ))
 
-        yield self._co_gen_target_code(src, instruction_tree_optimizations,
+        yield self._co_gen_target_code(src,
             instruction_tree_lookahead,
         )
 
@@ -423,7 +428,7 @@ class CPUType(QOMCPU):
 #endif /* INCLUDE_TEMPORARY_TRANSLATE_INC_C */
 """)
 
-    def _co_gen_target_code(self, src, instruction_tree_optimizations,
+    def _co_gen_target_code(self, src,
         instruction_tree_lookahead,
     ):
         if self.instructions:
@@ -432,7 +437,7 @@ class CPUType(QOMCPU):
             read_bitsize = self.read_bitsize
             for e in encodings.values():
                 e.build_tree(read_bitsize,
-                    optimizations = instruction_tree_optimizations,
+                    optimizations = self.instruction_tree_optimizations,
                     lookahead = instruction_tree_lookahead,
                 )
         else:
