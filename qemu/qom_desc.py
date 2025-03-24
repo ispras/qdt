@@ -4,12 +4,22 @@ __all__ = [
   , "descriptionOf"
 ]
 
+from .build import (
+    register_in_build_system,
+    register_src_in_build_system,
+)
 from common import (
     get_class_total_args,
+    makedirs,
     same_attrs,
+    shadow_open,
 )
 from .qom import (
     QemuTypeName,
+)
+from source import (
+    ChunkGenerator,
+    Source,
 )
 
 from collections import (
@@ -17,6 +27,10 @@ from collections import (
 )
 from inspect import (
     getmro,
+)
+from os.path import (
+    join,
+    split,
 )
 from sys import (
     modules,
@@ -39,6 +53,68 @@ class QOMDescription(object):
 
     def remove_from_project(self):
         self.project.remove_description(self)
+
+    def co_gen(self, src,
+        with_chunk_graph = False,
+        intermediate_chunk_graphs = False,
+        known_targets = None,
+        with_debug_comments = False,
+        include_paths = tuple(),
+        **__
+    ):
+        qom_t = self.gen_type()
+
+        yield qom_t.co_gen_sources()
+
+        for s in qom_t.sources:
+            spath = join(src, s.path)
+            sdir, sname = split(spath)
+
+            yield True
+
+            makedirs(sdir, exist_ok = True)
+
+            yield True
+
+            f = ChunkGenerator(s).generate()
+
+            if with_chunk_graph:
+                yield True
+                f.gen_chunks_gv_file(spath + ".chunks-before-gen.gv")
+
+            yield True
+
+            if intermediate_chunk_graphs:
+                graphs_prefix = spath + ".chunks"
+            else:
+                graphs_prefix = None
+
+            with shadow_open(spath) as stream:
+                f.generate(stream,
+                    graphs_prefix = graphs_prefix,
+                    gen_debug_comments = with_debug_comments,
+                    include_paths = include_paths
+                )
+
+            if with_chunk_graph:
+                yield True
+                f.gen_chunks_gv_file(spath + ".chunks-after-gen.gv")
+
+            yield True
+            f.update_origin_inclusions()
+
+            # Only sources need to be registered in the build system
+            if type(s) is not Source:
+                continue
+
+            directory = join(*(qom_t.__qom_prefix__ + (self.directory,)))
+
+            yield
+            register_in_build_system(src, directory, known_targets)
+
+            yield True
+            register_src_in_build_system(src, sname, directory)
+
 
 """
 GUI may edit only QOM templates which have the corresponding description

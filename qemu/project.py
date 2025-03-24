@@ -2,15 +2,10 @@ __all__ = [
     "QProject"
 ]
 
-from .build import (
-    register_in_build_system,
-    register_src_in_build_system,
-)
 from common import (
     callco,
     co_find_eq,
     caller_file_name,
-    makedirs,
     same_sets,
     shadow_open,
 )
@@ -21,10 +16,8 @@ from .machine_description import (
     MachineNode,
 )
 from source import (
-    ChunkGenerator,
     disable_auto_lock_inclusions,
     enable_auto_lock_inclusions,
-    Source,
 )
 from .version_description import (
     QemuVersionDescription,
@@ -38,7 +31,6 @@ from os.path import (
     dirname,
     exists,
     join,
-    split,
 )
 
 
@@ -151,80 +143,19 @@ class QProject(object):
         # Secondly, generate all devices
         for desc in self.descriptions:
             if not isinstance(desc, (CPUDescription, MachineNode)):
-                yield self.co_gen(desc, qemu_src, **gen_cfg)
+                yield desc.co_gen(qemu_src, **gen_cfg)
 
         # Lastly, generate machines
         for desc in self.descriptions:
             if isinstance(desc, MachineNode):
                 desc.link()
-                yield self.co_gen(desc, qemu_src, **gen_cfg)
+                yield desc.co_gen(qemu_src, **gen_cfg)
 
         enable_auto_lock_inclusions()
 
-    def gen(self, *args, **kw):
+    def gen(self, desc, *args, **kw):
         "Backward compatibility wrapper for co_gen"
-        callco(self.co_gen(*args, **kw))
-
-    def co_gen(self, desc, src,
-        with_chunk_graph = False,
-        intermediate_chunk_graphs = False,
-        known_targets = None,
-        with_debug_comments = False,
-        include_paths = tuple(),
-        **__
-    ):
-        qom_t = desc.gen_type()
-
-        yield qom_t.co_gen_sources()
-
-        for s in qom_t.sources:
-            spath = join(src, s.path)
-            sdir, sname = split(spath)
-
-            yield True
-
-            makedirs(sdir, exist_ok = True)
-
-            yield True
-
-            f = ChunkGenerator(s).generate()
-
-            if with_chunk_graph:
-                yield True
-                f.gen_chunks_gv_file(spath + ".chunks-before-gen.gv")
-
-            yield True
-
-            if intermediate_chunk_graphs:
-                graphs_prefix = spath + ".chunks"
-            else:
-                graphs_prefix = None
-
-            with shadow_open(spath) as stream:
-                f.generate(stream,
-                    graphs_prefix = graphs_prefix,
-                    gen_debug_comments = with_debug_comments,
-                    include_paths = include_paths
-                )
-
-            if with_chunk_graph:
-                yield True
-                f.gen_chunks_gv_file(spath + ".chunks-after-gen.gv")
-
-            yield True
-            f.update_origin_inclusions()
-
-            # Only sources need to be registered in the build system
-            if type(s) is not Source:
-                continue
-
-            directory = join(*(qom_t.__qom_prefix__ + (desc.directory,)))
-
-            yield
-            register_in_build_system(src, directory, known_targets)
-
-            yield True
-            register_src_in_build_system(src, sname, directory)
+        callco(desc.co_gen(*args, **kw))
 
     def __var_base__(self):
         return "project"
