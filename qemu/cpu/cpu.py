@@ -437,6 +437,7 @@ class CPUType(QOMCPU):
             self.encodings = encodings
             read_bitsize = self.read_bitsize
             for e in encodings.values():
+                yield True
                 e.build_tree(read_bitsize,
                     optimizations = self.instruction_tree_optimizations,
                     lookahead = self.instruction_tree_lookahead,
