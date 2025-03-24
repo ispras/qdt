@@ -811,7 +811,7 @@ in process. Do you want to start cache rebuilding?")
         except:
             pass
         else:
-            if isdir(build_path):
+            if build_path is not None and isdir(build_path):
                 kw["initialdir"] = build_path
 
         _dir = askdirectory(self,
