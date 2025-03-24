@@ -173,7 +173,7 @@ class QProject(object):
         known_targets = None,
         with_debug_comments = False,
         include_paths = tuple(),
-        **_
+        **__
     ):
         qom_t = desc.gen_type()
 
