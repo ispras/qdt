@@ -1,5 +1,6 @@
 __all__ = [
     "CPUType"
+  , "CPUDescription"
 ]
 
 from ..build import (
@@ -14,10 +15,14 @@ from ..qom import (
     QOMCPU,
 )
 from ..qom_desc import (
-    describable,
+    descriptionOf,
+    QOMDescription,
 )
 from ..version import (
     get_vp,
+)
+from ..version_description import (
+    QemuVersionDescription,
 )
 from .code_generation import *
 from .constants import (
@@ -64,6 +69,8 @@ from re import (
 from source import (
     ChunkGenerator,
     CIdGen,
+    disable_auto_lock_inclusions,
+    enable_auto_lock_inclusions,
     Enumeration,
     EnumerationElement,
     Function,
@@ -177,7 +184,6 @@ def add_global_array_with_reg_names(reg, arr_name, f):
     return names_array
 
 
-@describable
 class CPUType(QOMCPU):
     __attribute_info__ = OrderedDict([
         ("target_bigendian", {
@@ -1328,6 +1334,23 @@ class CPUType(QOMCPU):
         print_insn_def = Type[self.print_insn_name].gen_definition()
         fill_print_insn_body(self, print_insn_def)
         c.add_type(print_insn_def)
+
+
+@descriptionOf(CPUType)
+class CPUDescription(QOMDescription):
+
+    def co_gen(self, *a, **kw):
+        yield self.gen_type().co_gen(*a, **kw)
+
+        qvd = QemuVersionDescription.current
+
+        enable_auto_lock_inclusions()
+        # Re-init cache to prevent problems with same named types
+        qvd.forget_cache()
+        yield qvd.co_init_cache()
+        # Replace forgotten dirty cache with new clean one
+        qvd.qvc.use()
+        disable_auto_lock_inclusions()
 
 
 def create_default_config(src, target_name):
