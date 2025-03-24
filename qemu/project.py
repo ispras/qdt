@@ -19,9 +19,6 @@ from source import (
     disable_auto_lock_inclusions,
     enable_auto_lock_inclusions,
 )
-from .version_description import (
-    QemuVersionDescription,
-)
 
 from itertools import (
     count,
@@ -115,7 +112,6 @@ class QProject(object):
 
     def co_gen_all(self, qemu_src, **gen_cfg):
         disable_auto_lock_inclusions()
-        qvd = QemuVersionDescription.current
 
         new_targets = set()
         for desc in self.descriptions:
@@ -130,15 +126,7 @@ class QProject(object):
         # Firstly, generate all CPUs
         for desc in self.descriptions:
             if isinstance(desc, CPUDescription):
-                yield desc.gen_type().co_gen(qemu_src, **gen_cfg)
-
-                enable_auto_lock_inclusions()
-                # Re-init cache to prevent problems with same named types
-                qvd.forget_cache()
-                yield qvd.co_init_cache()
-                # Replace forgotten dirty cache with new clean one
-                qvd.qvc.use()
-                disable_auto_lock_inclusions()
+                yield desc.co_gen(qemu_src, **gen_cfg)
 
         # Secondly, generate all devices
         for desc in self.descriptions:
