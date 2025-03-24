@@ -316,7 +316,9 @@ msp430_bcm = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_dma = SysBusDeviceDescription(
@@ -351,7 +353,9 @@ msp430_dma = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_ic = SysBusDeviceDescription(
@@ -373,7 +377,9 @@ msp430_ic = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_fmc = SysBusDeviceDescription(
@@ -406,7 +412,9 @@ msp430_fmc = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0,
-    block_num = 0x1
+    block_num = 0x1,
+    extra_fields = (),
+    extra_types = ()
 )
 
 # Port 8 is disabled because it overlaps with ADC10:
@@ -482,7 +490,9 @@ msp430_io = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_svs = SysBusDeviceDescription(
@@ -501,7 +511,9 @@ msp430_svs = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_wdt = SysBusDeviceDescription(
@@ -520,7 +532,9 @@ msp430_wdt = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0x1,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_timer_a = SysBusDeviceDescription(
@@ -550,7 +564,9 @@ msp430_timer_a = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0x1,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_timer_b = SysBusDeviceDescription(
@@ -587,7 +603,9 @@ msp430_timer_b = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0x1,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_usi = SysBusDeviceDescription(
@@ -611,7 +629,9 @@ msp430_usi = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_oa = SysBusDeviceDescription(
@@ -631,7 +651,9 @@ msp430_oa = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_comp_a = SysBusDeviceDescription(
@@ -652,7 +674,9 @@ msp430_comp_a = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_adc10 = SysBusDeviceDescription(
@@ -681,7 +705,9 @@ msp430_adc10 = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0x1,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_adc12 = SysBusDeviceDescription(
@@ -713,7 +739,9 @@ msp430_adc12 = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_dac12 = SysBusDeviceDescription(
@@ -735,7 +763,9 @@ msp430_dac12 = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_sd16_a = SysBusDeviceDescription(
@@ -749,7 +779,7 @@ msp430_sd16_a = SysBusDeviceDescription(
         0: [
             Register(2, name = 'SD16CTL', full_name = 'SD16_A control', wmask = CINT(0x0FFE, 16, 4)),
             Register(2, name = 'SD16CCTL0', full_name = 'SD16_A channel 0 control', wmask = CINT(0x7FFE, 16, 4)),
-            Register(14),
+            Register(14, reset = CINT(0x0, 16, 1)),
             Register(2, name = 'SD16IV', access = 'r', full_name = 'SD16_A interrupt vector'),
             Register(2, name = 'SD16MEM0', access = 'r', full_name = 'SD16_A conversion memory')
         ],
@@ -763,7 +793,9 @@ msp430_sd16_a = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_usci_a = SysBusDeviceDescription(
@@ -792,7 +824,9 @@ msp430_usci_a = SysBusDeviceDescription(
     nic_num = 0,
     timer_num = 0,
     char_num = 0x1,
-    block_num = 0
+    block_num = 0,
+    extra_fields = (),
+    extra_types = ()
 )
 
 msp430_adc10_l0 = GUILayout(
