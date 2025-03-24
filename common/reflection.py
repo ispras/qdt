@@ -56,7 +56,7 @@ def get_class_total_args(Class):
 
         args, varargs, keywords, defaults = getargspec(Class.__init__)
 
-        kwargs_count = 0 if defaults is None else  len(defaults)
+        kwargs_count = 0 if defaults is None else len(defaults)
 
         # slice from index 1 to exclude 'self'
         if kwargs_count > 0:
