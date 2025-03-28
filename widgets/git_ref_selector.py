@@ -94,6 +94,7 @@ class GitVerSelWidget(GUIFrame):
         selected.trace_variable("w", self.on_selected_var_write)
 
         self.cbvar = cbvar = StringVar(self)
+        self.ignore_cb_var_writes = False
         cbvar.trace_variable("w", self.on_cb_var_write)
 
         cb = HKCombobox(self,
@@ -106,6 +107,9 @@ class GitVerSelWidget(GUIFrame):
         cbvar.set(refname)
 
     def on_cb_var_write(self, *__):
+        if self.ignore_cb_var_writes:
+            return
+
         value = self.cbvar.get()
         hexsha = self.value2hexsha.get(value)
         if hexsha:
@@ -121,7 +125,22 @@ class GitVerSelWidget(GUIFrame):
     def on_selected_var_write(self, *__):
         if self.ignore_selected_var_writes:
             return
-        raise NotImplementedError("find out corresponding entry")
+
+        userval = self.selected.get()
+        try:
+            commit = self.repo.rev_parse(userval)
+        except:
+            value = userval
+        else:
+            hexsha = commit.hexsha
+            if hexsha in self.hexsha2refs:
+                value = next(self.hexsha2refs[hexsha].iter_values())
+            else:
+                value = hexsha
+
+        self.ignore_cb_var_writes = True
+        self.cbvar.set(value)
+        self.ignore_cb_var_writes = False
 
 
 class GitVerSelDialog(GUIDialog):
