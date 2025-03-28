@@ -88,7 +88,9 @@ class GitVerSelWidget(GUIFrame):
             values = list(value2hexsha)
             values.sort(key = lambda s: s.lower())
 
-        self.selected = StringVar(self)
+        self.selected = selected = StringVar(self)
+        self.ignore_selected_var_writes = False
+        selected.trace_variable("w", self.on_selected_var_write)
 
         self.cbvar = cbvar = StringVar(self)
         cbvar.trace_variable("w", self.on_cb_var_write)
@@ -110,7 +112,15 @@ class GitVerSelWidget(GUIFrame):
         else:
             # Custom user input must be a valid Git reference.
             translated = value
+
+        self.ignore_selected_var_writes = True
         self.selected.set(translated)
+        self.ignore_selected_var_writes = False
+
+    def on_selected_var_write(self, *__):
+        if self.ignore_selected_var_writes:
+            return
+        raise NotImplementedError("find out corresponding entry")
 
 
 class GitVerSelDialog(GUIDialog):
