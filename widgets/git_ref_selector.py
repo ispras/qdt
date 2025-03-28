@@ -78,7 +78,7 @@ class GitVerSelWidget(GUIFrame):
 
             cur_hexsha = repo.head.commit.hexsha
             if cur_hexsha not in hexsha2refs:
-                value = "C: " + repr(cur_hexsha)[1:-1]
+                value = "C: " + cur_hexsha
                 value2hexsha[value] = cur_hexsha
                 # auto select HEAD as ref
                 refname = value
