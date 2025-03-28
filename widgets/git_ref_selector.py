@@ -60,6 +60,7 @@ class GitVerSelWidget(GUIFrame):
     def __init__(self, master, repo, *a, **kw):
         GUIFrame.__init__(self, master, *a, **kw)
 
+        self.repo = repo
         self.hexsha2refs = hexsha2refs = defaultdict(ShaInfo)
         self.value2hexsha = value2hexsha = {}
 
