@@ -19,9 +19,40 @@ from .var_widgets import (
     VarButton,
 )
 
+from collections import (
+    defaultdict,
+)
 from six.moves.tkinter import (
     StringVar,
 )
+
+
+class ShaInfo(object):
+
+    def __init__(self):
+        self.name2origins = defaultdict(list)
+
+    def account_ref(self, ref):
+        refpath = tuple(ref.path.split("/"))
+        if refpath[1] == "tags":
+            disp_name = "T: " #ag
+        else:
+            disp_name = "B: " #ranch
+        disp_name += refpath[-1]
+        origin = refpath[2:-1]
+        if origin:
+            # remote
+            self.name2origins[disp_name].append("/".join(origin))
+        else:
+            # local, only trigger entry instantiation
+            self.name2origins[disp_name]
+
+    def iter_values(self):
+        for disp_name, origins in self.name2origins.items():
+            value = disp_name
+            if origins:
+                value += " (" + ", ".join(origins) + ")"
+            yield value
 
 
 class GitVerSelWidget(GUIFrame):
@@ -29,29 +60,57 @@ class GitVerSelWidget(GUIFrame):
     def __init__(self, master, repo, *a, **kw):
         GUIFrame.__init__(self, master, *a, **kw)
 
+        self.hexsha2refs = hexsha2refs = defaultdict(ShaInfo)
+        self.value2hexsha = value2hexsha = {}
+
         if repo is None:
             refname = ""
-            refs = []
+            values = []
         else:
-            # auto select HEAD as ref
-            try:
-                refname = repo.head.ref.name
-            except TypeError:
-                refname = repo.head.commit.hexsha
 
-            refs = [r.name for r in repo.references]
+            for ref in repo.references:
+                shainfo = hexsha2refs[ref.commit.hexsha]
+                shainfo.account_ref(ref)
 
-        selected = StringVar()
+            for hexsha, shainfo in hexsha2refs.items():
+                for value in shainfo.iter_values():
+                    value2hexsha[value] = hexsha
+
+            cur_hexsha = repo.head.commit.hexsha
+            if cur_hexsha not in hexsha2refs:
+                value = "C: " + repr(cur_hexsha)[1:-1]
+                value2hexsha[value] = cur_hexsha
+                # auto select HEAD as ref
+                refname = value
+            else:
+                refname = next(hexsha2refs[cur_hexsha].iter_values())
+
+            values = list(value2hexsha)
+            values.sort(key = lambda s: s.lower())
+
+        self.selected = StringVar(self)
+
+        self.cbvar = cbvar = StringVar(self)
+        cbvar.trace_variable("w", self.on_cb_var_write)
+
         cb = HKCombobox(self,
             width = 41, # To fit 40 hex digits of git SHA1
-            values = refs,
-            textvariable = selected
+            values = values,
+            textvariable = cbvar,
         )
         cb.pack(side = "top", fill = "x", expand = True)
 
-        selected.set(refname)
+        cbvar.set(refname)
 
-        self.selected = selected
+    def on_cb_var_write(self, *__):
+        value = self.cbvar.get()
+        hexsha = self.value2hexsha.get(value)
+        if hexsha:
+            translated = hexsha
+        else:
+            # Custom user input must be a valid Git reference.
+            translated = value
+        self.selected.set(translated)
 
 
 class GitVerSelDialog(GUIDialog):
