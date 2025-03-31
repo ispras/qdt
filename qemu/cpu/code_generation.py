@@ -428,7 +428,7 @@ def fill_decode_opc_body(cputype, function, cpu_env):
         switch(enc_case)
 
         f_decode_opc_encoding = Function(
-            name = "decode_opc_" + enc.name.lower(),
+            name = "decode_opc_" + enc.func_sfx,
             ret_type = result.type,
             args = function.args,
             static = True,
