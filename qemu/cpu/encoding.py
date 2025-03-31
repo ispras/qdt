@@ -14,6 +14,9 @@ from .instruction import (
     check_unreachable_instructions,
     InstructionTreeNode,
 )
+from source import (
+    CIdGen,
+)
 
 from collections import (
     defaultdict,
@@ -40,6 +43,10 @@ class InstructionEncoding(object):
     @lazy
     def name(self):
         return self.instructions[0].encoding
+
+    @lazy
+    def func_sfx(self):
+        return CIdGen.generate(self.name).instance
 
     def build_tree(self, read_bitsize, **opts):
         self.tree = node = InstructionTreeNode()
