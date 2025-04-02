@@ -283,7 +283,7 @@ require reference to the current object.
 
             `if skip_def_vals`, keyword assignment is only generated when
         curent value differs from the default.
-        Else, all keyword assignment assignments are generated.
+        Else, all keyword value assignments are generated.
         Both `is` and `==` operators are used to compare values.
         `is` is used first (optimization).
 
