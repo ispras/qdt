@@ -1,6 +1,9 @@
 __all__ = [
     "compute_instruction_tree_stats"
   , "print_instruction_tree"
+  , "format_instructions"
+  , "print_instructions"
+  , "check_unreachable_instructions"
 ]
 
 from collections import (
@@ -61,3 +64,37 @@ def print_instruction_tree(node, offset = ""):
                     format_opcodes(opcodes, bitsize)
                 ))
             print_instruction_tree(subtree, offset + "    ")
+
+
+def format_instructions(instructions, indent = "", max_bitsize = None):
+    if max_bitsize is None:
+        max_bitsize = max(i.bitsize for i in instructions)
+    return "\n".join(
+        "{0}{2:<{1}} (priority {3}) mnemonic: {4}; comment: {5}".format(
+            indent,
+            max_bitsize,
+            i.opcode_bits_string,
+            i.priority,
+            i.mnemonic,
+            i.comment
+        ) for i in instructions
+    )
+
+
+def print_instructions(instructions, indent = "", max_bitsize = None):
+    print(
+        format_instructions(
+            instructions,
+            indent = indent,
+            max_bitsize = max_bitsize
+        )
+    )
+
+
+def check_unreachable_instructions(instructions):
+    unreachable_instructions = [i for i in instructions if not i.used]
+    if unreachable_instructions:
+        print("WARNING: some instructions unreachable (check instructions"
+            " encoding or priority):"
+        )
+        print_instructions(unreachable_instructions, indent = "    ")

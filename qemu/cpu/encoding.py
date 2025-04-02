@@ -11,8 +11,10 @@ from .constants import (
 )
 from .instruction import (
     build_instruction_tree,
-    check_unreachable_instructions,
     InstructionTreeNode,
+)
+from .stats import (
+    check_unreachable_instructions,
 )
 from source import (
     CIdGen,
