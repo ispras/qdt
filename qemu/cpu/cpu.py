@@ -641,15 +641,7 @@ class CPUType(QOMCPU):
                 encodings.values()
             )))
 
-            # default encoding to the top
-            default_enc = self.encoding_fmt.__mod__("DEFAULT")
-            try:
-                elems.remove(default_enc)
-            except:
-                # User renamed all encodings
-                pass
-            else:
-                elems.insert(0, (default_enc, 0))
+            elems[0] = (elems[0], 0)
 
             e_encs = Enumeration(elems,
                 typedef_name = self.encoding_enum_name
