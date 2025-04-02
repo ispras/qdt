@@ -55,6 +55,9 @@ class InstructionEncoding(object):
         fill_tree_reading_seq(node, read_bitsize)
 
     def __lt__(self, enc):
+        # Default encoding is to be placed first in generated code.
+        if self.name == "default":
+            return True
         return self.name < enc.name
 
 
