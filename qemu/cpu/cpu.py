@@ -444,6 +444,7 @@ class CPUType(QOMCPU):
             read_bitsize = self.read_bitsize
             for e in encodings.values():
                 yield True
+                print("Building tree of encoding %r..." % e.name)
                 e.build_tree(read_bitsize,
                     optimizations = self.instruction_tree_optimizations,
                     lookahead = self.instruction_tree_lookahead,
