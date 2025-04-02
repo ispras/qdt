@@ -1,6 +1,3 @@
-from collections import (
-    namedtuple,
-)
 from qemu import (
     BYTE_BITSIZE,
     SUPPORTED_READ_BITSIZES,
@@ -10,6 +7,8 @@ from qemu import (
     InstructionTreeNode,
     build_instruction_tree,
     check_unreachable_instructions,
+    compute_instruction_tree_stats,
+    print_instruction_tree,
 )
 from random import (
     randint,
@@ -45,36 +44,8 @@ def example_hypothesis(non_opt_tree, opt_tree, instructions):
     return True
 
 
-TreeStats = namedtuple(
-    "TreeStats",
-    "unreachable leaves min_depth aver_depth max_depth"
-)
-
-
-def traverse_tree(node, depths, used_instructions, depth = 0):
-    if node.instruction is not None:
-        used_instructions.append(node.instruction)
-        depths.append(depth)
-    else:
-        for __, subtree in node.subtree.items():
-            traverse_tree(subtree, depths, used_instructions, depth + 1)
-
-
-def compute_stats(node, instructions):
-    depths = []
-    used_instructions = []
-    traverse_tree(node, depths, used_instructions)
-    return TreeStats(
-        unreachable = len(set(instructions) - set(used_instructions)),
-        leaves = len(used_instructions),
-        min_depth = min(depths),
-        aver_depth = sum(depths) / float(len(depths)),
-        max_depth = max(depths)
-    )
-
-
 def print_stats(node, instructions, msg):
-    tree_stats = compute_stats(node, instructions)
+    tree_stats = compute_instruction_tree_stats(node, instructions)
     print("""\
 Statistics ({msg}):
   Instructions count: {instructions}
@@ -90,33 +61,6 @@ Statistics ({msg}):
     max_d = tree_stats.max_depth
         )
     )
-
-
-def format_opcodes(opcodes, bitsize):
-    return ", ".join(
-        " ... ".join(
-            "{1:0{0}b}".format(bitsize, subopcode) for subopcode in opcode
-        ) for opcode in opcodes
-    )
-
-def print_tree(node, offset = ""):
-    if node.instruction is not None:
-        print("{0}{1}".format(offset, node.instruction.name))
-    else:
-        print("{0}[{1} {2}]:".format(offset, *node.interval))
-        bitsize = node.interval[1]
-        for opcodes, subtree in node.subtree.items():
-            if opcodes is None:
-                print("{0}default ({1}):".format(
-                    offset,
-                    format_opcodes(node.default_opcodes, bitsize)
-                ))
-            else:
-                print("{0}{1}:".format(
-                    offset,
-                    format_opcodes(opcodes, bitsize)
-                ))
-            print_tree(subtree, offset + "    ")
 
 
 def process_fixed_instructions(fixed_instructions, *a, **kw):
@@ -208,9 +152,9 @@ def process_instructions(raw_instructions, read_size,
     if not print_only_true or res:
         print("Instructions set: %s" % raw_instructions)
         print("Tree without optimizations:")
-        print_tree(non_opt_tree)
+        print_instruction_tree(non_opt_tree)
         print("Tree with optimizations:")
-        print_tree(opt_tree)
+        print_instruction_tree(opt_tree)
         print_stats(non_opt_tree, instructions, "without optimizations")
         print_stats(opt_tree, instructions, "with optimizations")
         check_unreachable_instructions(instructions)
