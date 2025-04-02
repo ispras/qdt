@@ -345,6 +345,8 @@ class Instruction(object):
 :param encoding:
     A CPU may have several instruction encodings.
     One is `"default"` other must have different `"string"` name.
+    An instruction can present in multiple encodings given using
+    `"space separated strings"`.
     """
 
 # TODO: an ASCII-art schematic with field layout (bit enumeration) relative to
@@ -364,6 +366,7 @@ class Instruction(object):
         self.encoding = kw_args.get("encoding", "default")
 
         # mark for finding unreachable instructions
+        # TODO: check it for each encoding
         self.used = False
 
     __pygen_deps__ = ("semantics",)
