@@ -367,10 +367,6 @@ class Instruction(object):
         self.priority = kw_args.get("priority", 0)
         self.encoding = kw_args.get("encoding", "default")
 
-        # mark for finding unreachable instructions
-        # TODO: check it for each encoding
-        self.used = False
-
     __pygen_deps__ = ("semantics",)
 
     def join_opcodes(self):
@@ -731,7 +727,6 @@ def build_subtree_for_instruction(node, i, read_bitsize, checked_bits):
         node.limit_read = min_bitsize
 
     node.instruction = i
-    i.used = True
 
 
 def build_instruction_tree(node, instructions, read_bitsize,

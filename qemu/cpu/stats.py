@@ -91,8 +91,13 @@ def print_instructions(instructions, indent = "", max_bitsize = None):
     )
 
 
-def check_unreachable_instructions(instructions):
-    unreachable_instructions = [i for i in instructions if not i.used]
+def check_unreachable_instructions(node, instructions):
+    depths = []
+    used_instructions = []
+    traverse_tree(node, depths, used_instructions)
+    unreachable_instructions = list(sorted(
+        set(instructions) - set(used_instructions)
+    ))
     if unreachable_instructions:
         print("WARNING: some instructions unreachable (check instructions"
             " encoding or priority):"

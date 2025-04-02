@@ -156,8 +156,9 @@ def process_instructions(raw_instructions, read_size,
         print("Tree with optimizations:")
         print_instruction_tree(opt_tree)
         print_stats(non_opt_tree, instructions, "without optimizations")
+        check_unreachable_instructions(non_opt_tree, instructions)
         print_stats(opt_tree, instructions, "with optimizations")
-        check_unreachable_instructions(instructions)
+        check_unreachable_instructions(opt_tree, instructions)
         print("Hypothesis result: %r" % res)
 
     return res

@@ -60,7 +60,7 @@ class InstructionEncoding(object):
     def build_tree(self, read_bitsize, **opts):
         self.tree = node = InstructionTreeNode()
         build_instruction_tree(node, self.instructions, read_bitsize, **opts)
-        check_unreachable_instructions(self.instructions)
+        check_unreachable_instructions(node, self.instructions)
         fill_tree_reading_seq(node, read_bitsize)
 
     def __lt__(self, enc):
