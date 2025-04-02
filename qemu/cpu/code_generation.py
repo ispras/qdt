@@ -63,6 +63,7 @@ from source import (
     CId,
     Comment,
     Declare,
+    Enumeration,
     Function,
     gen_printf_format,
     Goto,
@@ -377,6 +378,13 @@ def fill_default_identify_encoding(cputype, function):
 
     body(Return(next(iter(Type[cputype.encoding_enum_name].elems.values()))))
 
+def fill_default_identify_disas_encoding(cputype, function):
+    function.body = body = BodyTree()
+
+    body(Return(next(iter(
+        Type[cputype.disas_encoding_enum_name].elems.values()
+    ))))
+
 def fill_decode_opc_body(cputype, function, cpu_env):
     ctx = function.args[1]
     ctx_pc = OpSDeref(ctx, "pc")
@@ -396,6 +404,8 @@ def fill_decode_opc_body(cputype, function, cpu_env):
             next(iter(encodings)), unknown_instruction_case_nodes
         )
 
+    # TODO: This part is very similar to multiple encodings handling
+    #       part of `fill_print_insn_body`.
     function.body = body = BodyTree()
     result = function.ret_type("result")
 
@@ -1144,29 +1154,30 @@ def fill_print_insn_body(cputype, function):
     stream = Pointer(Type["void"])("stream")
     fpr = Type["fprintf_function"]("fpr")
 
-    body(
-        Declare(status),
-        Declare(buffer_),
-        Declare(
-            OpDeclareAssign(
-                length,
-                0
-            )
-        ),
-        Declare(
-            OpDeclareAssign(
-                stream,
-                OpSDeref(function.args[1], "stream")
-            )
-        ),
-        Declare(
-            OpDeclareAssign(
-                fpr,
-                OpSDeref(function.args[1], "fprintf_func")
-            )
-        ),
-        NewLine()
-    )
+    def fill_print_insn_body_prologue(body):
+        body(
+            Declare(status),
+            Declare(buffer_),
+            Declare(
+                OpDeclareAssign(
+                    length,
+                    0
+                )
+            ),
+            Declare(
+                OpDeclareAssign(
+                    stream,
+                    OpSDeref(function.args[1], "stream")
+                )
+            ),
+            Declare(
+                OpDeclareAssign(
+                    fpr,
+                    OpSDeref(function.args[1], "fprintf_func")
+                )
+            ),
+            NewLine()
+        )
 
     fail_lbl = Label("fail")
 
@@ -1262,28 +1273,101 @@ def fill_print_insn_body(cputype, function):
         Call("abort")
     ]
 
-    ParseTreeCodeBuilder(
-        cputype.encodings["default"].tree,
-        cputype.target_bigendian,
-        cputype.read_bitsize,
-        body,
-        gen_disas_opcode_read,
-        print_ins_epilogue,
-        unknown_instruction_case_nodes,
-        add_break = False
+    def fill_print_insn_body_epilogue(body):
+        body(
+            Return(length),
+            fail_lbl,
+            Call(
+                OpSDeref(function.args[1], "memory_error_func"),
+                status,
+                function.args[0],
+                function.args[1]
+            ),
+            Return(-1)
+        )
+
+    def fill_print_insn_body(enc, body):
+        fill_print_insn_body_prologue(body)
+        ParseTreeCodeBuilder(
+            enc.tree,
+            cputype.target_bigendian,
+            cputype.read_bitsize,
+            body,
+            gen_disas_opcode_read,
+            print_ins_epilogue,
+            unknown_instruction_case_nodes,
+            add_break = False
+        )
+        fill_print_insn_body_epilogue(body)
+
+    encodings = cputype.encodings
+
+    if len(encodings) == 1:
+        fill_print_insn_body(next(encodings.values()), body)
+        return
+
+    for enc in encodings.values():
+        enc.disas_enum_name = cputype.disas_encoding_fmt % enc.name.upper()
+
+    elems = list((enc.disas_enum_name) for enc in sorted(tuple(
+        encodings.values()
+    )))
+
+    elems[0] = (elems[0], 0)
+
+    e_encs_disas = Enumeration(elems,
+        typedef_name = cputype.disas_encoding_enum_name
     )
 
-    body(
-        Return(length),
-        fail_lbl,
-        Call(
-            OpSDeref(function.args[1], "memory_error_func"),
-            status,
-            function.args[0],
-            function.args[1]
-        ),
-        Return(-1)
+    # TODO: This part is very similar to multiple encodings handling
+    #       part of `fill_decode_opc_body`.
+    result = function.ret_type("result")
+
+    body(Declare(result))
+
+    f_identify_disas_encoding = Function(
+        name = "identify_disas_encoding",
+        ret_type = e_encs_disas,
+        args = function.args,
+        static = True,
     )
+    fill_default_identify_disas_encoding(cputype, f_identify_disas_encoding)
+
+    v_encoding = e_encs_disas("encoding")
+    body(Declare(v_encoding))
+
+    body(OpAssign(v_encoding, Call(f_identify_disas_encoding, *function.args)))
+
+    switch = BranchSwitch(v_encoding)
+    body(switch)
+
+    enum_name2enc = dict(
+        (enc.disas_enum_name, enc)
+            for enc in encodings.values()
+    )
+
+    for e_enc_elem in e_encs_disas.elems.values():
+        enc = enum_name2enc[e_enc_elem.name]
+
+        enc_case = SwitchCase(e_enc_elem)
+        switch(enc_case)
+
+        f_print_insn_enc = Function(
+            name = cputype.print_insn_name + "_" + enc.func_sfx,
+            ret_type = function.ret_type,
+            args = function.args,
+            static = True,
+        )
+        f_print_insn_enc.body = enc_body = BodyTree()
+        fill_print_insn_body(enc, enc_body)
+
+        enc_case(
+            OpAssign(result, Call(f_print_insn_enc, *function.args))
+        )
+
+    switch(SwitchCaseDefault()(*unknown_instruction_case_nodes))
+
+    body(Return(result))
 
 def fill_raise_exception_body(cputype, function):
     cs = Pointer(Type["CPUState"])("cs")
