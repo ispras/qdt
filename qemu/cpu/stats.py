@@ -19,7 +19,7 @@ def traverse_tree(node, depths, used_instructions, depth = 0):
         used_instructions.append(node.instruction)
         depths.append(depth)
     else:
-        for __, subtree in node.subtree.items():
+        for subtree in node.subtree.values():
             traverse_tree(subtree, depths, used_instructions, depth + 1)
 
 
