@@ -21,28 +21,35 @@ from source import (
 from collections import (
     defaultdict,
 )
+from itertools import (
+    starmap,
+)
+from re import (
+    compile,
+)
+
+re_encoding_sep = compile(r" +")
+split_encoding_names = re_encoding_sep.split
 
 
 def separate_instructions(instructions):
     encodings = defaultdict(list)
 
     for i in instructions:
-        encodings[i.encoding].append(i)
+        for encoding in split_encoding_names(i.encoding):
+            encodings[encoding].append(i)
 
     return dict((
         (ie.name, ie)
-            for ie in map(InstructionEncoding, encodings.values())
+            for ie in starmap(InstructionEncoding, encodings.items())
     ))
 
 
 class InstructionEncoding(object):
 
-    def __init__(self, instructions):
+    def __init__(self, name, instructions):
+        self.name = name
         self.instructions = instructions
-
-    @lazy
-    def name(self):
-        return self.instructions[0].encoding
 
     @lazy
     def func_sfx(self):
