@@ -508,6 +508,9 @@ class Instruction(object):
             self.comment = semantics.__doc__
         return semantics
 
+    def __lt__(self, i):
+        return self.mnemonic < i.mnemonic
+
 
 class InstructionTreeNode(object):
 
