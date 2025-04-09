@@ -79,6 +79,7 @@ class AddDescriptionDialog(GUIDialog):
                 _("Machine draft"),
                 _("PCI(E) function template"),
                 _("CPU template"),
+                _("Immediate implementation code"),
             ],
             state = "readonly"
         )
@@ -157,6 +158,9 @@ class AddDescriptionDialog(GUIDialog):
         elif kind == 3:
             class_name = "CPUDescription"
             directory = cur_name
+        elif kind == 4:
+            class_name = "ImmImplDescription"
+            directory = ""
 
         add_op = self.pht.stage(POp_AddDesc, class_name,
             self.pht.p.next_serial_number(),
