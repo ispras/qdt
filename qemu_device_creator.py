@@ -5,8 +5,6 @@ from argparse import (
     ArgumentParser
 )
 from os.path import (
-    abspath,
-    dirname,
     isdir
 )
 from qemu import (
