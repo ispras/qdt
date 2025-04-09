@@ -89,6 +89,8 @@ class Source(TypeContainer):
 
     def __init__(self, path,
         locked_inclusions = None,
+        name_comment = True,
+        chunk_group_separator = "\n",
         **kw
     ):
         super(Source, self).__init__(**kw)
@@ -99,6 +101,8 @@ class Source(TypeContainer):
         self.global_variables = {}
         self.references = set()
         self.protection_prefix = None
+        self.name_comment = name_comment
+        self.chunk_group_separator = chunk_group_separator
         if locked_inclusions is not None:
             self.locked_inclusions = locked_inclusions
         else:
@@ -516,7 +520,9 @@ macro_forbidden = compile("[^0-9A-Z_]")
 class SourceFile(object):
 
     def __init__(self, origin,
-        protection_prefix = "INCLUDE_"
+        protection_prefix = "INCLUDE_",
+        name_comment = True,
+        chunk_group_separator = "\n",
     ):
         self.name = splitext(basename(origin.path))[0]
         self.is_header = type(origin) is Header
@@ -525,6 +531,8 @@ class SourceFile(object):
         self.chunks = OrderedSet()
         self.sort_needed = False
         self.protection_prefix = protection_prefix
+        self.name_comment = name_comment
+        self.chunk_group_separator = chunk_group_separator
         self.origin = origin
 
     def gen_chunks_graph(self, w, chunks):
@@ -886,9 +894,10 @@ digraph Chunks {
         if self.sort_needed:
             self.chunks = sort_chunks(self.chunks)
 
-        writer.write(
-            "/* %s.%s */\n" % (self.name, "h" if self.is_header else "c")
-        )
+        if self.name_comment:
+            writer.write(
+                "/* %s.%s */\n" % (self.name, "h" if self.is_header else "c")
+            )
 
         if self.is_header and self.protection_prefix is not None:
             writer.write("""\
@@ -897,6 +906,7 @@ digraph Chunks {
 """.format(name = self.name_for_macro(), prefix = self.protection_prefix)
             )
 
+        chgrp_separ = self.chunk_group_separator
         prev_group = None
 
         for chunk in self.chunks:
@@ -904,11 +914,10 @@ digraph Chunks {
             if isinstance(chunk, HeaderInclusion) and self.is_header:
                 self.origin.add_inclusion(chunk.origin)
 
-            # Add empty line between chunks of different groups.
-            # This also adds empty line before first chunk because initially
+            # This also adds separator before first chunk because initially
             # prev_group is None.
             if prev_group is not chunk.group:
-                writer.write("\n")
+                writer.write(chgrp_separ)
             prev_group = chunk.group
 
             chunk.check_cols_fix_up()
