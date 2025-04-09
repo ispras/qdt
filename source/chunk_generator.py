@@ -94,6 +94,8 @@ class ChunkGenerator(object):
         Header.propagate_references()
 
         file = SourceFile(definer,
+            name_comment = definer.name_comment,
+            chunk_group_separator = definer.chunk_group_separator,
             protection_prefix = definer.protection_prefix,
         )
 
