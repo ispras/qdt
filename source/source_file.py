@@ -411,7 +411,8 @@ class Header(Source):
         is_global = False,
         protection_prefix = "INCLUDE_",
         locked_inclusions = None,
-        no_global_headers = NO_GLOBAL_HEADERS
+        no_global_headers = NO_GLOBAL_HEADERS,
+        **kw
     ):
         """
 :param path: it is used in #include statements, as unique identifier and
@@ -422,7 +423,7 @@ class Header(Source):
     `None` `protection_prefix` disables protection.
     "" `protection_prefix` results in only header name in protection macro.
         """
-        super(Header, self).__init__(path, locked_inclusions)
+        super(Header, self).__init__(path, locked_inclusions, **kw)
         self.is_global = is_global
         self.includers = []
         self.protection_prefix = protection_prefix
