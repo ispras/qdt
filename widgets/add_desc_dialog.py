@@ -73,6 +73,7 @@ class AddDescriptionDialog(GUIDialog):
         v = self.var_kind = StringVar()
         cb = self.cb_kind = VarCombobox(self,
             textvariable = v,
+            # TODO: automate filling of this
             values = [
                 _("System bus device template"),
                 _("Machine draft"),
