@@ -497,6 +497,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         tree = proj.qom_tree
 
+        # TODO: define this in `qemu` module
         if isinstance(desc, SysBusDeviceDescription):
             parent_name = "sys-bus-device"
         elif isinstance(desc, PCIExpressDeviceDescription):
