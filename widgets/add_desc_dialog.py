@@ -78,7 +78,7 @@ class AddDescriptionDialog(GUIDialog):
                 _("System bus device template"),
                 _("Machine draft"),
                 _("PCI(E) function template"),
-                _("CPU template")
+                _("CPU template"),
             ],
             state = "readonly"
         )
