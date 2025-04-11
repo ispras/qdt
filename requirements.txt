@@ -7,3 +7,4 @@ serial
 psutil
 appdirs
 scons
+meson; python_version>="3.0"
