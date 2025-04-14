@@ -1181,16 +1181,6 @@ class Parser:
             self.current.lineno, self.current.colno, self.current.filename,
         )
 
-    def testcaseblock(self):
-        testcase = self.create_node(SymbolNode, self.previous)
-        condition = self.statement()
-        self.expect("eol")
-        block = self.codeblock()
-        endtestcase = SymbolNode(self.current)
-        return self.create_node(
-            TestCaseClauseNode, testcase, condition, block, endtestcase,
-        )
-
     def line(self):
         block_start = self.current
         if block_start == "eol":
