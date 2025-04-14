@@ -67,19 +67,6 @@ class MesonException(Exception):
         self.lineno = lineno
         self.colno = colno
 
-    @classmethod
-    def from_node(cls, *args, node):
-        """ Create a MesonException with location data from a BaseNode
-
-:param node: A BaseNode to set location data from
-:return: A Meson Exception instance
-        """
-        return cls(*args,
-            file = node.filename,
-            lineno = node.lineno,
-            colno = node.colno,
-        )
-
 
 def code_line(text, line, colno):
     """Print a line with a caret pointing to the colno
