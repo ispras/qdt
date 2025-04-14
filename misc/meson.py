@@ -113,7 +113,7 @@ class BlockParseException(ParseException):
             # Followed by a caret to show the block start
             # Followed by underscores
             # Followed by a caret to show the block end.
-            MesonException.__init__(self,
+            super().__init__(
                 "{}\n{}\n{}".format(
                     text,
                     line, "{}^{}^".format(
@@ -130,7 +130,7 @@ class BlockParseException(ParseException):
             # Followed by a message saying where the block started.
             # Followed by the line of the block start.
             # Followed by a caret for the block start.
-            MesonException.__init__(self,
+            super().__init__(
                 "%s\n%s\n%s\nFor a block that started at %d,%d\n%s\n%s" % (
                     text,
                     line,
@@ -404,7 +404,7 @@ class IdNode(ElementaryNode):
 class NumberNode(ElementaryNode):
 
     def __init__(self, token):
-        BaseNode.__init__(self, token.lineno, token.colno, token.filename)
+        super().__init__(token)
         self.raw_value = token.value
         self.value = int(token.value, base = 0)
         self.bytespan = token.bytespan
