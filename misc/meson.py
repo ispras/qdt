@@ -1276,7 +1276,6 @@ class AstVisitor:
         node.args.accept(self)
 
     def visit_AssignmentNode(self, node):
-        self.visit_default_func(node)
         node.var_name.accept(self)
         node.value.accept(self)
 
