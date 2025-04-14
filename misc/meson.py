@@ -7,10 +7,6 @@ from codecs import (
     BOM_UTF8,
     decode,
 )
-from dataclasses import (
-    dataclass,
-    field,
-)
 from itertools import (
     zip_longest,
 )
@@ -163,15 +159,24 @@ class BlockParseException(ParseException):
         self.colno = colno
 
 
-@dataclass(eq = False)
 class Token(object):
-    tid: str
-    filename: str
-    line_start: int
-    lineno: int
-    colno: int
-    bytespan: object
-    value: object
+
+    def __init__(self,
+        tid,
+        filename,
+        line_start,
+        lineno,
+        colno,
+        bytespan,
+        value,
+    ):
+        self.tid = tid
+        self.filename = filename
+        self.line_start = line_start
+        self.lineno = lineno
+        self.colno = colno
+        self.bytespan = bytespan
+        self.value = value
 
     def __eq__(self, other):
         if isinstance(other, str):
@@ -343,15 +348,7 @@ f" Please rename it."
                 )
 
 
-@dataclass
 class BaseNode:
-
-    lineno: int
-    colno: int
-    filename: str = field(hash = False)
-    end_lineno: int = field(hash = False)
-    end_colno: int = field(hash = False)
-    whitespaces: object = field(hash = False)
 
     def __init__(self, lineno, colno, filename,
         end_lineno = None,
@@ -388,10 +385,7 @@ class BaseNode:
             self.whitespaces.append(token)
 
 
-@dataclass(unsafe_hash = True)
 class WhitespaceNode(BaseNode):
-
-    value: str
 
     def __init__(self, token):
         super().__init__(token.lineno, token.colno, token.filename)
@@ -404,11 +398,7 @@ class WhitespaceNode(BaseNode):
         self.value += token.value
 
 
-@dataclass(unsafe_hash = True)
 class ElementaryNode(BaseNode):
-
-    value: object
-    bytespan: object = field(hash = False)
 
     def __init__(self, token):
         super().__init__(token.lineno, token.colno, token.filename)
@@ -424,10 +414,7 @@ class IdNode(ElementaryNode):
     pass
 
 
-@dataclass(unsafe_hash = True)
 class NumberNode(ElementaryNode):
-
-    raw_value: str = field(hash = False)
 
     def __init__(self, token):
         BaseNode.__init__(self, token.lineno, token.colno, token.filename)
@@ -436,12 +423,7 @@ class NumberNode(ElementaryNode):
         self.bytespan = token.bytespan
 
 
-@dataclass(unsafe_hash = True)
 class StringNode(ElementaryNode):
-
-    raw_value: str = field(hash = False)
-    is_multiline: bool
-    is_fstring: bool
 
     def __init__(self, token, escape = True):
         super().__init__(token)
@@ -468,13 +450,8 @@ class BreakNode(ElementaryNode):
 class SymbolNode(ElementaryNode):
     pass
 
-@dataclass(unsafe_hash = True)
-class ArgumentNode(BaseNode):
 
-    arguments: object = field(hash = False)
-    commas: object = field(hash = False)
-    colons: object = field(hash = False)
-    kwargs: object = field(hash = False)
+class ArgumentNode(BaseNode):
 
     def __init__(self, token):
         super().__init__(token.lineno, token.colno, token.filename)
@@ -524,12 +501,7 @@ class ArgumentNode(BaseNode):
         return self.num_args() + self.num_kwargs()
 
 
-@dataclass(unsafe_hash = True)
 class ArrayNode(BaseNode):
-
-    lbracket: SymbolNode
-    args: ArgumentNode
-    rbracket: SymbolNode
 
     def __init__(self, lbracket, args, rbracket):
         super().__init__(
@@ -544,12 +516,7 @@ class ArrayNode(BaseNode):
         self.rbracket = rbracket
 
 
-@dataclass(unsafe_hash = True)
 class DictNode(BaseNode):
-
-    lcurl: SymbolNode
-    args: ArgumentNode
-    rcurl: SymbolNode
 
     def __init__(self,
         lcurl: SymbolNode,
@@ -569,12 +536,7 @@ class EmptyNode(BaseNode):
     pass
 
 
-@dataclass(unsafe_hash = True)
 class BinaryOperatorNode(BaseNode):
-
-    left: BaseNode
-    operator: SymbolNode
-    right: BaseNode
 
     def __init__(self, left, operator, right):
         super().__init__(left.lineno, left.colno, left.filename)
@@ -591,32 +553,22 @@ class AndNode(BinaryOperatorNode):
     pass
 
 
-@dataclass(unsafe_hash = True)
 class ComparisonNode(BinaryOperatorNode):
-
-    ctype: object
 
     def __init__(self, ctype, left, operator, right):
         super().__init__(left, operator, right)
         self.ctype = ctype
 
 
-@dataclass(unsafe_hash = True)
 class ArithmeticNode(BinaryOperatorNode):
 
     # TODO: use a Literal for operation
-    operation: str
-
     def __init__(self, operation, left, operator, right):
         super().__init__(left, operator, right)
         self.operation = operation
 
 
-@dataclass(unsafe_hash = True)
 class UnaryOperatorNode(BaseNode):
-
-    operator: SymbolNode
-    value: BaseNode
 
     def __init__(self, token, operator, value):
         super().__init__(token.lineno, token.colno, token.filename)
@@ -632,11 +584,7 @@ class UMinusNode(UnaryOperatorNode):
     pass
 
 
-@dataclass(unsafe_hash = True)
 class CodeBlockNode(BaseNode):
-
-    pre_whitespaces: object = field(hash = False)
-    lines: object = field(hash = False)
 
     def __init__(self, token):
         super().__init__(token.lineno, token.colno, token.filename)
@@ -652,13 +600,7 @@ class CodeBlockNode(BaseNode):
             self.pre_whitespaces.append(token)
 
 
-@dataclass(unsafe_hash = True)
 class IndexNode(BaseNode):
-
-    iobject: BaseNode
-    lbracket: SymbolNode
-    index: BaseNode
-    rbracket: SymbolNode
 
     def __init__(self, iobject, lbracket, index, rbracket):
         super().__init__(iobject.lineno, iobject.colno, iobject.filename)
@@ -668,15 +610,7 @@ class IndexNode(BaseNode):
         self.rbracket = rbracket
 
 
-@dataclass(unsafe_hash = True)
 class MethodNode(BaseNode):
-
-    source_object: BaseNode
-    dot: SymbolNode
-    name: IdNode
-    lpar: SymbolNode
-    args: ArgumentNode
-    rpar: SymbolNode
 
     def __init__(self, source_object, dot, name, lpar, args, rpar):
         super().__init__(name.lineno, name.colno, name.filename,
@@ -691,13 +625,7 @@ class MethodNode(BaseNode):
         self.rpar = rpar
 
 
-@dataclass(unsafe_hash = True)
 class FunctionNode(BaseNode):
-
-    func_name: IdNode
-    lpar: SymbolNode
-    args: ArgumentNode
-    rpar: SymbolNode
 
     def __init__(self, func_name, lpar, args, rpar):
         super().__init__(func_name.lineno, func_name.colno, func_name.filename,
@@ -709,12 +637,7 @@ class FunctionNode(BaseNode):
         self.args = args
         self.rpar = rpar
 
-@dataclass(unsafe_hash = True)
 class AssignmentNode(BaseNode):
-
-    var_name: IdNode
-    operator: SymbolNode
-    value: BaseNode
 
     def __init__(self, var_name, operator, value):
         super().__init__(var_name.lineno, var_name.colno, var_name.filename)
@@ -727,16 +650,7 @@ class PlusAssignmentNode(AssignmentNode):
     pass
 
 
-@dataclass(unsafe_hash = True)
 class ForeachClauseNode(BaseNode):
-
-    foreach_: SymbolNode = field(hash = False)
-    varnames: object = field(hash = False)
-    commas: object = field(hash = False)
-    colon: SymbolNode = field(hash = False)
-    items: BaseNode
-    block: CodeBlockNode
-    endforeach: SymbolNode = field(hash = False)
 
     def __init__(self, foreach_, varnames, commas, colon, items, block,
         endforeach
@@ -751,12 +665,7 @@ class ForeachClauseNode(BaseNode):
         self.endforeach = endforeach
 
 
-@dataclass(unsafe_hash = True)
 class IfNode(BaseNode):
-
-    if_: SymbolNode
-    condition: BaseNode
-    block: CodeBlockNode
 
     def __init__(self, linenode, if_node, condition, block):
         super().__init__(linenode.lineno, linenode.colno, linenode.filename)
@@ -765,11 +674,7 @@ class IfNode(BaseNode):
         self.block = block
 
 
-@dataclass(unsafe_hash = True)
 class ElseNode(BaseNode):
-
-    else_: SymbolNode
-    block: CodeBlockNode
 
     def __init__(self, else_, block):
         super().__init__(block.lineno, block.colno, block.filename)
@@ -777,12 +682,7 @@ class ElseNode(BaseNode):
         self.block = block
 
 
-@dataclass(unsafe_hash = True)
 class IfClauseNode(BaseNode):
-
-    ifs: object = field(hash = False)
-    elseblock: object
-    endif: SymbolNode
 
     def __init__(self, linenode):
         super().__init__(linenode.lineno, linenode.colno, linenode.filename)
@@ -792,13 +692,7 @@ class IfClauseNode(BaseNode):
         )
 
 
-@dataclass(unsafe_hash = True)
 class TestCaseClauseNode(BaseNode):
-
-    testcase: SymbolNode
-    condition: BaseNode
-    block: CodeBlockNode
-    endtestcase: SymbolNode
 
     def __init__(self, testcase, condition, block, endtestcase):
         super().__init__(condition.lineno, condition.colno, condition.filename)
@@ -808,14 +702,7 @@ class TestCaseClauseNode(BaseNode):
         self.endtestcase = endtestcase
 
 
-@dataclass(unsafe_hash = True)
 class TernaryNode(BaseNode):
-
-    condition: BaseNode
-    questionmark: SymbolNode
-    trueblock: BaseNode
-    colon: SymbolNode
-    falseblock: BaseNode
 
     def __init__(self, condition, questionmark, trueblock, colon, falseblock):
         super().__init__(condition.lineno, condition.colno, condition.filename)
@@ -838,12 +725,7 @@ comparison_map = {
 }
 
 
-@dataclass(unsafe_hash = True)
 class ParenthesizedNode(BaseNode):
-
-    lpar: SymbolNode = field(hash = False)
-    inner: BaseNode
-    rpar: SymbolNode = field(hash = False)
 
     def __init__(self, lpar, inner, rpar):
         super().__init__(lpar.lineno, lpar.colno, inner.filename,
