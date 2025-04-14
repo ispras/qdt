@@ -505,11 +505,7 @@ class ArrayNode(BaseNode):
 
 class DictNode(BaseNode):
 
-    def __init__(self,
-        lcurl: SymbolNode,
-        args: ArgumentNode,
-        rcurl: SymbolNode,
-    ):
+    def __init__(self, lcurl, args, rcurl):
         super().__init__(lcurl.lineno, lcurl.colno, args.filename,
             end_lineno = rcurl.lineno,
             end_colno = rcurl.colno + 1,
