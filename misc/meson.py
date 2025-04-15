@@ -1540,21 +1540,22 @@ def main():
 
             print("Parse time %0.3f" % (t,))
 
-            if ast_prefix:
-                ast_dir = ast_prefix + dirpath[path_strip:]
-                if not isdir(ast_dir):
-                    makedirs(ast_dir)
-                ast_file = join(ast_dir, "prt." + filename)
-                print("Printing ast to %r" % ast_file)
-                printer = RawPrinter()
-                ast.accept(printer)
-                with open(ast_file, "w") as f:
-                    f.write(printer.result)
+            if not failed:
+                if ast_prefix:
+                    ast_dir = ast_prefix + dirpath[path_strip:]
+                    if not isdir(ast_dir):
+                        makedirs(ast_dir)
+                    ast_file = join(ast_dir, "prt." + filename)
+                    print("Printing ast to %r" % ast_file)
+                    printer = RawPrinter()
+                    ast.accept(printer)
+                    with open(ast_file, "w") as f:
+                        f.write(printer.result)
 
-                if diff_with_parsed:
-                    orig_file_copy = join(ast_dir, "orig." + filename)
-                    with open(orig_file_copy, "w") as f:
-                        f.write(code)
+                    if diff_with_parsed:
+                        orig_file_copy = join(ast_dir, "orig." + filename)
+                        with open(orig_file_copy, "w") as f:
+                            f.write(code)
 
             if vs_orig:
 
