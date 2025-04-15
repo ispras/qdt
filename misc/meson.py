@@ -1492,6 +1492,30 @@ class RawPrinter(FullAstVisitor):
         self.result += 'break'
 
 
+class AstInfo(object):
+
+    ast2info = {}
+    dir2info = {}
+
+    def __init__(self, ast, dir_suffix, file_name):
+        self.ast = ast
+        self.dir_suffix = dir_suffix
+        self.file_name = file_name
+
+        self.ast2info[ast] = self
+        self.dir2info[dir_suffix] = self
+
+    def to_string(self):
+        printer = RawPrinter()
+        self.ast.accept(printer)
+        return printer.result
+
+    def to_file(self, full_file_name):
+        s = self.to_string()
+        with open(full_file_name, "w") as f:
+            f.write(s)
+
+
 def main():
     ap = ArgumentParser()
     arg = ap.add_argument
@@ -1541,16 +1565,17 @@ def main():
             print("Parse time %0.3f" % (t,))
 
             if not failed:
+                dir_suffix = dirpath[path_strip:]
+
+                info = AstInfo(ast, dir_suffix, filename)
+
                 if ast_prefix:
-                    ast_dir = ast_prefix + dirpath[path_strip:]
+                    ast_dir = ast_prefix + dir_suffix
                     if not isdir(ast_dir):
                         makedirs(ast_dir)
                     ast_file = join(ast_dir, "prt." + filename)
                     print("Printing ast to %r" % ast_file)
-                    printer = RawPrinter()
-                    ast.accept(printer)
-                    with open(ast_file, "w") as f:
-                        f.write(printer.result)
+                    info.to_file(ast_file)
 
                     if diff_with_parsed:
                         orig_file_copy = join(ast_dir, "orig." + filename)
