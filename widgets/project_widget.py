@@ -379,8 +379,10 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
                 qt = self.p.qom_tree
                 qtn = QemuTypeName(desc_name)
-                t = next(qt.find(name = qtn.for_id_name))
-                t.unparent()
+                # Note that ImmImplDescription does not add a QOM type.
+                for t in qt.find(name = qtn.for_id_name):
+                    t.unparent()
+                    break
             else: # added
                 self.__add_qtype_for_description(desc)
         elif isinstance(op, DOp_SetAttr):
