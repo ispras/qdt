@@ -97,6 +97,7 @@ It's a way to embed arbitrary sources.
         extend = stack.extend
 
         while stack:
+            yield True
             ospath, infix = pop()
 
             if isfile(ospath):
