@@ -4,19 +4,19 @@ __all__ = [
 ]
 
 
-def add_line(lines, line):
-    """ Appends `line` to `lines` if such a line is absent.
-`return`s `bool` indicating `line` addition.
+def add_line(lines, line, after = -1):
+    """ Inserts `line` to `lines` if such a line is absent.
+`return`s `bool` indicating `line` insertion.
     """
 
     if line in lines:
         return False
-    lines.append(line)
+    lines.insert(after, line)
     return True
 
 
-def add_line_to_file(file_name, line):
-    "Appends `line` to file named `file_name` if such a line is absent."
+def add_line_to_file(file_name, line, *a, **kw):
+    "Inserts `line` to file named `file_name` if such a line is absent."
 
     if line[-1] != '\n':
         line += '\n'
@@ -24,6 +24,6 @@ def add_line_to_file(file_name, line):
     with open(file_name, "r") as f:
         lines = f.readlines()
 
-    if add_line(lines, line):
+    if add_line(lines, line, *a, **kw):
         with open(file_name, "w") as f:
             f.write("".join(lines))
