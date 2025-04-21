@@ -271,18 +271,21 @@ class QOMType(object):
         self.fill_source()
 
     def provide_header(self):
-        header_path = join("include", "hw", self.directory,
-            self.qtn.for_header_name + ".h"
-        )
+        header_path = join(*(
+            ("include",)
+          + self.__qom_prefix__
+          + (self.directory, self.qtn.for_header_name + ".h")
+        ))
         try:
             return Header[header_path]
         except Exception:
             return Header(header_path)
 
     def gen_source(self):
-        source_path = join("hw", self.directory,
-            self.qtn.for_header_name + ".c"
-        )
+        source_path = join(*(
+            self.__qom_prefix__
+            + (self.directory, self.qtn.for_header_name + ".c")
+        ))
         return Source(source_path)
 
     def fill_source(self):
