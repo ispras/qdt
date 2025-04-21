@@ -11,6 +11,7 @@ from .build import (
 from common import (
     get_class_total_args,
     makedirs,
+    path2tuple,
     same_attrs,
     shadow_open,
 )
@@ -29,6 +30,7 @@ from inspect import (
     getmro,
 )
 from os.path import (
+    abspath,
     join,
     split,
 )
@@ -72,8 +74,12 @@ class QOMDescription(object):
 
         yield qom_t.co_gen_sources()
 
+        src = abspath(src)
+        src_t = path2tuple(src)
+        src_len = len(src_t)
+
         for s in qom_t.sources:
-            spath = join(src, s.path)
+            spath = abspath(join(src, s.path))
             sdir, sname = split(spath)
 
             yield True
@@ -113,7 +119,8 @@ class QOMDescription(object):
             if type(s) is not Source:
                 continue
 
-            directory = join(*(qom_t.__qom_prefix__ + (self.directory,)))
+            directory_t = path2tuple(spath)[src_len:-1]
+            directory = join(*directory_t)
 
             yield
             register_in_build_system(src, directory, known_targets)
