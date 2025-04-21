@@ -46,14 +46,14 @@ It's a way to embed arbitrary sources.
 
     __attribute_info__ = OrderedDict((
         ("path", { "short": _("Path"), "input": str }),
-        ("gen_order", # Used by QOMDescription.
+        ("gen_order",
             { "short": _("Generation Order"), "input": int }
         ),
     ))
 
     def __init__(self, name, directory,
         path = ".",
-        gen_order = 0,
+        gen_order = 0, # Used by QOMDescription.
         **__
     ):
         """
@@ -73,7 +73,6 @@ It's a way to embed arbitrary sources.
         self.name = name
         self.directory = directory
         self.path = path
-        self.gen_order = gen_order
 
     def co_gen_sources(self):
         self._sources = sources = []
