@@ -16,7 +16,7 @@ from common import (
 from libe.common.shadow_open import (
     shadow_open,
 )
-from .qom import (
+from .qtn import (
     QemuTypeName,
 )
 from source import (
