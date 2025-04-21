@@ -134,15 +134,16 @@ def register_src_in_meson(src_root, sname, directory):
         with open(meson_build, "rb") as f:
             meson_build_data = f.read()
         meson_build_lines = meson_build_data.splitlines()
-        used_source_sets = defaultdict(int)
-        for l in meson_build_lines:
+        used_source_sets = defaultdict(list)
+        for i, l in enumerate(meson_build_lines):
             mi = re_meson_ss_new.search(l) or re_meson_ss_add.search(l)
             if mi:
-                used_source_sets[mi.group(1)] += 1
+                used_source_sets[mi.group(1)].append(i)
 
         if used_source_sets:
             source_set = sorted(
-                tuple((-c, s) for (s, c) in used_source_sets.items())
+                tuple((-len(lines), s) for (s, lines)
+                    in used_source_sets.items())
             )[0][1].decode()
     else:
         # If it's a new `hw` subfolder, it has no `meson.build`.
@@ -156,4 +157,9 @@ def register_src_in_meson(src_root, sname, directory):
     else:
         line = "%s.add(files('%s'))" % (source_set, sname)
 
-    add_line_to_file(meson_build, line)
+    if source_set in used_source_sets:
+        add_line_to_file(meson_build, line,
+            after = used_source_sets[source_set][-1],
+        )
+    else:
+        add_line_to_file(meson_build, line)
