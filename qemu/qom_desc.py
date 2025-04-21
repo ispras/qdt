@@ -14,7 +14,7 @@ from common import (
     same_attrs,
     shadow_open,
 )
-from .qom import (
+from .qtn import (
     QemuTypeName,
 )
 from source import (
