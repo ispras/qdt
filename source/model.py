@@ -679,6 +679,13 @@ class Pointer(Type):
         self.type = _type
         self.const = const
 
+    def __getattr__(self, name):
+        try:
+            return getattr(self.type, name)
+        except AttributeError:
+            pass
+        raise AttributeError(name)
+
     def __eq__(self, other):
         if not isinstance(other, Pointer):
             return False
