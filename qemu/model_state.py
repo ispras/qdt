@@ -22,6 +22,9 @@ class StateStruct(object):
         for field in fields:
             self.add_field(field)
 
+    def __iter__(self):
+        return iter(self.fields)
+
     def __var_base__(self):
         return "ss_" + self.c_type_name.lower()
 
