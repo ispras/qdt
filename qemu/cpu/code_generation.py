@@ -580,8 +580,8 @@ def _gen_reg_printf_format(type_):
 def fill_dump_state_body(cputype, function, reg_vars):
     function.body = body = BodyTree()
 
-    cpu = Pointer(Type[cputype.struct_instance_name])("cpu")
-    env_struct = Type[cputype.struct_name]
+    cpu = Pointer(Type[cputype.struct_name])("cpu")
+    env_struct = cpu.type.env.type
     env = Pointer(env_struct)("env")
 
     out_file = function.args[1]
@@ -662,7 +662,7 @@ def fill_env_get_cpu_body(cputype, function):
             MCall(
                 "container_of",
                 function.args[0],
-                Type[cputype.struct_instance_name],
+                Type[cputype.struct_name],
                 CId("env")
             )
         )
@@ -675,8 +675,8 @@ gdb_get_reg_bitsizes = (8, 16, 32, 64, 128)
 ld_size_infixes = {16: "uw", 32: "l", 64: "q"}
 
 def fill_gdb_rw_register_body(cputype, function, is_write = False):
-    cpu = Pointer(Type[cputype.struct_instance_name])("cpu")
-    env = Pointer(Type[cputype.struct_name])("env")
+    cpu = Pointer(Type[cputype.struct_name])("cpu")
+    env = Pointer(cpu.type.env.type)("env")
 
     buf = function.args[1]
     n = function.args[2]
@@ -755,8 +755,10 @@ def fill_gdb_rw_register_body(cputype, function, is_write = False):
 def fill_gen_intermediate_code_body(cputype, function, cpu_env):
     function.body = body = BodyTree()
 
+    cpu = Pointer(Type[cputype.struct_name])("cpu")
+
     if get_vp("gen_intermediate_code arg1 is generic"):
-        env = Pointer(Type[cputype.struct_name])("env")
+        env = Pointer(cpu.type.env.type)("env")
         body(
             Declare(
                 OpDeclareAssign(
@@ -768,7 +770,6 @@ def fill_gen_intermediate_code_body(cputype, function, cpu_env):
     else:
         env = function.args[0]
 
-    cpu = Pointer(Type[cputype.struct_instance_name])("cpu")
     ctx = Type["DisasContext"]("ctx")
     ctx_pc = OpSDeref(ctx, "pc")
     ctx_tb = OpSDeref(ctx, "tb")
@@ -1071,7 +1072,7 @@ def fill_helper_illegal_body(function):
 def fill_initfn_body(cputype, function):
     function.body = body = BodyTree()
 
-    cpu = Pointer(Type[cputype.struct_instance_name])("cpu")
+    cpu = Pointer(Type[cputype.struct_name])("cpu")
     cs = Pointer(Type["CPUState"])("cs")
     for_macros = cputype.qtn.for_macros
 
@@ -1438,9 +1439,9 @@ def fill_realizefn_body(cputype, function):
 def fill_reset_body(cputype, function):
     function.body = body = BodyTree()
 
-    cpu = Pointer(Type[cputype.struct_instance_name])("cpu")
+    cpu = Pointer(Type[cputype.struct_name])("cpu")
     cc = Pointer(Type[cputype.struct_class_name])("cc")
-    env = Pointer(Type[cputype.struct_name])("env")
+    env = Pointer(cpu.type.env.type)("env")
 
     if get_vp("device_class_set_parent_reset used for cpu"):
         cs = Pointer(Type["CPUState"])("cs")
@@ -1489,7 +1490,7 @@ def fill_reset_body(cputype, function):
                 0,
                 MCall(
                     "offsetof",
-                    Type[cputype.struct_name],
+                    env.type.type,
                     CId("end_reset_fields")
                 )
             ),
@@ -1505,7 +1506,7 @@ def fill_reset_body(cputype, function):
                 env,
                 0,
                 OpSizeOf(
-                    Type[cputype.struct_name]
+                    env.type
                 )
             ),
             OpAssign(
@@ -1528,7 +1529,7 @@ def fill_restore_state_to_opc_body(cputype, function):
     )
 
 def fill_set_pc_body(cputype, function):
-    cpu = Pointer(Type[cputype.struct_instance_name])("cpu")
+    cpu = Pointer(Type[cputype.struct_name])("cpu")
 
     function.body = BodyTree()(
         Declare(
@@ -1583,7 +1584,7 @@ def fill_tcg_init_body(cputype, function, reg_vars, cpu_env):
             )
         )
 
-    cpu_arch_state = Type[cputype.struct_name]
+    cpu_arch_state = Type[cputype.struct_name].env.type
     for r, var, names_array in reg_vars:
         if r.bank_size:
             parent_node = LoopFor(
