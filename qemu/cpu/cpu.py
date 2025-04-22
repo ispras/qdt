@@ -637,6 +637,8 @@ class CPUType(QOMCPU):
 
         self.add_state_field_h(env_state_name, "env")
 
+        self.declare_extra_fields()
+
         arch_cpu = self.gen_state()
         h.add_type(arch_cpu)
 
