@@ -1073,10 +1073,9 @@ class QOMCPU(QOMType):
         self.target_name = directory
 
         # redefinition of struct_name
-        self.struct_name = "CPU" + self.cpu_name.upper() + "State"
+        self.struct_name = self.cpu_name.upper() + "CPU"
 
         # all derived strings in one place
-        self.struct_instance_name = self.qtn.for_struct_name.upper()
         self.struct_class_name = self.qtn.for_struct_name.upper() + "Class"
         self.env_get_cpu_name = self.cpu_name.lower() + "_env_get_cpu"
         self.tcg_init_name = self.cpu_name.lower() + "_tcg_init"
@@ -1098,20 +1097,9 @@ class QOMCPU(QOMType):
         self.state.vmsd_min_version_id = 1
         self.state.vmsd_state_name = "cpu"
 
-    def gen_state(self):
-        s = super(QOMCPU, self).gen_state()
-        if get_vp("move tlb_flush to cpu_common_reset"):
-            s.append_field(TopComment(
-                "Fields up to this point are cleared by a CPU reset"
-            ))
-            s.append_field(Structure()("end_reset_fields"))
-        if get_vp("CPU_COMMON exists"):
-            cpu_common_usage = Type["CPU_COMMON"].gen_type()
-            s.append_field(cpu_common_usage)
-            # XXX: extra reference guarantiee that NB_MMU_MODES defined before
-            # CPU_COMMON usage
-            cpu_common_usage.extra_references = {Type["NB_MMU_MODES"]}
-        return s
+        self.add_state_field_h("CPUState", "parent_obj",
+            save = False,
+        )
 
     def gen_vmstate_var(self, state_struct):
         vmstate = super(QOMCPU, self).gen_vmstate_var(state_struct)
@@ -1127,7 +1115,7 @@ class QOMCPU(QOMType):
         return Function(
             name = "raise_exception",
             args = [
-                Pointer(Type[self.struct_name])("env"),
+                Pointer(Type[self.struct_name].env.type)("env"),
                 Type["uint32_t"]("index")
             ],
             static = True
@@ -1136,11 +1124,11 @@ class QOMCPU(QOMType):
     def gen_helper_debug(self):
         return Function(
             name = "helper_debug",
-            args = [ Pointer(Type[self.struct_name])("env") ]
+            args = [ Pointer(Type[self.struct_name].env.type)("env") ]
         )
 
     def gen_helper_illegal(self):
         return Function(
             name = "helper_illegal",
-            args = [ Pointer(Type[self.struct_name])("env") ]
+            args = [ Pointer(Type[self.struct_name].env.type)("env") ]
         )

@@ -11,12 +11,18 @@ from ..build import (
 from .encoding import (
     separate_instructions,
 )
+from ..model_state import (
+    StateStruct,
+)
 from ..qom import (
     QOMCPU,
 )
 from ..qom_desc import (
     descriptionOf,
     QOMDescription,
+)
+from ..qom_type_state_field import (
+    QOMTypeStateField,
 )
 from ..version import (
     get_vp,
@@ -79,6 +85,7 @@ from source import (
     Pointer,
     Source,
     Structure,
+    TopComment,
     Type,
     TypeAlias,
     TypeNotRegistered,
@@ -285,15 +292,8 @@ class CPUType(QOMCPU):
                 "Script '%s' does not define a CPU info" % self.info_path
             )
 
-        self.registers = registers = info.registers
+        self.registers = info.registers
         self.pc_register = info.pc_register
-
-        for reg in registers:
-            self.add_state_field_h("uint%d_t" % (reg.field_bitsize),
-                reg.name,
-                num = reg.bank_size,
-                save = True
-            )
 
         self.name_to_format = info.name_to_format
         self.instructions = instructions = info.instructions
@@ -601,16 +601,43 @@ class CPUType(QOMCPU):
 
             Header["exec/cpu-defs.h"].add_reference(Type["TARGET_LONG_BITS"])
 
-        cpu_arch_state = self.gen_state()
+
+        if get_vp("CPUNegativeOffsetState exists"):
+            self.add_state_field_h("CPUNegativeOffsetState", "neg",
+                save = False,
+            )
+
+        env_state_name = "CPU" + self.cpu_name.upper() + "State"
+
+        env_state_desc = StateStruct(env_state_name)
+
+        for reg in self.registers:
+            env_state_desc.add_field(QOMTypeStateField(
+                "uint%d_t" % (reg.field_bitsize),
+                reg.name,
+                array_size = reg.bank_size,
+                save_in_vmsd = True,
+            ))
+
+        cpu_arch_state = env_state_desc.gen_c_type()
+
+        if get_vp("move tlb_flush to cpu_common_reset"):
+            cpu_arch_state.append_field(TopComment(
+                "Fields up to this point are cleared by a CPU reset"
+            ))
+            cpu_arch_state.append_field(Structure()("end_reset_fields"))
+        if get_vp("CPU_COMMON exists"):
+            cpu_common_usage = Type["CPU_COMMON"].gen_type()
+            cpu_arch_state.append_field(cpu_common_usage)
+            # XXX: extra reference guarantiee that NB_MMU_MODES defined before
+            # CPU_COMMON usage
+            cpu_common_usage.extra_references = {Type["NB_MMU_MODES"]}
+
         h.add_type(cpu_arch_state)
 
-        arch_cpu_fields = [
-            Type["CPUState"]("parent_obj"),
-            cpu_arch_state("env")
-        ]
-        if get_vp("CPUNegativeOffsetState exists"):
-            arch_cpu_fields.insert(1, Type["CPUNegativeOffsetState"]("neg"))
-        arch_cpu = Structure(self.struct_instance_name, *arch_cpu_fields)
+        self.add_state_field_h(env_state_name, "env")
+
+        arch_cpu = self.gen_state()
         h.add_type(arch_cpu)
 
         if get_vp("typedef ArchCPU"):
@@ -825,7 +852,7 @@ class CPUType(QOMCPU):
             h.add_type(
                 Function(
                     name = self.cpu_init_name,
-                    ret_type = Pointer(Type[self.struct_instance_name]),
+                    ret_type = Pointer(Type[self.struct_name]),
                     args = [ Pointer(Type["const char"])("cpu_model") ]
                 )
             )
@@ -977,13 +1004,13 @@ class CPUType(QOMCPU):
                     "parent": Type["TYPE_CPU"],
                     # TODO: support `OpSizeOf` and other related function body
                     #       classes in `Initializer`'s `code`
-                    "instance_size": "sizeof(%s)" % self.struct_instance_name,
+                    "instance_size": "sizeof(%s)" % self.struct_name,
                     "instance_init": cpu_initfn,
                     "class_size": "sizeof(%s)" % self.struct_class_name,
                     "class_init": cpu_class_init
                 },
                 used_types = [
-                    Type[self.struct_instance_name],
+                    Type[self.struct_name],
                     Type[self.struct_class_name]
                 ]
             ),
@@ -1100,7 +1127,7 @@ class CPUType(QOMCPU):
             name = "decode_opc",
             ret_type = Type["int"],
             args = [
-                Pointer(Type[self.struct_instance_name])("cpu"),
+                Pointer(Type[self.struct_name])("cpu"),
                 Pointer(Type["DisasContext"])("ctx")
             ],
             static = True
@@ -1108,7 +1135,7 @@ class CPUType(QOMCPU):
         fill_decode_opc_body(self, decode_opc, cpu_env)
         c.add_type(decode_opc)
 
-        cpu_arch_state_p = Pointer(Type[self.struct_name])
+        cpu_arch_state_p = Pointer(Type[self.struct_name].env.type)
 
         gen_int_code_args = [ Pointer(Type["TranslationBlock"])("tb") ]
         if get_vp("gen_intermediate_code arg1 is generic"):
