@@ -192,14 +192,21 @@ class QOMType(object):
     ):
         self.directory = directory
         self.qtn = qtn = QemuTypeName(name)
-        self.struct_name = "{}State".format(self.qtn.for_struct_name)
-        self.state = StateStruct(self.struct_name,
+        self.state = StateStruct("{}State".format(self.qtn.for_struct_name),
             vmsd_state_name = qtn.for_id_name,
         )
         # an interface is either `Macro` or C string literal
         self.interfaces = OrderedSet()
         self.extra_fields = tuple(extra_fields)
         self.extra_types = tuple(extra_types)
+
+    @property
+    def struct_name(self):
+        return self.state.c_type_name
+
+    @struct_name.setter
+    def struct_name(self, struct_name):
+        self.state.c_type_name = struct_name
 
     def iter_gen_extra_types(self):
         for type_desc in self.extra_types:
@@ -1090,7 +1097,6 @@ class QOMCPU(QOMType):
 
         self.state.vmsd_min_version_id = 1
         self.state.vmsd_state_name = "cpu"
-        self.state.c_type_name = self.struct_name
 
     def gen_state(self):
         s = super(QOMCPU, self).gen_state()
