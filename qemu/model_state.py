@@ -8,6 +8,9 @@ from source import (
     Type,
     TypeNotRegistered,
 )
+from collections import (
+    OrderedDict,
+)
 
 
 class StateStruct(object):
@@ -18,12 +21,12 @@ class StateStruct(object):
         self.vmsd_state_name = kw.pop("vmsd_state_name", None)
 
         self.c_type_name = c_type_name
-        self.fields = []
+        self.fields = OrderedDict()
         for field in fields:
             self.add_field(field)
 
     def __iter__(self):
-        return iter(self.fields)
+        return iter(self.fields.values())
 
     def __var_base__(self):
         return "ss_" + self.c_type_name.lower()
@@ -38,7 +41,7 @@ class StateStruct(object):
 
     def add_field(self, field):
         "`field` is of `QOMTypeStateField`"
-        self.fields.append(field)
+        self.fields[field.name] = field
 
     def gen_c_type(self):
         s = Structure(self.c_type_name,
