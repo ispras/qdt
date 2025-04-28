@@ -343,6 +343,32 @@ def main():
             # cache
             write = outFile.write
 
+            def write_normalized(token):
+                tok = token()
+
+                # drop leading spaces
+                while tok:
+                    if tok.type in WS:
+                        tok = token()
+                    else:
+                        break
+
+                clear_spaces()
+                while tok:
+                    if tok.type in WS:
+                        account_spaces(tok.value)
+                    else:
+                        if prev_spaces:
+                            if '\n' in prev_spaces:
+                                write('\n')
+                            else:
+                                write(' ')
+                            clear_spaces()
+
+                        write(tok.value)
+
+                    tok = token()
+
             if cpp:
                 try:
                     outData = system_cpp(fullInPath,
@@ -357,31 +383,7 @@ def main():
                     lex = CPPLexer.clone()
                     lex.input(outData)
 
-                    token = lex.token
-                    tok = token()
-
-                    # drop leading spaces
-                    while tok:
-                        if tok.type in WS:
-                            tok = token()
-                        else:
-                            break
-
-                    clear_spaces()
-                    while tok:
-                        if tok.type in WS:
-                            account_spaces(tok.value)
-                        else:
-                            if prev_spaces:
-                                if '\n' in prev_spaces:
-                                    write('\n')
-                                else:
-                                    write(' ')
-                                clear_spaces()
-
-                            write(tok.value)
-
-                        tok = token()
+                    write_normalized(lex.token)
                 else:
                     write(outData)
             else:
@@ -399,35 +401,13 @@ def main():
 
                 p.parse(inData, fullInPath)
 
-                # cache
-                token = p.token
-
-                tok = token()
                 if normalize:
-
-                    # drop leading spaces
-                    while tok:
-                        if tok.type in WS:
-                            tok = token()
-                        else:
-                            break
-
-                    clear_spaces()
-                    while tok:
-                        if tok.type in WS:
-                            account_spaces(tok.value)
-                        else:
-                            if prev_spaces:
-                                if '\n' in prev_spaces:
-                                    write('\n')
-                                else:
-                                    write(' ')
-                                clear_spaces()
-
-                            write(tok.value)
-
-                        tok = token()
+                    write_normalized(p.token)
                 else:
+                    # cache
+                    token = p.token
+
+                    tok = token()
                     while tok:
                         write(tok.value)
                         tok = token()
