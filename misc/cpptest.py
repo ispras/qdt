@@ -358,9 +358,16 @@ def main():
                     lex.input(outData)
 
                     token = lex.token
+                    tok = token()
+
+                    # drop leading spaces
+                    while tok:
+                        if tok.type in WS:
+                            tok = token()
+                        else:
+                            break
 
                     clear_spaces()
-                    tok = token()
                     while tok:
                         if tok.type in WS:
                             account_spaces(tok.value)
@@ -395,9 +402,17 @@ def main():
                 # cache
                 token = p.token
 
-                clear_spaces()
                 tok = token()
                 if normalize:
+
+                    # drop leading spaces
+                    while tok:
+                        if tok.type in WS:
+                            tok = token()
+                        else:
+                            break
+
+                    clear_spaces()
                     while tok:
                         if tok.type in WS:
                             account_spaces(tok.value)
