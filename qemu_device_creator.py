@@ -1,23 +1,25 @@
 #!/usr/bin/python
 
-from argparse import (
-    ArgumentTypeError,
-    ArgumentParser
+from common import (
+    execfile,
 )
-from os.path import (
-    isdir
-)
+import qdt
 from qemu import (
     CPUDescription,
     qvd_load_with_cache,
 )
-from common import (
-    execfile
+
+from argparse import (
+    ArgumentParser,
+    ArgumentTypeError,
+)
+from os.path import (
+    isdir,
 )
 from traceback import (
-    print_exc
+    print_exc,
 )
-import qdt
+
 
 def arg_type_directory(string):
     if not isdir(string):
