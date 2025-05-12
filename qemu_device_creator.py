@@ -88,6 +88,11 @@ def main():
             " an instruction tree.",
     )
     arg(
+        "--dry-run",
+        action = "store_true",
+        help = "Do not generate project.",
+    )
+    arg(
         "script",
         help = "A Python script containing definition of"
             " a project to generate.",
@@ -149,15 +154,18 @@ def main():
             if isinstance(desc, CPUDescription):
                 desc.instruction_tree_lookahead = True
 
-    project.gen_all(qvd.src_path,
-        intermediate_chunk_graphs = arguments.gen_intermediate_chunk_graphs,
-        with_chunk_graph = arguments.gen_chunk_graphs,
-        known_targets = qvd.qvc.known_targets,
-        with_debug_comments = arguments.gen_debug_comments,
-        translate_cpu_semantics = not arguments.no_i3s,
-        instruction_tree_lookahead = arguments.instruction_tree_lookahead,
-        include_paths = tuple(path for path, __ in qvd.include_paths)
-    )
+    if not arguments.dry_run:
+        project.gen_all(qvd.src_path,
+            intermediate_chunk_graphs
+                = arguments.gen_intermediate_chunk_graphs,
+            with_chunk_graph = arguments.gen_chunk_graphs,
+            known_targets = qvd.qvc.known_targets,
+            with_debug_comments = arguments.gen_debug_comments,
+            translate_cpu_semantics = not arguments.no_i3s,
+            instruction_tree_lookahead
+                = arguments.instruction_tree_lookahead,
+            include_paths = tuple(path for path, __ in qvd.include_paths)
+        )
 
     return 0
 
