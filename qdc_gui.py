@@ -60,7 +60,6 @@ from os import (
     remove,
 )
 from os.path import (
-    abspath,
     dirname,
     isdir,
     isfile,
