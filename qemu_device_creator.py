@@ -30,15 +30,16 @@ def main():
         "The tool generates source files inside QEMU source tree according to"
         " settings read from project script."
     )
+    arg = parser.add_argument
 
-    parser.add_argument(
+    arg(
         "--qemu-build", "-b",
         default = None,
         type = arg_type_directory,
         metavar = "/path/to/qemu/build/directory",
         help = "Override QEMU build path of the project."
     )
-    parser.add_argument(
+    arg(
         "--target-version", "-t",
         default = None,
         metavar = "<tree-ish>", # like in Git's docs
@@ -46,52 +47,52 @@ def main():
         " Overrides project's target_version."
     )
 
-    parser.add_argument(
+    arg(
         "--gen-header-tree",
         default = None,
         metavar = "header_tree.gv",
         help = "Output QEMU header inclusion graph in Graphviz format."
     )
 
-    parser.add_argument(
+    arg(
         "--gen-chunk-graphs",
         action = "store_true",
         help = "Generate Graphviz files with graph of chunks per each "
         "generated source."
     )
 
-    parser.add_argument(
+    arg(
         "--gen-intermediate-chunk-graphs",
         action = "store_true",
         help = "Generate Graphviz files with intermediate graph of chunks "
         "during header inclusion optimization for each generated source."
     )
 
-    parser.add_argument(
+    arg(
         "--gen-debug-comments",
         action = "store_true",
         help = "Generate source files with debug comments."
     )
 
-    parser.add_argument(
+    arg(
         "--no-i3s",
         action = "store_true",
         help = "Disable automatic CPU semantics translation."
     )
 
-    parser.add_argument(
+    arg(
         "--no-instruction-tree-optimizations",
         action = "store_true",
         help = "Disable optimizations when building an instruction tree."
     )
 
-    parser.add_argument(
+    arg(
         "--instruction-tree-lookahead",
         action = "store_true",
         help = "Enable lookahead approach when building an instruction tree."
     )
 
-    parser.add_argument(
+    arg(
         "script",
         help = "A Python script containing definition of a project to generate."
     )
