@@ -1304,7 +1304,7 @@ def fill_print_insn_body(cputype, function):
     encodings = cputype.encodings
 
     if len(encodings) == 1:
-        fill_print_insn_body(next(encodings.values()), body)
+        fill_print_insn_body(next(iter(encodings.values())), body)
         return
 
     for enc in encodings.values():
