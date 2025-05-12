@@ -104,32 +104,45 @@ def main():
         help = "Write project script to file with path given.",
     )
     arg(
-        "script",
-        help = "A Python script containing definition of"
-            " a project to generate.",
+        "scripts",
+        nargs = "+",
+        help = "Python scripts containing definitions of"
+            " projects to generate. Before generation projects are merged."
+            " First project settings have priority.",
     )
 
     arguments = parser.parse_args()
 
-    script = arguments.script
+    scripts = arguments.scripts
 
-    loaded = dict(qdt.__dict__)
-    try:
-        execfile(script, loaded)
-    except:
-        print("Cannot load configuration from '%s'" % script)
-        print_exc()
-        return -1
+    project = None
 
-    for v in loaded.values():
-        if isinstance(v, qdt.QProject):
-            project = v
-            break
-    else:
-        print("Script '%s' does not define a project to generate." % script)
-        return -1
+    for script in scripts:
+        loaded = dict(qdt.__dict__)
+        try:
+            execfile(script, loaded)
+        except:
+            print("Cannot load configuration from '%s'" % script)
+            print_exc()
+            return -1
 
-    v.file_name = script  # it's known exactly
+        projects = []
+        for v in loaded.values():
+            if isinstance(v, qdt.QProject):
+                v.file_name = script  # it's known exactly
+                projects.append(v)
+
+        if not projects:
+            print("Script '%s' does not define a project to generate." % (
+                script,
+            ))
+            return -1
+
+        for v in projects:
+            if project is None:
+                project = v
+            else:
+                project.merge(v)
 
     if arguments.qemu_build is None:
         qemu_build_path = getattr(project, "build_path", None)
