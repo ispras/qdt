@@ -2,6 +2,8 @@
 
 from common import (
     execfile,
+    makedirs,
+    pythonize,
 )
 import qdt
 from qemu import (
@@ -14,6 +16,7 @@ from argparse import (
     ArgumentTypeError,
 )
 from os.path import (
+    dirname,
     isdir,
 )
 from traceback import (
@@ -95,6 +98,12 @@ def main():
         help = "Do not generate project.",
     )
     arg(
+        "--output", "-o",
+        default = None,
+        metavar = "/path/to/output/script.py",
+        help = "Write project script to file with path given.",
+    )
+    arg(
         "script",
         help = "A Python script containing definition of"
             " a project to generate.",
@@ -168,6 +177,13 @@ def main():
                 = arguments.instruction_tree_lookahead,
             include_paths = tuple(path for path, __ in qvd.include_paths)
         )
+
+    output = arguments.output
+    if output:
+        output_dir = dirname(output)
+        if output_dir:
+            makedirs(output_dir, exist_ok = True)
+        pythonize(project, output)
 
     return 0
 
