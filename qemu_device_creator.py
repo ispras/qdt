@@ -26,9 +26,10 @@ def arg_type_directory(string):
 
 def main():
     parser = ArgumentParser(
-        description = "QEMU Project Generator\n"
-        "The tool generates source files inside QEMU source tree according to"
-        " settings read from project script."
+        description = "QEMU Project Generator."
+            " The tool generates boilerplate source files into QEMU source"
+            " tree according to settings read from project script."
+            " Related existing files are updated.",
     )
     arg = parser.add_argument
 
