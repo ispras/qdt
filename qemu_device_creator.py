@@ -38,64 +38,59 @@ def main():
         default = None,
         type = arg_type_directory,
         metavar = "/path/to/qemu/build/directory",
-        help = "Override QEMU build path of the project."
+        help = "Override QEMU build path of the project.",
     )
     arg(
         "--target-version", "-t",
         default = None,
         metavar = "<tree-ish>", # like in Git's docs
         help = "Assume given version of Qemu."
-        " Overrides project's target_version."
+        " Overrides project's target_version.",
     )
-
     arg(
         "--gen-header-tree",
         default = None,
         metavar = "header_tree.gv",
-        help = "Output QEMU header inclusion graph in Graphviz format."
+        help = "Output QEMU header inclusion graph in Graphviz format.",
     )
-
     arg(
         "--gen-chunk-graphs",
         action = "store_true",
-        help = "Generate Graphviz files with graph of chunks per each "
-        "generated source."
+        help = "Generate Graphviz files with graph of chunks per each"
+            " generated source.",
     )
-
     arg(
         "--gen-intermediate-chunk-graphs",
         action = "store_true",
-        help = "Generate Graphviz files with intermediate graph of chunks "
-        "during header inclusion optimization for each generated source."
+        help = "Generate Graphviz files with intermediate graph of chunks"
+            " during header inclusion optimization for each generated"
+            " source.",
     )
-
     arg(
         "--gen-debug-comments",
         action = "store_true",
-        help = "Generate source files with debug comments."
+        help = "Generate source files with debug comments.",
     )
-
     arg(
         "--no-i3s",
         action = "store_true",
-        help = "Disable automatic CPU semantics translation."
+        help = "Disable automatic CPU semantics translation.",
     )
-
     arg(
         "--no-instruction-tree-optimizations",
         action = "store_true",
-        help = "Disable optimizations when building an instruction tree."
+        help = "Disable optimizations when building an instruction tree.",
     )
-
     arg(
         "--instruction-tree-lookahead",
         action = "store_true",
-        help = "Enable lookahead approach when building an instruction tree."
+        help = "Enable lookahead approach when building"
+            " an instruction tree.",
     )
-
     arg(
         "script",
-        help = "A Python script containing definition of a project to generate."
+        help = "A Python script containing definition of"
+            " a project to generate.",
     )
 
     arguments = parser.parse_args()
