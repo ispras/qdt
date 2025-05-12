@@ -55,6 +55,19 @@ class GUIProject(QProject):
                 self.layouts[dn] = l_dict = {}
             l_dict[l.lid] = l
 
+    def merge(self, project):
+        super(GUIProject, self).merge(project)
+
+        if not isinstance(project, GUIProject):
+            return
+
+        if self.build_path is None:
+            self.build_path = project.build_path
+        if self.target_version is None:
+            self.target_version = project.target_version
+
+        self.add_layouts(project.get_all_layouts_sorted())
+
     def reset_qom_tree(self):
         self.qom_tree = q_root = QType("[QOM root is not a type]")
         q_object = QType("object", parent = q_root)
