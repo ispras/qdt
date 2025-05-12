@@ -53,6 +53,15 @@ class QProject(object):
 
         self.compat = compat
 
+    def merge(self, project):
+        for d in project.descriptions:
+            project.remove_description(d)
+            self.add_description(d)
+
+        setdefault = self.compat.setdefault
+        for kv in project.compat.items():
+            setdefault(*kv)
+
     @property
     def file_name(self):
         return self._file_name
