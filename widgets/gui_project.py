@@ -36,6 +36,12 @@ class GUIProject(QProject):
         self.target_version = target_version
 
         self.layouts = {}
+        self.add_layouts(layouts)
+
+        self.history = History()
+        self.reset_qom_tree()
+
+    def add_layouts(self, layouts):
         for l in layouts:
             # backward compatibility
             if isinstance(l, tuple):
@@ -48,9 +54,6 @@ class GUIProject(QProject):
             except KeyError:
                 self.layouts[dn] = l_dict = {}
             l_dict[l.lid] = l
-
-        self.history = History()
-        self.reset_qom_tree()
 
     def reset_qom_tree(self):
         self.qom_tree = q_root = QType("[QOM root is not a type]")
