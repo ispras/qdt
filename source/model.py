@@ -681,7 +681,10 @@ class Pointer(Type):
 
     def __getattr__(self, name):
         try:
-            return getattr(self.type, name)
+            # Some non-assigned attributes should not be searched in pointed
+            # type as they only assuciated with the `Pointer` instance.
+            if name not in ("name", "c_name"):
+                return getattr(self.type, name)
         except AttributeError:
             pass
         raise AttributeError(name)
