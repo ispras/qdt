@@ -566,7 +566,7 @@ def specify_instruction_operand(insn, op_name, op_val):
         raise ValueError(
             "%s: %d-bit instruction field is replaced with field(s)"
             " of different length %d bit(s): %r" % (
-                f.name, f.bitsize, sub_raw_fields_size, l
+                op_name, prev_field_size, sub_raw_fields_size, l
             )
         )
 
