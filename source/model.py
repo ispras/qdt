@@ -104,6 +104,9 @@ def pointer_name(name):
 class Type(TypeContainer):
     reg = {}
 
+    # `Pointer` proxifies some attributes of pointed type descriptor.
+    __pointer_proxified__ = frozenset()
+
     @staticmethod
     def lookup(name):
         name, asterisks = pointer_name(name)
@@ -249,6 +252,18 @@ class Type(TypeContainer):
 
 
 class Structure(Type):
+
+    @property
+    def __pointer_proxified__(self):
+        return frozenset(
+            (
+                "c_name",  # for nameless pointers
+                "declaration",
+                "_definition",
+                "fields",
+                "name", # for nameless pointers
+            ) + tuple(self._fields)
+        )
 
     def __init__(self,
         name = None,
@@ -403,6 +418,14 @@ class Structure(Type):
 
 class Enumeration(Type):
 
+    __pointer_proxified__ = frozenset((
+        "c_name", # for nameless pointers
+        "elems",
+        "enum_name",
+        "name", # for nameless pointers
+        "typedef_name",
+    ))
+
     def __init__(self, elems_list,
         enum_name = None,
         typedef_name = None,
@@ -534,6 +557,19 @@ class FunctionBodyString(TypeContainer):
 
 
 class Function(Type):
+
+    __pointer_proxified__ = frozenset((
+        "args",
+        "body",
+        "c_name", # for nameless pointers
+        "declaration",
+        "inline",
+        "name", # for nameless pointers
+        "ret_type",
+        "static",
+        "used_globals",
+        "used_types",
+    ))
 
     def __init__(self,
         name = None,
@@ -680,13 +716,14 @@ class Pointer(Type):
         self.const = const
 
     def __getattr__(self, name):
-        try:
-            # Some non-assigned attributes should not be searched in pointed
-            # type as they only assuciated with the `Pointer` instance.
-            if name not in ("name", "c_name"):
-                return getattr(self.type, name)
-        except AttributeError:
-            pass
+        while True: # not a loop
+            if name == "type":
+                break
+            # proxify only chosen pointed type attributes
+            t = self.type
+            if name not in t.__pointer_proxified__:
+                break
+            return getattr(t, name)
         raise AttributeError(name)
 
     def __eq__(self, other):
@@ -818,6 +855,13 @@ class Macro(Type):
 class MacroUsage(Type):
     "Something defined using a macro expansion."
 
+    __pointer_proxified__ = frozenset((
+        "c_name", # for nameless pointers
+        "initializer",
+        "macro",
+        "name", # for nameless pointers
+    ))
+
     def __init__(self, macro,
         initializer = None,
         name = None,
@@ -872,6 +916,15 @@ class OpaqueCode(Type):
 Use this to insert top level code entities which are not supported by the
 model yet. Better implement required functionality and submit patches!
     """
+
+    __pointer_proxified__ = frozenset((
+        "c_name", # for nameless pointers
+        "code",
+        "name", # for nameless pointers
+        "used_types",
+        "used_variables",
+        "weight",
+    ))
 
     def __init__(self, code,
         name = None,
