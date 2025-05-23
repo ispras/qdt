@@ -196,6 +196,10 @@ def print_layout(insn):
 
 def print_function(t):
     try:
+        body = str_as_function_body(t.body.children)
+    except:
+        body = "/* body stringification failed:\n" + format_exc() + "*/\n"
+    try:
         print("%s %s(%s)\n{\n%s}\n" % (
             t.ret_type.name,
             t.c_name,
@@ -203,7 +207,7 @@ def print_function(t):
                     check_cols_fix_up(a.declaration_string)
                         for a in t.args
                 ) if t.args is not None else "void",
-            str_as_function_body(t.body.children),
+            body
         ))
     except:
         # Sometimes, likely because of Late, a C code cannot be generated.
