@@ -101,7 +101,7 @@ class ExText(GUIFrame):
         "See Tkinter Text for arguments description."
 
         t = self.text
-        t.insert(index, text, *tags)
+        t.insert(index, text, tags)
 
         ln = self.ln
         cur_lines = int(ln.index(END).split('.', 1)[0])
