@@ -1,6 +1,7 @@
 __all__ = [
     "ExText"
       , "SyntaxView"
+  , "decorate_ignored"
 ]
 
 from .gui_frame import (
