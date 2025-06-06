@@ -51,15 +51,15 @@ class CConstantToks:
 class CConstant(CConstantToks):
 
     @staticmethod
-    def p_constant__int(INTEGER):
+    def s_constant__int(INTEGER):
         return CINT(INTEGER)
 
     @staticmethod
-    def p_constant__float(FLOAT):
+    def s_constant__float(FLOAT):
         raise NotImplementedError("float constant")
 
     @staticmethod
-    def p_constant__char(CHAR):
+    def s_constant__char(CHAR):
         raise NotImplementedError("character constant")
 
     # Note, according to C standard, STR (string-litheral) is used by
