@@ -25,12 +25,13 @@ with pypath("..ply"):
     )
 
 
-def short_ply_rule(p_func, is_method = None):
+def short_ply_rule(p_func, is_method = None, p_name = None):
     """A decorator to make short form of production handling function
 suitable for PLY's yacc.
     """
-    name = p_func.__name__
+    name = p_name or p_func.__name__
 
+    # PLY's `yacc` requires a production function name sttarts with `p_`.
     if name[:2] != "p_":
         name = "p_" + name
 
@@ -121,12 +122,11 @@ def _short_ply_grammar(cls,
     )
 
     for attr in dir(cls):
-        if not attr.startswith("p_"):
-            continue
-        if attr == "p_error":
+        if not attr.startswith("s_"):
             continue
 
-        setattr(cls, attr, short_ply_rule(getattr(cls, attr)))
+        p_func = short_ply_rule(getattr(cls, attr), p_name = attr[2:])
+        setattr(cls, p_func.__name__, p_func)
 
     cls.parser = yacc(
         module = cls,
