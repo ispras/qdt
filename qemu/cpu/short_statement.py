@@ -58,11 +58,11 @@ class ShortStatement(CDeclaration2):
         r"[ \t]"
 
     @staticmethod
-    def p_block_item__stmnt(statement):
+    def s_block_item__stmnt(statement):
         return statement
 
     @staticmethod
-    def p_block_item__decl(declaration):
+    def s_block_item__decl(declaration):
         for decl in declaration:
             if not isinstance(decl, (Variable, OpDeclareAssign)):
                 raise SyntaxError(
@@ -72,35 +72,35 @@ class ShortStatement(CDeclaration2):
         return Declare(*declaration)
 
     @staticmethod
-    def p_statement__expr(expression):
+    def s_statement__expr(expression):
         return expression
 
     @staticmethod
-    def p_statement__else(ELSE):
+    def s_statement__else(ELSE):
         return BranchElse()
 
     @staticmethod
-    def p_statement__elif(ELSE, expression):
+    def s_statement__elif(ELSE, expression):
         return BranchElse(expression)
 
     @staticmethod
-    def p_statement__for(FOR, expression):
+    def s_statement__for(FOR, expression):
         return LoopFor(step = expression)
 
     @staticmethod
-    def p_statement__for_no_expr(FOR):
+    def s_statement__for_no_expr(FOR):
         return LoopFor()
 
     @staticmethod
-    def p_statement__return(RETURN):
+    def s_statement__return(RETURN):
         return Return()
 
     @staticmethod
-    def p_statement__return_expr(RETURN, expression):
+    def s_statement__return_expr(RETURN, expression):
         return Return(expression)
 
     @staticmethod
-    def p_primary_expression__define(identifier, DEFINE, primary_expression):
+    def s_primary_expression__define(identifier, DEFINE, primary_expression):
         return Define(identifier, primary_expression)
 
     @staticmethod
