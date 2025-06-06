@@ -51,7 +51,7 @@ class CDeclaration(
     t_STAR = r"\*"
 
     @staticmethod
-    def p_declaration(declaration_specifiers__0, declaration_specifiers__1):
+    def s_declaration(declaration_specifiers__0, declaration_specifiers__1):
         # Declaration mast have at least two tokens.
         # Else, it can be confused with a an expression.
         # So, the production requires two lists of specifiers.
@@ -76,14 +76,14 @@ class CDeclaration(
         ))
 
     @staticmethod
-    def p_declaration__init(declaration_specifiers, init_declarator_list):
+    def s_declaration__init(declaration_specifiers, init_declarator_list):
         return list(iter_declarations(
             declaration_specifiers,
             init_declarator_list
         ))
 
     @staticmethod
-    def p_declaration__init_2(
+    def s_declaration__init_2(
         declaration_specifiers__0,
         declaration_specifiers__1,
         init_declarator_list
@@ -100,21 +100,21 @@ class CDeclaration(
     # TODO: declaration: static_assert_declaration
 
     @staticmethod
-    def p_init_declarator_list(init_declarator):
+    def s_init_declarator_list(init_declarator):
         return [init_declarator]
 
     @staticmethod
-    def p_init_declarator_list__n(
+    def s_init_declarator_list__n(
         init_declarator_list, COMMA, init_declarator
     ):
         return init_declarator_list + [init_declarator]
 
     @staticmethod
-    def p_init_declarator(declarator):
+    def s_init_declarator(declarator):
         return (declarator, None)
 
     @staticmethod
-    def p_direct_declarator__func_with_args(
+    def s_direct_declarator__func_with_args(
         direct_declarator, LPAREN, parameter_type_list, RPAREN
     ):
         return dict(
@@ -124,50 +124,50 @@ class CDeclaration(
         )
 
     @staticmethod
-    def p_parameter_type_list(parameter_list):
+    def s_parameter_type_list(parameter_list):
         return parameter_list
 
     @staticmethod
-    def p_parameter_type_list__va_arg(parameter_list, COMMA, DOTS):
+    def s_parameter_type_list__va_arg(parameter_list, COMMA, DOTS):
         return parameter_list + [DOTS]
 
     @staticmethod
-    def p_parameter_list(parameter_declaration):
+    def s_parameter_list(parameter_declaration):
         return [parameter_declaration]
 
     @staticmethod
-    def p_parameter_list__n(parameter_list, COMMA, parameter_declaration):
+    def s_parameter_list__n(parameter_list, COMMA, parameter_declaration):
         return parameter_list + [parameter_declaration]
 
     @staticmethod
-    def p_parameter_declaration(declaration_specifiers, declarator):
+    def s_parameter_declaration(declaration_specifiers, declarator):
         return next(iter_declarations(
             declaration_specifiers, ((declarator, None),)
         ))
 
     @staticmethod
-    def p_declarator(direct_declarator):
+    def s_declarator(direct_declarator):
         return [direct_declarator]
 
     @staticmethod
-    def p_declarator__pointer(pointer, direct_declarator):
+    def s_declarator__pointer(pointer, direct_declarator):
         return pointer + [direct_declarator]
 
     @staticmethod
-    def p_direct_declarator__identifier(IDENTIFIER):
+    def s_direct_declarator__identifier(IDENTIFIER):
         return dict(
             type = str,
             name = IDENTIFIER,
         )
 
     @staticmethod
-    def _p_direct_declarator__parenthesed(
+    def _s_direct_declarator__parenthesed(
         LPAREN, declarator, RPAREN
     ):
         raise NotImplementedError
 
     @staticmethod
-    def p_direct_declarator__func_without_args(
+    def s_direct_declarator__func_without_args(
         direct_declarator, LPAREN, RPAREN
     ):
         return dict(
@@ -178,7 +178,7 @@ class CDeclaration(
         )
 
     @staticmethod
-    def p_direct_declarator__func_void_args(
+    def s_direct_declarator__func_void_args(
         direct_declarator, LPAREN, IDENTIFIER, RPAREN
     ):
         if IDENTIFIER != "void":
@@ -191,102 +191,102 @@ class CDeclaration(
         )
 
     @staticmethod
-    def p_pointer__qualified(STAR, type_qualifier_list):
+    def s_pointer__qualified(STAR, type_qualifier_list):
         return [type_qualifier_list]
 
     @staticmethod
-    def p_pointer__qualified_n(STAR, type_qualifier_list, pointer):
+    def s_pointer__qualified_n(STAR, type_qualifier_list, pointer):
         return [type_qualifier_list] + pointer
 
     @staticmethod
-    def p_pointer(STAR):
+    def s_pointer(STAR):
         return [[]]
 
     @staticmethod
-    def p_pointer__n(STAR, pointer):
+    def s_pointer__n(STAR, pointer):
         return [[]] + pointer
 
     @staticmethod
-    def p_type_qualifier_list(type_qualifier):
+    def s_type_qualifier_list(type_qualifier):
         return [type_qualifier]
 
     @staticmethod
-    def p_type_qualifier_list__n(type_qualifier_list, type_qualifier):
+    def s_type_qualifier_list__n(type_qualifier_list, type_qualifier):
         return type_qualifier_list + [type_qualifier]
 
     # --
 
     @staticmethod
-    def p_type_name(specifier_qualifier_list):
+    def s_type_name(specifier_qualifier_list):
         return get_type(specifier_qualifier_list, [])
 
     @staticmethod
-    def p_type_name__abstract(specifier_qualifier_list, abstract_declarator):
+    def s_type_name__abstract(specifier_qualifier_list, abstract_declarator):
         return get_type(specifier_qualifier_list, abstract_declarator)
 
     # --
 
     @staticmethod
-    def p_abstract_declarator__pointer(pointer):
+    def s_abstract_declarator__pointer(pointer):
         return pointer
 
     # TODO
     @staticmethod
-    def _p_abstract_declarator__direct(direct_abstract_declarator):
+    def _s_abstract_declarator__direct(direct_abstract_declarator):
         return [direct_abstract_declarator]
 
     # TODO
     @staticmethod
-    def _p_abstract_declarator__p_direct(pointer, direct_abstract_declarator):
+    def _s_abstract_declarator__p_direct(pointer, direct_abstract_declarator):
         return pointer + [direct_abstract_declarator]
 
 
 class CDeclaration2(CDeclaration, CExpr):
 
     @staticmethod
-    def p_init_declarator__with_init(declarator, ASSIGN, initializer):
+    def s_init_declarator__with_init(declarator, ASSIGN, initializer):
         return (declarator, initializer)
 
     @staticmethod
-    def p_initializer_list(initializer_list_item):
+    def s_initializer_list(initializer_list_item):
         return initializer_list_item
 
     @staticmethod
-    def p_initializer_list__n(initializer_list, COMMA, initializer_list_item):
+    def s_initializer_list__n(initializer_list, COMMA, initializer_list_item):
         return initializer_list.update(initializer_list_item)
 
     @staticmethod
-    def p_initializer_list_item(initializer):
+    def s_initializer_list_item(initializer):
         return OrderedDict({ None : initializer })
 
     @staticmethod
-    def p_initializer_list_item__designated(designation, initializer):
+    def s_initializer_list_item__designated(designation, initializer):
         return OrderedDict({ designation : initializer })
 
     @staticmethod
-    def p_designation(designator_list, ASSIGN):
+    def s_designation(designator_list, ASSIGN):
         return designator_list
 
     @staticmethod
-    def p_designator_list(designator):
+    def s_designator_list(designator):
         return (designator) # must be hashable
 
     @staticmethod
-    def p_designator_list__n(designator_list, designator):
+    def s_designator_list__n(designator_list, designator):
         return designator_list + (designator,) # must be hashable
 
     @staticmethod
-    def p_designator__id(DOT, IDENTIFIER):
+    def s_designator__id(DOT, IDENTIFIER):
         return IDENTIFIER
 
     # requires CExpr
 
     @staticmethod
-    def p_initializer__expr(assignment_expression):
+    def s_initializer__expr(assignment_expression):
         return assignment_expression
 
     @staticmethod
-    def p_designator__expr(LBRACKET, constant_expression, RBRACKET):
+    def s_designator__expr(LBRACKET, constant_expression, RBRACKET):
         return constant_expression
 
 
