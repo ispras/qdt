@@ -68,90 +68,90 @@ class CIdGen(object):
     # Parser produces list of `cidchar`s those will be used for thing
     # construction.
 
-    def p_result(base):
+    def s_result(base):
         return base
 
-    def p_result__empty():
+    def s_result__empty():
         return [cidchar('', '', '', '_')]
 
-    def p_result__discard_leading_digits(digits, base):
+    def s_result__discard_leading_digits(digits, base):
         return base
 
-    def p_result__discard_leading_separators(separators, base):
+    def s_result__discard_leading_separators(separators, base):
         return base
 
-    def p_base__0(capitalized):
+    def s_base__0(capitalized):
         return capitalized
 
-    def p_base__1(word):
+    def s_base__1(word):
         return word
 
-    def p_base__2(separated):
+    def s_base__2(separated):
         # Strip separator to the right.
         return separated[:-1]
 
-    def p_base__3(enumerated):
+    def s_base__3(enumerated):
         return enumerated
 
-    def p_capitalized(capitalizer, word):
+    def s_capitalized(capitalizer, word):
         # Capitalize structure name.
         return capitalizer + [
             word[0]._replace(struct = word[0].struct.capitalize())
         ] + word[1:]
 
-    def p_separated(separatible, separators):
+    def s_separated(separatible, separators):
         # Take only first separator, discard rest.
         return separatible + separators[:1]
 
-    def p_enumerated(enumeratible, digits):
+    def s_enumerated(enumeratible, digits):
         return enumeratible + digits
 
-    def p_capitalizer__0(separated):
+    def s_capitalizer__0(separated):
         return separated
 
-    def p_capitalizer__1(enumerated):
+    def s_capitalizer__1(enumerated):
         return enumerated
 
-    def p_separatible__0(capitalized):
+    def s_separatible__0(capitalized):
         return capitalized
 
-    def p_separatible__1(word):
+    def s_separatible__1(word):
         return word
 
-    def p_separatible__2(enumerated):
+    def s_separatible__2(enumerated):
         return enumerated
 
-    def p_enumeratible__0(capitalized):
+    def s_enumeratible__0(capitalized):
         return capitalized
 
-    def p_enumeratible__1(word):
+    def s_enumeratible__1(word):
         return word
 
-    def p_enumeratible__2(separated):
+    def s_enumeratible__2(separated):
         return separated
 
-    def p_word(word__0, word__1):
+    def s_word(word__0, word__1):
         return word__0 + word__1
 
-    def p_word__LOWER(LOWER):
+    def s_word__LOWER(LOWER):
         return [LOWER]
 
-    def p_word__UPPER(UPPER):
+    def s_word__UPPER(UPPER):
         return [UPPER]
 
-    def p_separators(separators__0, separators__1):
+    def s_separators(separators__0, separators__1):
         return separators__0 + separators__1
 
-    def p_separators__SLASH(SLASH):
+    def s_separators__SLASH(SLASH):
         return [SLASH]
 
-    def p_separators__FORBIDDEN(FORBIDDEN):
+    def s_separators__FORBIDDEN(FORBIDDEN):
         return [FORBIDDEN]
 
-    def p_digits(digits__0, digits__1):
+    def s_digits(digits__0, digits__1):
         return digits__0 + digits__1
 
-    def p_digits__NUMBER(NUMBER):
+    def s_digits__NUMBER(NUMBER):
         return [NUMBER]
 
     p_error = t_error
