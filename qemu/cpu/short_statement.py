@@ -9,7 +9,7 @@ from source.function.tree import (
     Return,
 )
 from source.langs.c_decl import (
-    CDeclaration2,
+    CDeclarationAndExpr,
 )
 from source.model import (
     NodeVisitor,
@@ -49,7 +49,7 @@ class DefineFinder(NodeVisitor):
     debugfile = True,
     start = "block_item",
 )
-class ShortStatement(CDeclaration2):
+class ShortStatement(CDeclarationAndExpr):
 
     t_DEFINE = ":="
 

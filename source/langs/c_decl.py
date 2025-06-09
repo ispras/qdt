@@ -254,7 +254,7 @@ class CDeclaration(
         return OpSizeOf(type_name)
 
 
-class CDeclaration2(CDeclaration, CExpr):
+class CDeclarationAndExpr(CDeclaration, CExpr):
 
     @staticmethod
     def s_init_declarator__with_init(declarator, ASSIGN, initializer):
@@ -316,7 +316,7 @@ class CDeclaration2(CDeclaration, CExpr):
     debugfile = True,
     start = "declaration",
 )
-class CDecl(CDeclaration2):
+class CDecl(CDeclarationAndExpr):
 
     @staticmethod
     def t_WS(t):
