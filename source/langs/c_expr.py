@@ -390,3 +390,12 @@ class CExpr(
     @staticmethod
     def s_constant_expression(conditional_expression):
         return conditional_expression
+
+    @staticmethod
+    def s_enumerator__manual(IDENTIFIER, ASSIGN, constant_expression):
+        # Note:
+        #    enumerator : enumeration_constant ASSIGN constant_expression
+        #    but
+        #    enumeration_constant: identifier
+        #    only
+        return (IDENTIFIER, constant_expression)
