@@ -17,6 +17,7 @@ from .c_type import (
 )
 from ..function.tree import (
     OpDeclareAssign,
+    OpSizeOf,
 )
 from ..late import (
     Late,
@@ -239,6 +240,17 @@ class CDeclaration(
     @staticmethod
     def _s_abstract_declarator__p_direct(pointer, direct_abstract_declarator):
         return pointer + [direct_abstract_declarator]
+
+    # contributions
+
+    @staticmethod
+    def s_unary_expression__sizeof_id(
+        SIZEOF,
+        LPAREN,
+        type_name,
+        RPAREN
+    ):
+        return OpSizeOf(type_name)
 
 
 class CDeclaration2(CDeclaration, CExpr):
