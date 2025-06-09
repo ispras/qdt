@@ -446,7 +446,7 @@ class Enumeration(Type):
             self.c_name = "enum@b" + self.c_name
 
         self.elems = OrderedDict()
-        t = [ Type["int"] ]
+        used_types = None
         for elem in elems_list:
             # Either ("name", value) tuple or just a "name" `str`ing.
             if isinstance(elem, str):
@@ -454,7 +454,9 @@ class Enumeration(Type):
                 init = None
             else:
                 key, val = elem
-                init = Initializer(str(val), t)
+                if used_types is None:
+                    used_types = [ Type["int"] ]
+                init = Initializer(str(val), used_types = used_types)
 
             self.elems[key] = EnumerationElement(self, key, init)
 
