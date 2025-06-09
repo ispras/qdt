@@ -1,12 +1,20 @@
 __all__ = [
     "CStructOrUnion"
+  , "CEnum"
   , "CTypeSpecifier"
   , "CTypeQualifier"
   , "CSpecQualList"
 ]
 
+from .c_punct import (
+    CPunctuation,
+)
 from .c_words import (
     CWords,
+)
+from ..model import (
+    Enumeration,
+    Type,
 )
 
 
@@ -86,23 +94,23 @@ class CAtomic(CWords):
         raise NotImplementedError(ATOMIC + "(%s)" % type_name)
 
 
-class CEnum(CWords):
+class CEnum(CPunctuation, CWords):
 
     # Sourced productions
 
     @staticmethod
     def s_enum_specifier__ref(ENUM, IDENTIFIER):
-        raise NotImplementedError("enum " + IDENTIFIER)
+        res = Type[IDENTIFIER]
+        assert isinstance(res, Enumeration)
+        return res
 
     @staticmethod
     def s_enum_specifier__anon(ENUM, enumerator_list_block):
-        raise NotImplementedError("enum { ... }")
+        return Enumeration(enumerator_list_block)
 
     @staticmethod
     def s_enum_specifier__full(ENUM, IDENTIFIER, enumerator_list_block):
-        raise NotImplementedError(
-            "struct/union " + IDENTIFIER + " { ... }"
-        )
+        return Enumeration(enumerator_list_block, enum_name = IDENTIFIER)
 
     # --
 
@@ -133,23 +141,13 @@ class CEnum(CWords):
         #    but
         #    enumeration_constant: identifier
         #    only
-        raise NotImplementedError(IDENTIFIER + " as `enum` item")
+        return IDENTIFIER
 
     # Extensions to other productions
 
     @staticmethod
     def s_type_specifier__enum(enum_specifier):
         return enum_specifier
-
-    # TODO: move to `constant_expression` extensions
-    @staticmethod
-    def _s_enumerator__manual(IDENTIFIER, ASSIGN, constant_expression):
-        # Note:
-        #    enumerator : enumeration_constant ASSIGN constant_expression
-        #    but
-        #    enumeration_constant: identifier
-        #    only
-        raise NotImplementedError(IDENTIFIER + " = [value] as `enum` item")
 
 
 class CStructOrUnion(CWords):
