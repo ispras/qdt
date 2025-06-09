@@ -16,6 +16,7 @@ from .c_type import (
     CSpecQualList,
 )
 from ..function.tree import (
+    OpCast,
     OpDeclareAssign,
     OpSizeOf,
 )
@@ -300,6 +301,15 @@ class CDeclaration2(CDeclaration, CExpr):
     @staticmethod
     def s_designator__expr(LBRACKET, constant_expression, RBRACKET):
         return constant_expression
+
+    @staticmethod
+    def s_cast_expression__cast_id(
+        LPAREN,
+        type_name,
+        RPAREN,
+        cast_expression
+    ):
+        return OpCast(type_name, cast_expression)
 
 
 @short_ply_grammar(

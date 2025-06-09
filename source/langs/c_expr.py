@@ -24,7 +24,6 @@ from source.function.tree import (
     OpAddr,
     OpAnd,
     OpAssign,
-    OpCast,
     OpCombAssign,
     OpDeref,
     OpDiv,
@@ -199,15 +198,6 @@ class CExpr(
     @staticmethod
     def s_cast_expression(unary_expression):
         return unary_expression
-
-    @staticmethod
-    def s_cast_expression__cast_id(
-        LPAREN,
-        type_name,
-        RPAREN,
-        cast_expression
-    ):
-        return OpCast(type_name, cast_expression)
 
     @staticmethod
     def s_multiplicative_expression(cast_expression):
