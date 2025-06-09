@@ -194,15 +194,6 @@ class CExpr(
     def s_unary_expression__sizeof_expr(SIZEOF, unary_expression):
         return OpSizeOf(unary_expression)
 
-    @staticmethod
-    def s_unary_expression__sizeof_id(
-        SIZEOF,
-        LPAREN,
-        type_name,
-        RPAREN
-    ):
-        return OpSizeOf(type_name)
-
     # TODO: unary-expression: _Alignof ( type-name )
 
     @staticmethod
