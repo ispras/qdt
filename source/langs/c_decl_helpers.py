@@ -1,0 +1,130 @@
+__all__ = [] # currently, direct import only
+
+from .c_decl_spec import (
+    CDeclSpec,
+)
+from ..function.tree import (
+    OpDeclareAssign,
+)
+from ..late import (
+    Late,
+)
+from ..model import (
+    Function,
+    Pointer,
+    Type,
+    TypeNotRegistered,
+)
+
+
+spec_and_name = set([
+    "short",
+    "long",
+    "unsigned",
+    "signed",
+])
+
+
+def iter_declarations(declaration_specifiers, init_declarator_list):
+    var_type = None
+
+    for declarator, initializer in init_declarator_list:
+        pointers = declarator[:-1]
+        direct_declarator = declarator[-1]
+
+        dd_type = direct_declarator["type"]
+
+        if dd_type is Function:
+            if initializer is not None:
+                raise SyntaxError("initializer to a function")
+
+            kw = {}
+
+            ret_type_ds = []
+
+            for ds in declaration_specifiers:
+                if ds in ("static",) + CDeclSpec.FUNCTION_SPECIFIERS:
+                    kw[ds] = True
+                else:
+                    ret_type_ds.append(ds)
+
+            if var_type is None:
+                decl_spec_type = get_declaration_type(ret_type_ds)
+                var_type = make_pointer(decl_spec_type, pointers)
+
+            name_desc = direct_declarator["name"]
+            assert name_desc["type"] is str
+
+            yield Function(
+                name = name_desc["name"],
+                args = direct_declarator["args"],
+                ret_type = var_type,
+                **kw
+            )
+        elif dd_type is str:
+            # variable
+            if var_type is None:
+                decl_spec_type = get_declaration_type(declaration_specifiers)
+                var_type = make_pointer(decl_spec_type, pointers)
+
+            name = direct_declarator["name"]
+            assert isinstance(name, str)
+            var = var_type(name)
+            if initializer is None:
+                yield var
+            else:
+                yield OpDeclareAssign(var, initializer)
+        else:
+            raise NotImplementedError
+
+def get_declaration_type(declaration_specifiers):
+    type_info = None
+    specs = []
+    for spec in declaration_specifiers:
+        if isinstance(spec, str):
+            specs.append(spec)
+        else:
+            if type_info is None:
+                type_info = spec
+            else:
+                if type_info["name"] in spec_and_name:
+                    # E.g. unsigned int, signed long long
+                    specs.append(type_info["name"])
+                    type_info = spec
+                else:
+                    # E.g. `int int` or `int short`
+                    raise ValueError(
+                        "multiple types: %s, %s" % (type_info, spec)
+                    )
+    if type_info is None:
+        raise ValueError("no type name found")
+
+    specs.append(type_info["name"])
+
+    spec_type_name = " ".join(specs)
+
+    try:
+        return Type[spec_type_name]
+    except TypeNotRegistered:
+        if type_info["base"]:
+            return Type(
+                name = spec_type_name,
+                base = True,
+                incomplete = type_info["name"] == "void",
+            )
+        else:
+            return Late(spec_type_name)
+
+def make_pointer(base_type, pointers):
+    for pointer_qualifiers in pointers:
+        base_type = Pointer(base_type,
+            **dict((q, True) for q in pointer_qualifiers)
+        )
+    return base_type
+
+
+def get_type(specifier_qualifier_list, abstract_declarator):
+    # specifier_qualifier_list is subset of declaration_specifiers
+    base_type = get_declaration_type(specifier_qualifier_list)
+    # XXX: current impementation allows only pointers in abstract_declarator
+    return make_pointer(base_type, abstract_declarator)
