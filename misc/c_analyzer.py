@@ -7,6 +7,7 @@ from source import (
 )
 from widgets import (
     add_scrollbars_native,
+    AutoPanedWindow,
     ExText,
     decorate_ignored,
     GUIText,
@@ -32,12 +33,11 @@ from os.path import (
 )
 from six.moves.tkinter import (
     BOTH,
-    BOTTOM,
     END,
     Frame,
     LEFT,
-    RIGHT,
-    TOP,
+    RAISED,
+    VERTICAL,
 )
 
 gcc_defines = tuple(iter_gcc_defines())
@@ -87,11 +87,17 @@ class CAnalyzerTk(GUITk):
     def __init__(self, *a, **kw):
         super(CAnalyzerTk, self).__init__(*a, **kw)
 
-        top = Frame(self)
-        top.pack(side = TOP, fill = BOTH, expand = True)
+        apw = AutoPanedWindow(self,
+            sashrelief = RAISED,
+            orient = VERTICAL,
+        )
+        apw.pack(fill = BOTH, expand = True)
 
-        bottom = Frame(self)
-        bottom.pack(side = BOTTOM, fill = BOTH, expand = True)
+        top = Frame(apw)
+        apw.add(top, sticky = "NESW")
+
+        bottom = Frame(apw)
+        apw.add(bottom, sticky = "NESW")
 
         et_result = ExText(top)
         et_result.pack(side = LEFT, fill = BOTH, expand = True)
