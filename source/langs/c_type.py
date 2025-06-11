@@ -6,6 +6,9 @@ __all__ = [
   , "CSpecQualList"
 ]
 
+from .c_decl_helpers import (
+    iter_sturct_fields,
+)
 from .c_punct import (
     CPunctuation,
 )
@@ -14,6 +17,7 @@ from .c_words import (
 )
 from ..model import (
     Enumeration,
+    Structure,
     Type,
 )
 
@@ -150,17 +154,18 @@ class CEnum(CPunctuation, CWords):
         return enum_specifier
 
 
-class CStructOrUnion(CWords):
-    """ User must defile
-  - struct_declarator
-  - struct_declaration
+class CStructOrUnion(CPunctuation, CWords):
+    """ User must define
+    - constant_expression
+    - declarator
+    - specifier_qualifier_list
     """
 
     # Sourced productions
 
     @staticmethod
     def s_struct_or_union__struct(STRUCT):
-        raise NotImplementedError(STRUCT)
+        return Structure
 
     @staticmethod
     def s_struct_or_union__union(UNION):
@@ -170,27 +175,31 @@ class CStructOrUnion(CWords):
 
     @staticmethod
     def s_struct_or_union_specifier__ref(struct_or_union, IDENTIFIER):
-        raise NotImplementedError("struct/union " + IDENTIFIER)
+        ret = Type[IDENTIFIER]
+        assert isinstance(ret, struct_or_union)
+        return ret
 
     @staticmethod
     def s_struct_or_union_specifier__anon(
             struct_or_union, struct_declaration_block
     ):
-        raise NotImplementedError("struct/union { ... }")
+        return struct_or_union(None,
+            *iter_sturct_fields(struct_declaration_block)
+        )
 
     @staticmethod
     def s_struct_or_union_specifier__full(
             struct_or_union, IDENTIFIER, struct_declaration_block
     ):
-        raise NotImplementedError(
-            "struct/union " + IDENTIFIER + " { ... }"
+        return struct_or_union(IDENTIFIER,
+            *iter_sturct_fields(struct_declaration_block)
         )
 
     # --
 
     @staticmethod
     def s_struct_declaration_block(
-        LPAREN, struct_declaration_list, RPAREN
+        LBRACE, struct_declaration_list, RBRACE
     ):
         return struct_declaration_list
 
@@ -221,19 +230,95 @@ class CStructOrUnion(CWords):
     # --
 
     # TODO: struct_declaration: static_assert_declaration
-    # TODO: struct_declaration:
-    #       specifier_qualifier_list struct_declarator_list SEMI
-    # TODO: struct_declaration:
-    #       specifier_qualifier_list SEMI
+
+    @staticmethod
+    def s_struct_declaration__last_spec_is_declarator(
+        specifier_qualifier_list,
+        SEMI
+    ):
+        return (
+            specifier_qualifier_list[:-1],
+            [ # init_declarator_list
+                [
+                    [
+                        dict(
+                            type = str,
+                            **specifier_qualifier_list[-1]
+                        )
+                    ], # declarator
+                    None,  # initializer
+                ],
+            ]
+        )
+
+    @staticmethod
+    def s_struct_declaration(
+        specifier_qualifier_list,
+        struct_declarator_list,
+        SEMI
+    ):
+        return (specifier_qualifier_list, struct_declarator_list)
+
+    # Note, in configuration...
+    #    specifier_qualifier_item . IDENTIFIER
+    # The state machine cannot distinguish those rules...
+    #    1. direct_declarator -> IDENTIFIER
+    #    2. type_specifier -> IDENTIFIER
+    # The former results in reducing IDENTIFIER to struct_declarator and
+    # leads to configuration...
+    #     specifier_qualifier_list . struct_declarator_list
+    # The letter results in reducing IDENTIFIER to specifier_qualifier_item and
+    # leads to configuration...
+    #     specifier_qualifier_list .
+    # I.e. it cannot distinguish two productions above.
+    # The production above forces it to wait for either COMMA or SEMI to make
+    # a choice.
+    # Note that, in the original C parsing chain there is a type table.
+    # The lexer chooses between IDENTIFIER and TYPE_IDENTIFIER tokens
+    # querying the table.
+    # Lexically, those tokens matches same regular expression.
+    # And the rule 2. looks like...
+    #    2. type_specifier -> TYPE_IDENTIFIER
+
+    @staticmethod
+    def s_struct_declaration__last_spec_is_first_declarator(
+        specifier_qualifier_list,
+        COMMA,
+        struct_declarator_list,
+        SEMI
+    ):
+        return (
+            specifier_qualifier_list[:-1],
+            [ # init_declarator_list
+                [
+                    [
+                        dict(
+                            type = str,
+                            **specifier_qualifier_list[-1]
+                        )
+                    ], # declarator
+                    None,  # initializer
+                ],
+            ] + struct_declarator_list
+        )
 
     # --
 
-    # TODO: struct_declarator: declarator
-    # TODO: struct_declarator: COLON constant_expression
-    # TODO: struct_declarator: declarator COLON constant_expression
+    @staticmethod
+    def s_struct_declarator(declarator):
+        return (declarator, None)
+
+    @staticmethod
+    def s_struct_declarator__bitfield(declarator, COLON, constant_expression):
+        return (declarator, constant_expression)
+
+    # TODO
+    @staticmethod
+    def _s_struct_declarator__anon_bitfield(COLON, constant_expression):
+        return (None, constant_expression)
 
     # Extensions to other productions
 
     @staticmethod
     def s_type_specifier__struct_or_union(struct_or_union_specifier):
-        raise NotImplementedError("struct/union ID_opt {...}_opt")
+        return struct_or_union_specifier
