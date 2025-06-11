@@ -4,3 +4,4 @@ build/
 rpc.touch
 git_worktrees_root/
 _CEnum*
+_CStructOrUnion*
