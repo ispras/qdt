@@ -76,9 +76,9 @@ class CSpecQualList:
 
     @staticmethod
     def s_specifier_qualifier_list__n(
-        specifier_qualifier_item, specifier_qualifier_list
+        specifier_qualifier_list, specifier_qualifier_item
     ):
-        return [specifier_qualifier_item] + specifier_qualifier_list
+        return specifier_qualifier_list + [specifier_qualifier_item]
 
 
 class CAtomic(CWords):
