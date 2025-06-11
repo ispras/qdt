@@ -128,10 +128,11 @@ class CWords:
     def t_CONTINUE(t):
         return t
 
-    FUNCTION_SPECIFIERS = ("inline", "_Noreturn")
-
     @staticmethod
-    @word(*FUNCTION_SPECIFIERS)
+    @word(
+        "inline",
+        "_Noreturn",
+    )
     def t_FUNCTION_SPECIFIER(t):
         return t
 
