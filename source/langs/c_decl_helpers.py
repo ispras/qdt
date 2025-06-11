@@ -3,6 +3,9 @@ __all__ = [] # currently, direct import only
 from .c_decl_spec import (
     CDeclSpec,
 )
+from .c_type import (
+    CTypeQualifier,
+)
 from ..function.tree import (
     OpDeclareAssign,
 )
@@ -57,8 +60,8 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
             ret_type_ds = []
 
             for ds in declaration_specifiers:
-                if ds in ("static",) + CDeclSpec.FUNCTION_SPECIFIERS:
-                    kw[ds] = True
+                if ds["type"] is CDeclSpec:
+                    kw[ds["name"]] = True
                 else:
                     ret_type_ds.append(ds)
 
@@ -95,8 +98,11 @@ def get_declaration_type(declaration_specifiers):
     type_info = None
     specs = []
     for spec in declaration_specifiers:
-        if isinstance(spec, str):
-            specs.append(spec)
+        spec_type = spec["type"]
+        if spec_type is CTypeQualifier:
+            specs.append(spec["name"])
+        elif spec_type is CDeclSpec:
+            raise NotImplementedError
         else:
             if type_info is None:
                 type_info = spec

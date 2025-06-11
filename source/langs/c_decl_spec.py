@@ -28,11 +28,17 @@ class CDeclSpec(CWords):
 
     @staticmethod
     def s_declaration_specifier__storage_class(STORAGE_CLASS_SPECIFIER):
-        return STORAGE_CLASS_SPECIFIER
+        return dict(
+            name = STORAGE_CLASS_SPECIFIER,
+            type = CDeclSpec,
+        )
 
     @staticmethod
     def s_declaration_specifier__function(FUNCTION_SPECIFIER):
-        return FUNCTION_SPECIFIER
+        return dict(
+            name = FUNCTION_SPECIFIER,
+            type = CDeclSpec,
+        )
 
 
 class CAlignSpecExts(CWords, CPunctuation):

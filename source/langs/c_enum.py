@@ -67,4 +67,8 @@ class CEnum(CPunctuation, CWords):
 
     @staticmethod
     def s_type_specifier__enum(enum_specifier):
-        return enum_specifier
+        return dict(
+            name = enum_specifier.name if enum_specifier.is_named
+                   else None,
+            type = CEnum,
+        )

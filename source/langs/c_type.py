@@ -18,6 +18,7 @@ class CTypeSpecifier(CWords):
         return dict(
             name = BASE_TYPE_SPECIFIER,
             base = True,
+            type = CTypeSpecifier,
         )
 
     @staticmethod
@@ -26,6 +27,7 @@ class CTypeSpecifier(CWords):
         return dict(
             name = IDENTIFIER,
             base = False,
+            type = CTypeSpecifier,
         )
 
     # Extensions to other productions
@@ -41,7 +43,10 @@ class CTypeQualifier(CWords):
 
     @staticmethod
     def s_type_qualifier(TYPE_QUALIFIER):
-        return TYPE_QUALIFIER
+        return dict(
+            name = TYPE_QUALIFIER,
+            type = CTypeQualifier,
+        )
 
     # Extensions to other productions
 
