@@ -44,10 +44,6 @@ class CTypeSpecifier(CWords):
     # Extensions to other productions
 
     @staticmethod
-    def s_specifier_qualifier_item__type_qualifier(type_qualifier):
-        return type_qualifier
-
-    @staticmethod
     def s_declaration_specifier__type(type_specifier):
         return type_specifier
 
@@ -65,6 +61,10 @@ class CTypeQualifier(CWords):
     @staticmethod
     def s_specifier_qualifier_item__type(type_specifier):
         return type_specifier
+
+    @staticmethod
+    def s_specifier_qualifier_item__type_qualifier(type_qualifier):
+        return type_qualifier
 
     @staticmethod
     def s_declaration_specifier__type_qualifier(type_qualifier):
