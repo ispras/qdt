@@ -13,9 +13,6 @@ from .c_words import (
 
 
 class CDeclSpec(CWords):
-    """ This sub-grammar defines self-sufficient productions only.
-See: CDeclSpecEx.
-    """
 
     @staticmethod
     def s_declaration_specifiers(declaration_specifier):
