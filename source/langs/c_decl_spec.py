@@ -38,7 +38,7 @@ See: CDeclSpecEx.
         return FUNCTION_SPECIFIER
 
 
-class CAlignSpecExts(CWords):
+class CAlignSpecExts(CWords, CPunctuation):
     "User must provide `alignment_specifier`"
 
     # Extensions to other productions
