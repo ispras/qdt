@@ -107,7 +107,7 @@ class CStructOrUnion(CPunctuation, CWords):
                     [
                         dict(
                             type = str,
-                            **specifier_qualifier_list[-1]
+                            name = specifier_qualifier_list[-1]["name"],
                         )
                     ], # declarator
                     None,  # initializer
@@ -158,7 +158,7 @@ class CStructOrUnion(CPunctuation, CWords):
                     [
                         dict(
                             type = str,
-                            **specifier_qualifier_list[-1]
+                            name = specifier_qualifier_list[-1]["name"],
                         )
                     ], # declarator
                     None,  # initializer
