@@ -16,6 +16,10 @@ from ..model import (
     TypeNotRegistered,
 )
 
+from itertools import (
+    chain,
+    starmap,
+)
 
 spec_and_name = set([
     "short",
@@ -23,6 +27,16 @@ spec_and_name = set([
     "unsigned",
     "signed",
 ])
+
+
+def iter_sturct_fields(struct_declaration_block):
+    for decl in chain(*starmap(iter_declarations, struct_declaration_block)):
+        if isinstance(decl, OpDeclareAssign):
+            # a bitfield
+            var, bits = decl.children
+            var.initializer = bits
+            decl = var
+        yield decl
 
 
 def iter_declarations(declaration_specifiers, init_declarator_list):
