@@ -185,4 +185,7 @@ class CStructOrUnion(CPunctuation, CWords):
 
     @staticmethod
     def s_type_specifier__struct_or_union(struct_or_union_specifier):
-        return struct_or_union_specifier
+        return dict(
+            name = struct_or_union_specifier.name,
+            type = CStructOrUnion,
+        )
