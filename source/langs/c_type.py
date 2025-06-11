@@ -1,6 +1,5 @@
 __all__ = [
     "CStructOrUnion"
-  , "CEnum"
   , "CTypeSpecifier"
   , "CTypeQualifier"
   , "CSpecQualList"
