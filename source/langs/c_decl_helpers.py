@@ -95,7 +95,7 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
             raise NotImplementedError
 
 def get_declaration_type(declaration_specifiers):
-    type_info = None
+    type_spec = None
     specs = []
     for spec in declaration_specifiers:
         spec_type = spec["type"]
@@ -104,33 +104,33 @@ def get_declaration_type(declaration_specifiers):
         elif spec_type is CDeclSpec:
             raise NotImplementedError
         else:
-            if type_info is None:
-                type_info = spec
+            if type_spec is None:
+                type_spec = spec
             else:
-                if type_info["name"] in spec_and_name:
+                if type_spec["name"] in spec_and_name:
                     # E.g. unsigned int, signed long long
-                    specs.append(type_info["name"])
-                    type_info = spec
+                    specs.append(type_spec["name"])
+                    type_spec = spec
                 else:
                     # E.g. `int int` or `int short`
                     raise ValueError(
-                        "multiple types: %s, %s" % (type_info, spec)
+                        "multiple type names: %s, %s" % (type_spec, spec)
                     )
-    if type_info is None:
-        raise ValueError("no type name found")
+    if type_spec is None:
+        raise ValueError("no type (name) specified")
 
-    specs.append(type_info["name"])
+    specs.append(type_spec["name"])
 
     spec_type_name = " ".join(specs)
 
     try:
         return Type[spec_type_name]
     except TypeNotRegistered:
-        if type_info["base"]:
+        if type_spec["base"]:
             return Type(
                 name = spec_type_name,
                 base = True,
-                incomplete = type_info["name"] == "void",
+                incomplete = type_spec["name"] == "void",
             )
         else:
             return Late(spec_type_name)
