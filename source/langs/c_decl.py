@@ -1,6 +1,7 @@
 __all__ = [
     "CDeclaration"
       , "CDecl"
+      , "CDeclarationAndExpr"
 ]
 
 
