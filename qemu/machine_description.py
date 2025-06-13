@@ -76,10 +76,7 @@ class MachineDescription(QOMDescription):
         gen.reset_gen(self)
         gen.gen_field('name = "' + self.name + '"')
         gen.gen_field('directory = "' + self.directory + '"')
-        if self.compat:
-            for attr, val in self.compat.items():
-                gen.gen_field(attr + " = ")
-                gen.pprint(val)
+        gen.gen_compat(self)
         gen.gen_end()
 
     def __pygen_pass__(self, gen):
