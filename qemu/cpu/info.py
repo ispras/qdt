@@ -1,8 +1,13 @@
 __all__ = [
-    "CPUInfo"
+    "CPUEnvField"
+  , "CPUInfo"
   , "CPURegister"
   , "gen_reg_names_range"
 ]
+
+from ..qom_type_state_field import (
+    QOMTypeStateField,
+)
 
 from six import (
     integer_types,
@@ -29,6 +34,15 @@ class CPURegister(object):
         self.field_bitsize = (bitsize + 31) & ~31
         self.reg_names = reg_names
         self.bank_size = len(reg_names) if reg_names else None
+
+
+class CPUEnvField(QOMTypeStateField):
+    """ Note that, not all of the inherited attributes are applicable.
+E.g. *property* settings are ignored.
+    """
+
+    def __var_base__(self):
+        return "env_fld_" + self.name
 
 
 def gen_reg_names_range(base_name, suffix = "", start = 0, end = 1):
@@ -62,7 +76,8 @@ class CPUInfo(object):
         instructions = (),
         read_size = 1,
         reg_types = no_reg_types,
-        name_shortener = (lambda args, comment : None)
+        name_shortener = (lambda args, comment : None),
+        env_extra_fields = (),
     ):
         """
     :param registers:
@@ -130,6 +145,8 @@ class CPUInfo(object):
         generated `translate.inc.i3s.c` file (`comment` can be used to specify
         instruction in user notifications)
 
+    :param env_extra_fields:
+        an iterable of `CPUEnvField`s to be added to `CPU*State`
         """
 
         self.registers = list(registers)
@@ -139,3 +156,4 @@ class CPUInfo(object):
         self.read_size = read_size
         self.reg_types = reg_types
         self.name_shortener = name_shortener
+        self.env_extra_fields = env_extra_fields

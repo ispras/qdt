@@ -302,6 +302,7 @@ class CPUType(QOMCPU):
         self.read_bitsize = read_bitsize = info.read_size * BYTE_BITSIZE
         self.reg_types = info.reg_types
         self.name_shortener = info.name_shortener
+        self.env_extra_fields = info.env_extra_fields
 
         if read_bitsize not in SUPPORTED_READ_BITSIZES:
             raise RuntimeError(
@@ -615,6 +616,9 @@ class CPUType(QOMCPU):
                 array_size = reg.bank_size,
                 save_in_vmsd = True,
             ))
+
+        for f in self.env_extra_fields:
+            env_state_desc.add_field(f)
 
         cpu_arch_state = env_state_desc.gen_c_type()
 

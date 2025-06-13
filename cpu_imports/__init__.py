@@ -28,6 +28,7 @@ from qemu import (
 # CPU template generation settings
     CPUInfo
   , CPURegister
+  , CPUEnvField
   , gen_reg_names_range
   , Instruction
   , Opcode
