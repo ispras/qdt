@@ -85,7 +85,13 @@ class StateStruct(object):
 
                 if isinstance(c_type, Structure):
                     type_desc = c_type.origin
-                    if type_desc is not None:
+                    if type_desc is None:
+                        raise NotImplementedError(
+                            "VMSD generation attempt for `struct %s`" % (
+                                f_c_type_name,
+                            )
+                        )
+                    else:
                         if isinstance(type_desc, StateStruct):
                             field_vmsd = type_desc.gen_vmstate_var(f.name)
 
