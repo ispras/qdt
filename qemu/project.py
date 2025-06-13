@@ -158,8 +158,5 @@ class QProject(object):
     def __gen_code__(self, gen):
         gen.reset_gen(self)
         gen.gen_args(self)
-        if self.compat:
-            for attr, val in self.compat.items():
-                gen.gen_field(attr + " = ")
-                gen.pprint(val)
+        gen.gen_compat(self)
         gen.gen_end()
