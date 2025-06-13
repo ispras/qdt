@@ -216,12 +216,7 @@ def descriptionOf(QOMTemplate):
         def __gen_code__(self, gen):
             gen.reset_gen(self)
             gen.gen_args(self, pa_names = True, skip_def_vals = False)
-
-            if self.compat:
-                for attr, val in self.compat.items():
-                    gen.gen_field(attr + " = ")
-                    gen.pprint(val)
-
+            gen.gen_compat(self)
             gen.gen_end()
 
         # Common __init__ method for all descriptions.
