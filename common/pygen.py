@@ -327,6 +327,20 @@ require reference to the current object.
             self.gen_field(kwa + " = ")
             self.pprint(v)
 
+    def gen_compat(self,
+        compat = "compat",
+    ):
+        """ Forward compatibility requires an instance to save unknown **kw
+        arguments to be reproduced during code generation. This method do
+        the reproduction assuming they are stored in a `dict` referenced to by
+        an attribute with name provided by `compat` argument.
+        """
+        compat = getattr(self, compat)
+        # Sort items for deterministic output.
+        for a, v in sorted(compat.items()):
+            self.gen_field(a + " = ")
+            self.pprint(v)
+
     def gen_end(self, suffix = ")"):
         if not self.first_field:
             self.line()
