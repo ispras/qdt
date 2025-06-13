@@ -2,33 +2,33 @@ __all__ = [
     "get_vp"
 ]
 
-from hashlib import (
-    md5
-)
 from source import (
+    add_base_types,
     BodyTree,
+    Call,
+    Declare,
+    Enumeration,
+    Function,
+    Header,
+    Initializer,
+    iter_specified_type_names,
+    Macro,
+    MCall,
+    NewLine,
+    OpAddr,
     OpAssign,
     OpDeclareAssign,
     OpSDeref,
-    NewLine,
-    MCall,
-    Call,
-    OpAddr,
-    Declare,
-    Initializer,
-    iter_specified_type_names,
-    add_base_types,
     Pointer,
-    Header,
+    Structure,
     Type,
-    Function,
-    Macro,
-    Enumeration,
-    Structure
 )
 
+from hashlib import (
+    md5,
+)
 from os.path import (
-    sep
+    sep,
 )
 
 # Callable
