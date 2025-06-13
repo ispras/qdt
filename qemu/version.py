@@ -22,6 +22,7 @@ from source import (
     Pointer,
     Structure,
     Type,
+    TypeAlias,
 )
 
 from hashlib import (
@@ -1002,6 +1003,73 @@ def define_only_qemu_2_6_0_types():
         hw_pci_pci_host_h.add_type(Function("PCI_HOST_BRIDGE"))
         hw_boards_h.add_type(Function("MACHINE_CLASS"))
         cpu_h.add_type(Function("CPU_CLASS"))
+
+    m_int32_t = Type["int32_t"]
+    m_int64_t = Type["int64_t"]
+    m_uint32_t = Type["uint32_t"]
+    m_uint64_t = Type["uint64_t"]
+    m_float32 = TypeAlias(m_uint32_t, "float32")
+    m_float64 = TypeAlias(m_uint64_t, "float64")
+    m_FloatRoundMode = Enumeration(
+        (
+            ("float_round_nearest_even", 0),
+            ("float_round_down"        , 1),
+            ("float_round_up"          , 2),
+            ("float_round_to_zero"     , 3),
+            ("float_round_ties_away"   , 4),
+            ("float_round_to_odd"      , 5),
+        ),
+        typedef_name = "FloatRoundMode",
+    )
+    m_float_status = Structure("float_status",
+        m_FloatRoundMode("float_rounding_mode"),
+        Type["uint8_t"]("float_exception_flags"),
+        Type["signed char"]("floatx80_rounding_precision"),
+        *map(Type["bool"], (
+            "tininess_before_rounding",
+            "flush_to_zero",
+            "flush_inputs_to_zero",
+            "default_nan_mode",
+            "snan_bit_is_one",
+            "use_first_nan",
+            "no_signaling_nans",
+        )),
+    )
+    m_p_float_status = Pointer(m_float_status)
+    Header["fpu/softfloat-types.h"](
+        m_float32,
+        m_float64,
+        m_float64,
+        Enumeration((
+            ("float_flag_invalid"        ,   1),
+            ("float_flag_divbyzero"      ,   4),
+            ("float_flag_overflow"       ,   8),
+            ("float_flag_underflow"      ,  16),
+            ("float_flag_inexact"        ,  32),
+            ("float_flag_input_denormal" ,  64),
+            ("float_flag_output_denormal", 128),
+        )),
+        m_float_status,
+    )
+    Header["fpu/softfloat.h"](
+        Function(
+            name = "int32_to_float32",
+            ret_type = m_float32,
+            args = (
+                m_int32_t("a"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float32_to_int32",
+            ret_type = m_int32_t,
+            args = (
+                m_float32("a"),
+                m_p_float_status("status")
+            )
+        ),
+    )
+    Header["fpu/softfloat-helpers.h"]
 
 def define_qemu_2_6_5_types():
     add_base_types()
