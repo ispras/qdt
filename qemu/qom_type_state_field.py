@@ -58,7 +58,7 @@ class QOMTypeStateField(object):
             return save_in_vmsd
 
     def __var_base__(self):
-        return "fld_"
+        return "fld_" + self.name
 
     def __pygen_pass__(self, gen, __):
         gen.reset_gen(self)
