@@ -1061,10 +1061,58 @@ def define_only_qemu_2_6_0_types():
             )
         ),
         Function(
+            name = "int32_to_float64",
+            ret_type = m_float64,
+            args = (
+                m_int32_t("a"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "uint32_to_float32",
+            ret_type = m_float32,
+            args = (
+                m_uint32_t("a"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "uint32_to_float64",
+            ret_type = m_float64,
+            args = (
+                m_uint32_t("a"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float32_to_float64",
+            ret_type = m_float64,
+            args = (
+                m_float32("a"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
             name = "float32_to_int32",
             ret_type = m_int32_t,
             args = (
                 m_float32("a"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float64_to_float32",
+            ret_type = m_float32,
+            args = (
+                m_float64("a"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float64_to_int32",
+            ret_type = m_int32_t,
+            args = (
+                m_float64("a"),
                 m_p_float_status("status")
             )
         ),
