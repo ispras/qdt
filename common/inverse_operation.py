@@ -64,7 +64,7 @@ def set_touches_entry(X, e):
         raise ValueError("Unsupported type of entry: " + str(type(e)))
     return False
 
-"""
+r"""
 Composite operations should be divided in sequence of basic operations with
 same identifier as sequence parameter.
 
