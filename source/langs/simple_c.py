@@ -32,7 +32,7 @@ def t_CONST(t):
     return t
 
 def t_ID(t):
-    "[\\w_][\w\\d_]*"
+    "[\\w_][\\w\\d_]*"
     return t
 
 def t_ARGS_BEGIN(t):
