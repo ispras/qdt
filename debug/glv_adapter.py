@@ -34,7 +34,7 @@ from .line_adapter import (
 )
 
 # regular expression for git version of file and eps
-re_glv_expr = compile("^(?:\s+([\w\-.]+))?(?:\s+(\d+)(?:\s|$))?")
+re_glv_expr = compile(r"^(?:\s+([\w\-.]+))?(?:\s+(\d+)(?:\s|$))?")
 
 identity_map = intervalmap()
 identity_map[1:None] = 0
