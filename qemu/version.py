@@ -1051,7 +1051,17 @@ def define_only_qemu_2_6_0_types():
         )),
         m_float_status,
     )
+    m_FloatRelation = Enumeration(
+        (
+            ("float_relation_less"      , -1),
+            ("float_relation_equal"     ,  0),
+            ("float_relation_greater"   ,  1),
+            ("float_relation_unordered" ,  2),
+        ),
+        typedef_name = "FloatRelation",
+    )
     Header["fpu/softfloat.h"](
+        # conversions
         Function(
             name = "int32_to_float32",
             ret_type = m_float32,
@@ -1113,6 +1123,127 @@ def define_only_qemu_2_6_0_types():
             ret_type = m_int32_t,
             args = (
                 m_float64("a"),
+                m_p_float_status("status")
+            )
+        ),
+        # operations
+        Function(
+            name = "float32_abs",
+            ret_type = m_float32,
+            args = (
+                m_float32("a")
+            )
+        ),
+        Function(
+            name = "float32_add",
+            ret_type = m_float32,
+            args = (
+                m_float32("a"),
+                m_float32("b"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float32_compare",
+            ret_type = m_FloatRelation,
+            args = (
+                m_float32("a"),
+                m_float32("b"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float32_div",
+            ret_type = m_FloatRelation,
+            args = (
+                m_float32("a"),
+                m_float32("b"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float32_mul",
+            ret_type = m_float32,
+            args = (
+                m_float32("a"),
+                m_float32("b"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float32_sqrt",
+            ret_type = m_float32,
+            args = (
+                m_float32("a"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float32_sub",
+            ret_type = m_float32,
+            args = (
+                m_float32("a"),
+                m_float32("b"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float64_abs",
+            ret_type = m_float64,
+            args = (
+                m_float64("a")
+            )
+        ),
+        Function(
+            name = "float64_add",
+            ret_type = m_float64,
+            args = (
+                m_float64("a"),
+                m_float64("b"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float64_compare",
+            ret_type = m_FloatRelation,
+            args = (
+                m_float64("a"),
+                m_float64("b"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float64_div",
+            ret_type = m_FloatRelation,
+            args = (
+                m_float64("a"),
+                m_float64("b"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float64_mul",
+            ret_type = m_float64,
+            args = (
+                m_float64("a"),
+                m_float64("b"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float64_sqrt",
+            ret_type = m_float64,
+            args = (
+                m_float64("a"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float64_sub",
+            ret_type = m_float64,
+            args = (
+                m_float64("a"),
+                m_float64("b"),
                 m_p_float_status("status")
             )
         ),
