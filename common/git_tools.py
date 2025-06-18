@@ -53,7 +53,7 @@ Range = namedtuple("Range", "lineno count")
 # 'new' - range added to new version of file
 Chunk = namedtuple("Chunk", "old new")
 
-re_chunks = compile(b"@@ -(\d+)(?:,?(\d*)) \+(\d+)(?:,?(\d*)) @@")
+re_chunks = compile(br"@@ -(\d+)(?:,?(\d*)) \+(\d+)(?:,?(\d*)) @@")
 
 
 def iter_chunks(diff):
