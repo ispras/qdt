@@ -17,7 +17,7 @@ from .message import (
 )
 
 
-DESCRIPTION_FF = filefilter([(True, "description(?:\..+)")])
+DESCRIPTION_FF = filefilter([(True, r"description(?:\..+)")])
 
 
 class MergeRequest(PathBacked):
