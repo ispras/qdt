@@ -18,7 +18,7 @@ class INode(object):
         return self.subtree[i]
 
     def lr_iter(self, prod_name):
-        """
+        r"""
 Traverses left-recurrent productions like:
 
 prod_name : prod1
