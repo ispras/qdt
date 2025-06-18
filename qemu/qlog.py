@@ -322,7 +322,7 @@ hexDigits = set("0123456789abcdefABCDEF")
 
 # Record/Replay #2 adds line IC=[instructions_executed] to CPU state for
 # debug.
-re_instruction_counter = compile(".*IC=(\d+).*")
+re_instruction_counter = compile(r".*IC=(\d+).*")
 
 
 class QTrace(object):
