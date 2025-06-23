@@ -63,7 +63,7 @@ class Chainview(TkConfigureOverrideHelper, GUIFrame):
             return
         self._chain = chain = tuple(chain)
 
-        children = self.winfo_children()
+        children = self.pack_slaves()
 
         prev = self._index
         if prev > 0:
@@ -122,7 +122,7 @@ class Chainview(TkConfigureOverrideHelper, GUIFrame):
         self._next_index = index
         if self._index == index:
             return
-        children = self.winfo_children()
+        children = self.pack_slaves()
         prev = self._index
         if prev > 0:
             self._bt_normalize(children[prev - 1])
