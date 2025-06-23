@@ -79,11 +79,12 @@ class Chainview(TkConfigureOverrideHelper, GUIFrame):
         cache = self._cache
         side = self._side
         expand = self._expand
-        for bt, (i, part) in zip_longest(children, enumerate(chain, 1)):
-            if part is None:
+        for bt, i_part in zip_longest(children, enumerate(chain, 1)):
+            if i_part is None:
                 bt.pack_forget()
                 self._cache.append(bt)
                 continue
+            (i, part) = i_part
             if bt is None:
                 try:
                     bt = cache.pop()
