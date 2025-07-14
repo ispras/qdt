@@ -1,0 +1,501 @@
+#!/usr/bin/env python3
+
+# configure PYTHONPATH
+from os.path import (
+    dirname,
+)
+from sys import (
+    path as PYTHONPATH,
+)
+DIR = dirname(__file__)
+PYTHONPATH.insert(0, dirname(DIR))
+
+from common import (
+    byN,
+)
+from widgets import (
+    add_scrollbars_native,
+    BOTH,
+    Chainview,
+    GUIFrame,
+    GUITk,
+    Pictures,
+    pic_path,
+)
+
+from argparse import (
+    ArgumentParser,
+)
+from os import (
+    listdir,
+)
+from os.path import (
+    exists,
+    isdir,
+    join,
+)
+from six.moves import (
+    zip_longest,
+)
+from six.moves.tkinter import (
+    BROWSE,
+    END,
+    X,
+)
+from six.moves.tkinter_ttk import (
+    Treeview,
+)
+
+FS_EMPTY = frozenset()
+
+def common_supers(*class_iterables):
+    i = iter(class_iterables)
+    for classes in i:
+        common = set(classes)
+        break
+    else:
+        return FS_EMPTY
+
+    while common:
+        for classes in i:
+            for ccls in tuple(common):
+                for icls in classes:
+                    if ccls is icls:
+                        break
+                    if issubclass(icls, ccls):
+                        break
+                    if issubclass(ccls, icls):
+                        # icls is common base for (icls, rcls)
+                        common.add(icls)
+                else:
+                    common.remove(ccls)
+            break
+        else:
+            break
+
+    return common
+
+
+class ImageView:
+
+    def __init__(self, image):
+        self._image = image
+
+
+class SubimageProvider(ImageView):
+
+    def __iter__(self):
+        return self._image.__iter_names__()
+
+    def __contains__(self, name):
+        return self._image.__contains_subimage__(name)
+
+    def __getitem__(self, name):
+        return self._image.__get_subimage__(name)
+
+
+class Image:
+
+    __views__ = ()
+
+    @property
+    def is_directory_like(self):
+        return bool(common_supers((SubimageProvider,), self.__views__))
+
+
+class VirtualDirectory(Image):
+
+    __views__ = (
+        SubimageProvider,
+    )
+
+    def __init__(self, parent = None):
+        self._parent = parent
+        self._images = {}
+
+    def __contains__(self, name):
+        return name in self._images
+
+    def __setitem__(self, name, image):
+        assert self._images.setdefault(name, image) is image
+
+    def __getitem__(self, name):
+        return self._images[name]
+
+    def __delitem__(self, name):
+        del self._images[name]
+
+    def override(self, name, image):
+        try:
+            del self[name]
+        except KeyError:
+            pass
+        self[name] = image
+
+    def __iter_names__(self):
+        return iter(self._images)
+
+    __get_subimage__ = __getitem__
+    __contains_subimage__ = __contains__
+
+
+class Merged(Image):
+
+    def __init__(self, *images):
+        self._merged = set(images)
+
+    def merge(self, image):
+        self._merged.add(image)
+
+    def __iter__(self):
+        return iter(self._merged)
+
+    IMPLEMENTED_VIEWS = set([SubimageProvider])
+
+    @property
+    def __views__(self):
+        common = common_supers(*(i.__views__ for i in self._merged))
+        return common & self.IMPLEMENTED_VIEWS
+
+    def iter_subimages(self, name):
+        for i in self._merged:
+            ip = SubimageProvider(i)
+            if name in ip:
+                yield ip[name]
+
+    def __iter_names__(self):
+        yielded = set()
+        add = yielded.add
+        for nv in map(SubimageProvider, self._merged):
+            for n in nv:
+                if n in yielded:
+                    continue
+                yield n
+                add(n)
+
+    def __contains_subimage__(self, name):
+        for i in self._merged:
+            ip = SubimageProvider(i)
+            if name in ip:
+                return True
+        return False
+
+    def __get_subimage__(self, name):
+        return Merged(*self.iter_subimages(name))
+
+
+class FSNode(Image):
+
+    def __init__(self, path, parent = None):
+        self._path = path
+        self._parent = parent
+        self._cache = {}
+
+    @property
+    def __views__(self):
+        return tuple(self.iter_views())
+
+    def iter_views(self):
+        if isdir(self._path):
+            yield SubimageProvider
+
+    def __iter_names__(self):
+        return iter(listdir(self._path))
+
+    def __contains_subimage__(self, name):
+        return name in listdir(self._path)
+
+    def __get_subimage__(self, name):
+        cache = self._cache
+        ret = cache.get(name)
+        if ret is None:
+            subpath = join(self._path, name)
+            if (
+                exists(subpath)
+                # Broken symlinks are present in `listdir` but `not exists`.
+             or name in listdir(self._path)
+            ):
+                ret = FSNode(subpath, parent = self)
+                cache[name] = ret
+            else:
+                raise KeyError(name)
+        return ret
+
+
+def iter_tree_lines(root, max_depth = None, indent = "\t"):
+    if max_depth:
+        max_depth -= 1
+
+    views = tuple(root.__views__)
+    for View in views:
+        if issubclass(View, SubimageProvider):
+            if max_depth == 0:
+                yield "..."
+                return
+            view = View(root)
+            for name in view:
+                yield name
+                img = view[name]
+                for line in iter_tree_lines(img,
+                    max_depth = max_depth,
+                    indent = indent,
+                ):
+                    yield indent + line
+            return
+    for View in views:
+        if issubclass(View, SubimageProvider):
+            if max_depth == 0:
+                yield "..."
+                return
+            view = View(root)
+            for name in view:
+                yield name
+            return
+
+
+class ImageViewWidget:
+
+    EVENT_ENTER_SUBIMAGE = "<<EnterSubimage>>"
+
+    __view2widget__ = {}
+
+
+class SubimagesFrame(GUIFrame, ImageViewWidget):
+
+    icons = Pictures(
+        subtree = pic_path("subtree.png"),
+        opaque  = pic_path("opaque.png"),
+    )
+
+    def __init__(self, *a, **kw):
+        GUIFrame.__init__(self, *a, **kw)
+
+        self.rowconfigure(0, weight = 1)
+        self.columnconfigure(0, weight = 1)
+
+        self._tv = tv = Treeview(self,
+            show = "tree",
+            selectmode = BROWSE,
+        )
+        self._tv_cache = []  # of detached items
+        tv.grid(row = 0, column = 0, sticky = "NESW")
+
+        add_scrollbars_native(self, tv, sizegrip = True)
+
+        tv.bind("<Double-Button-1>", self._on_tv_2b1)
+        tv.bind("<Return>", self._on_tv_enter)
+
+    def _on_tv_2b1(self, e):
+        tv = e.widget
+        iid = tv.identify("item", e.x, e.y)
+        if not iid:
+            return
+        self.subimage_name = tv.item(iid, "text")
+        self.event_generate(self.EVENT_ENTER_SUBIMAGE)
+        del self.subimage_name
+
+    def _on_tv_enter(self, e):
+        tv = e.widget
+        sel = tv.get_section()
+        if not sel:
+            return
+        iid = sel[0]
+        self.subimage_name = tv.item(iid, "text")
+        self.event_generate(self.EVENT_ENTER_SUBIMAGE)
+        del self.subimage_name
+
+    _image = None
+
+    @property
+    def image(self):
+        return self._image
+
+    @image.setter
+    def image(self, image):
+        if self._image is image: return
+        self._image = image
+
+        tv = self._tv
+        tv_cache = self._tv_cache
+        ico_subtree = self.icons.subtree
+        ico_opaque = self.icons.opaque
+
+        sp = SubimageProvider(image)
+
+        for name, ciid in zip_longest(
+            # TODO: this may take a while...
+            sorted(sp, key = lambda n: (not sp[n].is_directory_like, n)),
+            tv.get_children("")
+        ):
+            if name is None:
+                tv.detach(ciid)
+                tv_cache.append(ciid)
+                continue
+            if ciid is None:
+                if tv_cache:
+                    ciid = tv_cache.pop()
+                    tv.move(ciid, "", END)
+                else:
+                    ciid = tv.insert("", END)
+
+            cfg = dict(
+                text = name,
+            )
+
+            subimg = sp[name]
+            if subimg.is_directory_like:
+                cfg["image"] = ico_subtree
+            else:
+                cfg["image"] = ico_opaque
+
+            tv.item(ciid, **cfg)
+
+ImageViewWidget.__view2widget__[SubimageProvider] = SubimagesFrame
+
+
+class ImgviewFrame(GUIFrame):
+
+    def __init__(self, *a, **kw):
+        GUIFrame.__init__(self, *a, **kw)
+
+        self._cv = cv = Chainview(self)
+        cv.bind(Chainview.EVENT_SELECT, self._on_chainview_select, "+")
+        cv.pack(fill = X)
+
+        self._f_img_widgets = f = GUIFrame(self)
+        f.pack(fill = BOTH, expand = True)
+
+        self._img_w_cache = {}
+
+        self._refresh_img_w()
+
+    _tree = None
+
+    @property
+    def tree(self):
+        return self._tree
+
+    @tree.setter
+    def tree(self, tree):
+        if tree is self._tree: return
+        self._tree = tree
+        self._cv.chain = ("/",)
+        self._refresh_img_w()
+
+    def _on_chainview_select(self, e):
+        self._refresh_img_w()
+
+    def _refresh_img_w(self):
+        img = self.tree
+        for name in self._cv.subchain[1:]:
+            img = SubimageProvider(img)[name]
+
+        f = self._f_img_widgets
+        unused = set(f.pack_slaves())
+
+        if img is not None:
+            WCls2w = dict((type(w), w) for w in unused)
+
+            available_views = common_supers(
+                img.__views__,
+                ImageViewWidget.__view2widget__,
+            )
+            for VCls in available_views:
+                WCls = ImageViewWidget.__view2widget__[VCls]
+
+                img_w = WCls2w.pop(WCls, None)
+
+                if img_w is None:
+                    img_w = self._img_w_cache.pop(WCls, None)
+                else:
+                    unused.remove(img_w)
+
+                if img_w is None:
+                    img_w = WCls(f)
+                    img_w.bind(
+                        img_w.EVENT_ENTER_SUBIMAGE,
+                        self._on_enter_subimage
+                    )
+
+                img_w.pack(fill = BOTH, expand = True)
+                img_w.image = img
+
+        for img_w in unused:
+            assert img_w is self._img_w_cache.setdefault(
+                type(img_w), img_w
+            )
+            img_w.pack_forget()
+
+    def _on_enter_subimage(self, e):
+        siname = e.widget.subimage_name
+        cv = self._cv
+        cv.chain = cv.subchain + (siname,)
+        cv.index = -1
+
+
+class ImgviewTk(GUITk):
+
+    def __init__(self, *a, **kw):
+        GUITk.__init__(self, *a, **kw)
+        self.title("Image view")
+        self._f = f = ImgviewFrame(self)
+        f.pack(fill = BOTH, expand = True)
+
+    @property
+    def tree(self):
+        return self._f.tree
+
+    @tree.setter
+    def tree(self, tree):
+        self._f.tree = tree
+
+
+def main():
+    ap = ArgumentParser()
+    arg = ap.add_argument
+
+    arg("path",
+        nargs = "+",
+        help = "v/path os/path"
+    )
+
+    args = ap.parse_args()
+
+    vroot = VirtualDirectory()
+
+    paths = args.path
+    if len(paths) & 1:
+        raise ValueError("paths must be paired, 'virtual path' 'OS path'")
+
+    for v_path, os_path in byN(2, paths):
+        if not v_path:
+            raise ValueError("%r: no virtual path provided" % (os_path,))
+        d = vroot
+        for n in v_path.split('/'):
+            if isinstance(d, Merged):
+                for img in d:
+                    if isinstance(img, VirtualDirectory):
+                        vd = img
+                        break
+                else:
+                    raise AssertionError
+            else:
+                assert isinstance(d, VirtualDirectory)
+                vd = d
+            if n not in vd:
+                vd[n] = VirtualDirectory(parent = vd)
+            d = vd[n]
+
+        os_node = FSNode(os_path)
+        if isinstance(d, VirtualDirectory):
+            d._parent.override(n, Merged(d, os_node))
+        else:
+            d.merge(os_node)
+
+    root = ImgviewTk()
+    root.tree = vroot
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    exit(main() or 0)
