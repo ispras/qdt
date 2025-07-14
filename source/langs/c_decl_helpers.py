@@ -1,7 +1,7 @@
 __all__ = [] # currently, direct import only
 
 from .c_decl_spec import (
-    CDeclSpec,
+    CFuncAndStSpec,
 )
 from .c_type import (
     CTypeQualifier,
@@ -61,7 +61,7 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
             ret_type_ds = []
 
             for ds in declaration_specifiers:
-                if ds["type"] is CDeclSpec:
+                if ds["type"] is CFuncAndStSpec:
                     kw[ds["name"]] = True
                 else:
                     ret_type_ds.append(ds)
@@ -100,17 +100,17 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
         else:
             raise NotImplementedError
 
-def get_declaration_type(declaration_specifiers, decl_specs = None):
+def get_declaration_type(declaration_specifiers, fs_specs = None):
     type_spec = None
     specs = []
     for spec in declaration_specifiers:
         spec_type = spec["type"]
         if spec_type is CTypeQualifier:
             specs.append(spec["name"])
-        elif spec_type is CDeclSpec:
-            if decl_specs is None:
+        elif spec_type is CFuncAndStSpec:
+            if fs_specs is None:
                 raise SyntaxError("unexpected function/storage specifier")
-            decl_specs.append(spec["name"])
+            fs_specs.append(spec["name"])
         else:
             if type_spec is None:
                 type_spec = spec

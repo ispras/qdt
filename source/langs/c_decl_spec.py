@@ -1,5 +1,6 @@
 __all__ = [
     "CDeclSpec"
+  , "CFuncAndStSpec"
   , "CAlignSpecExts"
 ]
 
@@ -12,7 +13,8 @@ from .c_words import (
 )
 
 
-class CDeclSpec(CWords):
+class CDeclSpec:
+    """`declaration_specifier` production is required"""
 
     @staticmethod
     def s_declaration_specifiers(declaration_specifier):
@@ -24,20 +26,23 @@ class CDeclSpec(CWords):
     ):
         return declaration_specifiers + [declaration_specifier]
 
-    # --
+
+class CFuncAndStSpec(CWords):
+
+    # Extensions to other productions
 
     @staticmethod
     def s_declaration_specifier__storage_class(STORAGE_CLASS_SPECIFIER):
         return dict(
             name = STORAGE_CLASS_SPECIFIER,
-            type = CDeclSpec,
+            type = CFuncAndStSpec,
         )
 
     @staticmethod
     def s_declaration_specifier__function(FUNCTION_SPECIFIER):
         return dict(
             name = FUNCTION_SPECIFIER,
-            type = CDeclSpec,
+            type = CFuncAndStSpec,
         )
 
 
