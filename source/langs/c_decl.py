@@ -11,6 +11,7 @@ from .c_decl_helpers import (
 )
 from .c_decl_spec import (
     CDeclSpec,
+    CFuncAndStSpec,
 )
 from .c_expr import (
     CExpr,
@@ -38,6 +39,7 @@ from collections import (
 
 class CDeclaration(
     CDeclSpec,
+    CFuncAndStSpec,
     CTypeSpecifier,
     CTypeQualifier,
     CSpecQualList,
