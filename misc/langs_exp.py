@@ -1,5 +1,6 @@
 from source import (
     CDeclaration,
+    CDeclarationAndExpr,
     CEnum,
     CExpr,
     CStructOrUnion,
@@ -26,6 +27,21 @@ class Common:
     @staticmethod
     def p_error(p):
         raise SyntaxError(repr(p))
+
+
+@short_ply_grammar(
+    debugfile = True,
+    start = "declaration",
+)
+class CDeclarationEx(CStructOrUnion, CEnum, CDeclarationAndExpr, Common):
+    pass
+
+res = CDeclarationEx.parse("""
+typedef struct _CTypedef { void *X; } CTypedef
+""",
+    debug = True,
+)
+print(repr(res))
 
 
 @short_ply_grammar(
