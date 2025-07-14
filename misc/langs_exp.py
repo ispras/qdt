@@ -9,6 +9,9 @@ from source import (
 )
 
 
+# TODO: int static my_func(), my_var, *my_ptr;
+
+
 class Common:
 
     @staticmethod
