@@ -44,6 +44,7 @@ def iter_sturct_fields(struct_declaration_block):
 
 def iter_declarations(declaration_specifiers, init_declarator_list):
     var_type = None
+    storage_specs = []
 
     for declarator, initializer in init_declarator_list:
         pointers = declarator[:-1]
@@ -79,10 +80,15 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
                 **kw
             )
         elif dd_type is str:
-            # variable
+            # variable/typedef
             if var_type is None:
-                decl_spec_type = get_declaration_type(declaration_specifiers)
+                decl_spec_type = get_declaration_type(
+                    declaration_specifiers, storage_specs
+                )
                 var_type = make_pointer(decl_spec_type, pointers)
+
+            if storage_specs:
+                raise NotImplementedError
 
             name = direct_declarator["name"]
             assert isinstance(name, str)
@@ -94,15 +100,16 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
         else:
             raise NotImplementedError
 
-def get_declaration_type(declaration_specifiers):
+def get_declaration_type(declaration_specifiers, decl_specs = None):
     type_spec = None
     specs = []
-    decl_specs = []
     for spec in declaration_specifiers:
         spec_type = spec["type"]
         if spec_type is CTypeQualifier:
             specs.append(spec["name"])
         elif spec_type is CDeclSpec:
+            if decl_specs is None:
+                raise SyntaxError("unexpected function/storage specifier")
             decl_specs.append(spec["name"])
         else:
             if type_spec is None:
@@ -123,9 +130,6 @@ def get_declaration_type(declaration_specifiers):
     specs.append(type_spec["name"])
 
     spec_type_name = " ".join(specs)
-
-    if decl_specs:
-        raise NotImplementedError
 
     try:
         return Type[spec_type_name]
