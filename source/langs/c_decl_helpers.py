@@ -97,12 +97,13 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
 def get_declaration_type(declaration_specifiers):
     type_spec = None
     specs = []
+    decl_specs = []
     for spec in declaration_specifiers:
         spec_type = spec["type"]
         if spec_type is CTypeQualifier:
             specs.append(spec["name"])
         elif spec_type is CDeclSpec:
-            raise NotImplementedError
+            decl_specs.append(spec["name"])
         else:
             if type_spec is None:
                 type_spec = spec
@@ -122,6 +123,9 @@ def get_declaration_type(declaration_specifiers):
     specs.append(type_spec["name"])
 
     spec_type_name = " ".join(specs)
+
+    if decl_specs:
+        raise NotImplementedError
 
     try:
         return Type[spec_type_name]
