@@ -16,6 +16,7 @@ from ..model import (
     Function,
     Pointer,
     Type,
+    TypeAlias,
     TypeNotRegistered,
 )
 
@@ -87,16 +88,32 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
                 )
                 var_type = make_pointer(decl_spec_type, pointers)
 
-            if storage_specs:
-                raise NotImplementedError
-
             name = direct_declarator["name"]
             assert isinstance(name, str)
-            var = var_type(name)
-            if initializer is None:
-                yield var
+
+            try:
+                storage_specs.remove("typedef")
+            except ValueError:
+                # It's a variable declaration.
+                # `static`, `const` are expected here
+                # `_Thread_local`, `auto`, `register` are not implemented
+                try:
+                    storage_specs.remove("extern")
+                except ValueError:
+                    # `extern` is managed by the `ChunkGenerator`.
+                    pass
+                kw = dict((ss, True) for ss in storage_specs)
+                # It's a variable
+                var = var_type(name, **kw)
+
+                if initializer is None:
+                    yield var
+                else:
+                    yield OpDeclareAssign(var, initializer)
             else:
-                yield OpDeclareAssign(var, initializer)
+                if initializer:
+                    raise SyntaxError("initializer to a typedef")
+                yield TypeAlias(var_type, name)
         else:
             raise NotImplementedError
 
