@@ -1004,6 +1004,7 @@ def define_only_qemu_2_6_0_types():
         hw_boards_h.add_type(Function("MACHINE_CLASS"))
         cpu_h.add_type(Function("CPU_CLASS"))
 
+    m_bool = Type["bool"]
     m_int32_t = Type["int32_t"]
     m_int64_t = Type["int64_t"]
     m_uint32_t = Type["uint32_t"]
@@ -1121,6 +1122,65 @@ def define_only_qemu_2_6_0_types():
         Function(
             name = "float64_to_int32",
             ret_type = m_int32_t,
+            args = (
+                m_float64("a"),
+                m_p_float_status("status")
+            )
+        ),
+        # checkers
+        Function(
+            name = "float32_is_any_nan",
+            ret_type = m_bool,
+            args = (
+                m_float32("a")
+            )
+        ),
+        Function(
+            name = "float32_is_denormal",
+            ret_type = m_bool,
+            args = (
+                m_float32("a")
+            )
+        ),
+        Function(
+            name = "float32_is_infinity",
+            ret_type = m_bool,
+            args = (
+                m_float32("a")
+            )
+        ),
+        Function(
+            name = "float32_is_signaling_nan",
+            ret_type = m_bool,
+            args = (
+                m_float32("a"),
+                m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float64_is_any_nan",
+            ret_type = m_bool,
+            args = (
+                m_float64("a")
+            )
+        ),
+        Function(
+            name = "float64_is_denormal",
+            ret_type = m_bool,
+            args = (
+                m_float64("a")
+            )
+        ),
+        Function(
+            name = "float64_is_infinity",
+            ret_type = m_bool,
+            args = (
+                m_float64("a")
+            )
+        ),
+        Function(
+            name = "float64_is_signaling_nan",
+            ret_type = m_bool,
             args = (
                 m_float64("a"),
                 m_p_float_status("status")
