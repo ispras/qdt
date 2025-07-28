@@ -510,7 +510,7 @@ class StatFrame(GUIFrame, ImageViewWidget):
 
             cfg = dict(
                 text = name,
-                values = val,
+                values = tuple(("-" if n is None else n) for n in val),
             )
 
             tv.item(ciid, **cfg)
