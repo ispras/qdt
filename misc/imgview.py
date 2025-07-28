@@ -167,7 +167,7 @@ class Merged(Image):
     def __iter__(self):
         return iter(self._merged)
 
-    IMPLEMENTED_VIEWS = set([SubimageProvider])
+    IMPLEMENTED_VIEWS = set([SubimageProvider, StatView])
 
     @property
     def __views__(self):
@@ -188,6 +188,18 @@ class Merged(Image):
             i for i in self.iter_views_values(name, SubimageProvider)
                 if i is not None
         ))
+
+    def __iter_stat__(self):
+        return self.iter_views_names(StatView)
+
+    def __contains_stat__(self, name):
+        for n in self.iter_views_names(StatView):
+            if n == name:
+                return True
+        return False
+
+    def __get_stat__(self, name):
+        return tuple(self.iter_views_values(name, StatView))
 
     def iter_views_values(self, name, *view_classes):
         for i in self._merged:
