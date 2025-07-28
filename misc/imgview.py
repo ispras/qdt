@@ -507,9 +507,11 @@ class SubimagesFrame(GUIFrame, ImageViewWidget):
         self.columnconfigure(0, weight = 1)
 
         self._tv = tv = Treeview(self,
-            show = "tree",
             selectmode = BROWSE,
+            columns = ["summary"],
         )
+        tv.heading("#0", text = "Name")
+        tv.heading("summary", text = "Summary")
         self._tv_cache = []  # of detached items
         tv.grid(row = 0, column = 0, sticky = "NESW")
 
@@ -563,13 +565,22 @@ class SubimagesFrame(GUIFrame, ImageViewWidget):
 
             cfg = dict(
                 text = name,
+                values = ["?"]
             )
 
             subimg = sp[name]
+
             if subimg.is_directory_like:
                 cfg["image"] = ico_subtree
             else:
                 cfg["image"] = ico_opaque
+
+            try:
+                sv = subimg.view(SummaryView)
+            except NotImplementedError:
+                pass
+            else:
+                cfg["values"][0] = str(sv)
 
             tv.item(ciid, **cfg)
 
