@@ -144,6 +144,7 @@ class VirtualDirectory(Image):
 
     __views__ = (
         SubimageProvider,
+        StatView,
         SummaryView,
     )
 
@@ -186,6 +187,29 @@ class VirtualDirectory(Image):
             nt += 1
 
         return "VD %d/%d/%d" % (nd, nf, nt)
+
+    VDIR_STATS = ("n_files", "n_dirs", "n_total",)
+
+    def __iter_stat__(self):
+        return iter(self.VDIR_STATS)
+
+    def __contains_stat__(self, name):
+        return name in self.VDIR_STATS
+
+    def __get_stat__(self, name):
+        if name == "n_total":
+            return len(self._images)
+        if name == "n_files":
+            count = 0
+            for i in self._images.values():
+                count += not i.is_directory_like
+            return count
+        if name == "n_dirs":
+            count = 0
+            for i in self._images.values():
+                count += i.is_directory_like
+            return count
+        raise ValueError(name)
 
 
 class Merged(Image):
