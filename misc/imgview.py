@@ -119,6 +119,20 @@ class Image:
     def is_directory_like(self):
         return bool(common_supers((SubimageProvider,), self.__views__))
 
+    def view_classes(self, *view_classes):
+        return common_supers(self.__views__, view_classes)
+
+    def view_class(self, *view_classes):
+        avl = self.view_classes(*view_classes)
+        if not avl:
+            if not view_classes:
+                raise ValueError("a view class is required")
+            raise NotImplementedError(view_classes)
+        return next(iter(avl))
+
+    def view(self, *view_classes):
+        return self.view_class(*view_classes)(self)
+
 
 class VirtualDirectory(Image):
 
