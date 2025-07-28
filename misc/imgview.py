@@ -215,13 +215,19 @@ class Merged(Image):
     def __get_stat__(self, name):
         return tuple(self.iter_views_values(name, StatView))
 
-    def iter_views_values(self, name, *view_classes):
+    def iter_views(self, *view_classes):
         for i in self._merged:
             avl_view_classes = common_supers(i.__views__, view_classes)
             if not avl_view_classes:
                 yield None
             view_class = next(iter(avl_view_classes))
             v = view_class(i)
+            yield v
+
+    def iter_views_values(self, name, *view_classes):
+        for v in self.iter_views(*view_classes):
+            if v is None:
+                yield v
             if name in v:
                 yield v[name]
             else:
@@ -230,12 +236,9 @@ class Merged(Image):
     def iter_views_names(self, *view_classes):
         yielded = set()
         skip = yielded.add
-        for i in self._merged:
-            avl_view_classes = common_supers(i.__views__, view_classes)
-            if not avl_view_classes:
+        for v in self.iter_views(*view_classes):
+            if v is None:
                 continue
-            view_class = next(iter(avl_view_classes))
-            v = view_class(i)
             for n in v:
                 if n in yielded:
                     continue
