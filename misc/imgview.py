@@ -26,12 +26,17 @@ from widgets import (
 from argparse import (
     ArgumentParser,
 )
+from itertools import (
+    chain,
+)
 from os import (
     listdir,
+    stat,
 )
 from os.path import (
     exists,
     isdir,
+    isfile,
     join,
 )
 from six.moves import (
@@ -226,6 +231,7 @@ class FSNode(Image):
     def iter_views(self):
         if isdir(self._path):
             yield SubimageProvider
+        yield StatView
 
     def __iter_names__(self):
         return iter(listdir(self._path))
@@ -248,6 +254,51 @@ class FSNode(Image):
             else:
                 raise KeyError(name)
         return ret
+
+    DIR_AUTO_STATS = ("n_files", "n_dirs", "n_total",)
+
+    def __iter_stat__(self):
+        path = self._path
+
+        if isfile(path):
+            return (n for n in dir(stat(path)) if n.startswith("st_"))
+
+        if isdir(path):
+            return chain(
+                (n for n in dir(stat(path)) if n.startswith("st_")),
+                self.DIR_AUTO_STATS
+            )
+
+    def __contains_stat__(self, name):
+        path = self._path
+
+        if isfile(path):
+            return hasattr(stat(path), name)
+
+        if isdir(path):
+            return (name in self.DIR_AUTO_STATS) \
+                or hasattr(stat(path), name)
+
+    def __get_stat__(self, name):
+        path = self._path
+
+        if isfile(path):
+            return getattr(stat(path), name)
+
+        if isdir(path):
+            if name == "n_total":
+                return len(tuple(self.__iter_names__()))
+            if name == "n_files":
+                count = 0
+                for n in self.__iter_names__():
+                    count += isfile(join(path, n))
+                return count
+            if name == "n_dirs":
+                count = 0
+                for n in self.__iter_names__():
+                    count += isdir(join(path, n))
+                return count
+            return getattr(stat(path), name)
 
 
 def iter_tree_lines(root, max_depth = None, indent = "\t"):
