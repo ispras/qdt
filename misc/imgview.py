@@ -144,6 +144,7 @@ class VirtualDirectory(Image):
 
     __views__ = (
         SubimageProvider,
+        SummaryView,
     )
 
     def __init__(self, parent = None):
@@ -174,6 +175,17 @@ class VirtualDirectory(Image):
 
     __get_subimage__ = __getitem__
     __contains_subimage__ = __contains__
+
+    def __summary_str__(self):
+        nf, nd, nt = 0, 0, 0
+        for i in self._images.values():
+            if i.is_directory_like:
+                nd += 1
+            else:
+                nf += 1
+            nt += 1
+
+        return "VD %d/%d/%d" % (nd, nf, nt)
 
 
 class Merged(Image):
