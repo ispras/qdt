@@ -638,7 +638,7 @@ class ImgviewFrame(GUIFrame):
     def tree(self, tree):
         if tree is self._tree: return
         self._tree = tree
-        self._cv.chain = ("/",)
+        self._cv.chain = ()
         self._refresh_img_w()
 
     def _on_chainview_select(self, e):
@@ -646,7 +646,7 @@ class ImgviewFrame(GUIFrame):
 
     def _refresh_img_w(self):
         img = self.tree
-        for name in self._cv.subchain[1:]:
+        for name in self._cv.subchain:
             img = SubimageProvider(img)[name]
 
         f = self._f_img_widgets
