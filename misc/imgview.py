@@ -111,6 +111,12 @@ class StatView(ImageView):
         return self._image.__get_stat__(name)
 
 
+class SummaryView(ImageView):
+
+    def __str__(self):
+        return self._image.__summary_str__()
+
+
 class Image:
 
     __views__ = ()
