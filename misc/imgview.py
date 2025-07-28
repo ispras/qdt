@@ -231,7 +231,7 @@ class Merged(Image):
         return False
 
     def iter_cmp_stat(self, name):
-        prev = None
+        prev = object()  # anything that cannot match first v
         for v in self.iter_views_values(name, StatView):
             if v == prev:
                 yield "="
