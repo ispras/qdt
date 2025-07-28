@@ -275,6 +275,18 @@ class ImageViewWidget:
 
     __view2widget__ = {}
 
+    _image = None
+
+    @property
+    def image(self):
+        return self._image
+
+    @image.setter
+    def image(self, image):
+        if self._image is image: return
+        self.__image_changed__(image)
+        self._image = image
+
 
 class SubimagesFrame(GUIFrame, ImageViewWidget):
 
@@ -320,17 +332,7 @@ class SubimagesFrame(GUIFrame, ImageViewWidget):
         self.event_generate(self.EVENT_ENTER_SUBIMAGE)
         del self.subimage_name
 
-    _image = None
-
-    @property
-    def image(self):
-        return self._image
-
-    @image.setter
-    def image(self, image):
-        if self._image is image: return
-        self._image = image
-
+    def __image_changed__(self, image):
         tv = self._tv
         tv_cache = self._tv_cache
         ico_subtree = self.icons.subtree
