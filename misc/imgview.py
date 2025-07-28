@@ -265,6 +265,7 @@ class FSNode(Image):
         if isdir(self._path):
             yield SubimageProvider
         yield StatView
+        yield SummaryView
 
     def __iter_names__(self):
         return iter(listdir(self._path))
@@ -332,6 +333,42 @@ class FSNode(Image):
                     count += isdir(join(path, n))
                 return count
             return getattr(stat(path), name)
+
+    BYTE_MULTS = ("B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB")
+
+    def __summary_str__(self):
+        path = self._path
+
+        if isfile(path):
+            st = stat(path)
+            sz = st.st_size
+            prev_sz = 0
+            scale = 0
+            while sz >= 1024:
+                prev_sz = sz & 0x3FF
+                sz >>= 10
+                scale += 1
+
+            try:
+                ss = self.BYTE_MULTS[scale]
+            except IndexError:
+                ss = "!iB"
+
+            return "F %.1f%s" % (sz + prev_sz / 1024.0, ss)
+
+        if isdir(path):
+            nf, nd, nt = 0, 0, 0
+            for n in self.__iter_names__():
+                np = join(path, n)
+                if isfile(np):
+                    nf += 1
+                elif isdir(np):
+                    nd += 1
+                nt += 1
+
+            return "D %d/%d/%d" % (nd, nf, nt)
+
+        return "?"
 
 
 def iter_tree_lines(root, max_depth = None, indent = "\t"):
