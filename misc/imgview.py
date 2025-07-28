@@ -218,8 +218,17 @@ class Merged(Image):
                 return True
         return False
 
+    def iter_cmp_stat(self, name):
+        prev = None
+        for v in self.iter_views_values(name, StatView):
+            if v == prev:
+                yield "="
+            else:
+                yield v
+                prev = v
+
     def __get_stat__(self, name):
-        return tuple(self.iter_views_values(name, StatView))
+        return tuple(self.iter_cmp_stat(name))
 
     def __summary_str__(self):
         parts = []
@@ -228,7 +237,11 @@ class Merged(Image):
             if v is None:
                 part("-")
             else:
-                part(str(v))
+                s = str(v)
+                if parts and parts[-1] == s:
+                    part ("=")
+                else:
+                    part(s)
         return " | ".join(parts)
 
     def iter_views(self, *view_classes):
