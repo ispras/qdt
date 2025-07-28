@@ -157,31 +157,47 @@ class Merged(Image):
         common = common_supers(*(i.__views__ for i in self._merged))
         return common & self.IMPLEMENTED_VIEWS
 
-    def iter_subimages(self, name):
-        for i in self._merged:
-            ip = SubimageProvider(i)
-            if name in ip:
-                yield ip[name]
-
     def __iter_names__(self):
-        yielded = set()
-        add = yielded.add
-        for nv in map(SubimageProvider, self._merged):
-            for n in nv:
-                if n in yielded:
-                    continue
-                yield n
-                add(n)
+        return self.iter_views_names(SubimageProvider)
 
     def __contains_subimage__(self, name):
-        for i in self._merged:
-            ip = SubimageProvider(i)
-            if name in ip:
+        for n in self.iter_views_names(SubimageProvider):
+            if n == name:
                 return True
         return False
 
     def __get_subimage__(self, name):
-        return Merged(*self.iter_subimages(name))
+        return Merged(*(
+            i for i in self.iter_views_values(name, SubimageProvider)
+                if i is not None
+        ))
+
+    def iter_views_values(self, name, *view_classes):
+        for i in self._merged:
+            avl_view_classes = common_supers(i.__views__, view_classes)
+            if not avl_view_classes:
+                yield None
+            view_class = next(iter(avl_view_classes))
+            v = view_class(i)
+            if name in v:
+                yield v[name]
+            else:
+                yield None
+
+    def iter_views_names(self, *view_classes):
+        yielded = set()
+        skip = yielded.add
+        for i in self._merged:
+            avl_view_classes = common_supers(i.__views__, view_classes)
+            if not avl_view_classes:
+                continue
+            view_class = next(iter(avl_view_classes))
+            v = view_class(i)
+            for n in v:
+                if n in yielded:
+                    continue
+                yield n
+                skip(n)
 
 
 class FSNode(Image):
