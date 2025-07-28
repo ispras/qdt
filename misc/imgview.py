@@ -363,6 +363,68 @@ class ImageViewWidget:
         self._image = image
 
 
+class StatFrame(GUIFrame, ImageViewWidget):
+
+    def __init__(self, *a, **kw):
+        GUIFrame.__init__(self, *a, **kw)
+
+        self.rowconfigure(0, weight = 1)
+        self.columnconfigure(0, weight = 1)
+
+        self._tv = tv = Treeview(self,
+            show = "tree",
+        )
+        self._tv_cache = []  # of detached items
+        tv.grid(row = 0, column = 0, sticky = "NESW")
+
+        add_scrollbars_native(self, tv, sizegrip = True)
+
+    def __image_changed__(self, image):
+        tv = self._tv
+        tv_cache = self._tv_cache
+
+        sv = StatView(image)
+
+        # TODO: this may take a while...
+        names = sorted(tuple(sv))
+        values = {}
+        max_cols = 1
+        for name in names:
+            values[name] = val = sv[name]
+            if isinstance(val, (tuple, list)):
+                max_cols = max(max_cols, len(val))
+
+        tv.configure(columns = [""] * max_cols)
+
+        for name, ciid in zip_longest(
+            names,
+            tv.get_children("")
+        ):
+            if name is None:
+                tv.detach(ciid)
+                tv_cache.append(ciid)
+                continue
+            if ciid is None:
+                if tv_cache:
+                    ciid = tv_cache.pop()
+                    tv.move(ciid, "", END)
+                else:
+                    ciid = tv.insert("", END)
+
+            val = values[name]
+            if not isinstance(val, (tuple, list)):
+                val = (val,)
+
+            cfg = dict(
+                text = name,
+                values = val,
+            )
+
+            tv.item(ciid, **cfg)
+
+ImageViewWidget.__view2widget__[StatView] = StatFrame
+
+
 class SubimagesFrame(GUIFrame, ImageViewWidget):
 
     icons = Pictures(
