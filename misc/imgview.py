@@ -217,12 +217,10 @@ class Merged(Image):
 
     def iter_views(self, *view_classes):
         for i in self._merged:
-            avl_view_classes = common_supers(i.__views__, view_classes)
-            if not avl_view_classes:
+            try:
+                yield i.view(*view_classes)
+            except NotImplementedError:
                 yield None
-            view_class = next(iter(avl_view_classes))
-            v = view_class(i)
-            yield v
 
     def iter_views_values(self, name, *view_classes):
         for v in self.iter_views(*view_classes):
