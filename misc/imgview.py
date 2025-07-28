@@ -94,6 +94,18 @@ class SubimageProvider(ImageView):
         return self._image.__get_subimage__(name)
 
 
+class StatView(ImageView):
+
+    def __iter__(self):
+        return self._image.__iter_stat__()
+
+    def __contains__(self, name):
+        return self._image.__contains_stat__(name)
+
+    def __getitem__(self, name):
+        return self._image.__get_stat__(name)
+
+
 class Image:
 
     __views__ = ()
