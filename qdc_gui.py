@@ -47,6 +47,7 @@ from widgets import (
     QDCGUISignalHelper,
     QDTUserSettings,
     Statusbar,
+    TasksWindow,
     VarMenu,
 )
 
@@ -425,6 +426,20 @@ show it else hide it."),
             ),
         )
 
+        toolsmenu.add_separator()
+
+        v = self.var_tasks_window = BooleanVar()
+        v.set(False)
+
+        self.__on_var_tasks_window = v.trace_variable("w",
+            self.__on_var_tasks_window__
+        )
+
+        toolsmenu.add_checkbutton(
+            label = _("Tasks window"),
+            variable = v,
+        )
+
         menubar.add_cascade(label = _("Tools"), menu = toolsmenu)
 
         self.config(menu = menubar)
@@ -555,6 +570,31 @@ show it else hide it."),
                 pass
             else:
                 del self._history_window
+
+    def __on_tasks_window_destroy__(self, *args, **kw):
+        self.var_tasks_window.trace_vdelete("w",
+            self.__on_var_tasks_window
+        )
+
+        self.var_tasks_window.set(False)
+
+        self.__on_var_tasks_window = self.var_tasks_window.trace_variable(
+            "w", self.__on_var_tasks_window__
+        )
+
+    def __on_var_tasks_window__(self, *args):
+        if self.var_tasks_window.get():
+            self._tasks_window = TasksWindow(self)
+            self._tasks_window.bind("<Destroy>",
+                self.__on_tasks_window_destroy__, "+"
+            )
+        else:
+            try:
+                self._tasks_window.destroy()
+            except AttributeError:
+                pass
+            else:
+                del self._tasks_window
 
     def invert_history_window(self):
         self.var_history_window.set(not self.var_history_window.get())
