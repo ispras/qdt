@@ -365,6 +365,7 @@ class FSNode(Image):
         if isdir(self._path):
             yield SubimageProvider
         yield StatView
+        yield BackupStatView
         yield SummaryView
 
     def __iter_names__(self):
@@ -402,6 +403,20 @@ class FSNode(Image):
                 (n for n in dir(stat(path)) if n.startswith("st_")),
                 self.DIR_AUTO_STATS
             )
+
+    FILE_BACKUP_STATS = frozenset([
+        "st_mtime",
+        "st_size",
+    ])
+    DIR_BACKUP_STATS = frozenset(DIR_AUTO_STATS)
+
+    def __iter_backup_stat__(self):
+        path = self._path
+
+        if isdir(path):
+            return iter(self.DIR_BACKUP_STATS)
+        else:
+            return iter(self.FILE_BACKUP_STATS)
 
     def __contains_stat__(self, name):
         path = self._path
