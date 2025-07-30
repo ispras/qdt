@@ -264,12 +264,88 @@ class Merged(Image):
     def __iter__(self):
         return iter(self._merged)
 
-    IMPLEMENTED_VIEWS = set([SubimageProvider, StatView, SummaryView])
+    MERGED_VIEWS = set([
+        SubimageProvider,
+        StatView,
+        SummaryView,
+        BackupStatView,
+    ])
+
+    def iter_available_views(self):
+        common = common_supers(*(i.__views__ for i in self._merged))
+        for v in common & self.MERGED_VIEWS:
+            yield v
+        if len(self._merged) > 1:
+            yield BackupView
 
     @property
     def __views__(self):
-        common = common_supers(*(i.__views__ for i in self._merged))
-        return common & self.IMPLEMENTED_VIEWS
+        return tuple(self.iter_available_views())
+
+    def __iter_backup__(self):
+        is_directory_like = None
+        names = set()
+        for i in self:
+            try:
+                v = i.view(SubimageProvider)
+            except NotImplemented:
+                if is_directory_like is None:
+                    is_directory_like = False
+                elif is_directory_like:
+                    # different kind of items
+                    return iter(())
+            else:
+                if is_directory_like is None:
+                    is_directory_like = True
+                elif not is_directory_like:
+                    # different kind of items
+                    return iter(())
+            names.update(v)
+        return iter(names)
+
+    def __contains_backup__(self, name):
+        for n in self.__iter_backup__():
+            if n == name:
+                return True
+        return False
+
+    def __get_backup__(self, name):
+        variants = []
+        eq = 0
+        for i in self:
+            v = i.view(SubimageProvider)
+            if name in v:
+                item = v[name]
+            else:
+                continue
+            try:
+                isv = item.view(BackupStatView)
+            except NotImplementedError:
+                isv = None
+            for visv in variants:
+                if visv is None:
+                    if isv is None:
+                        eq += 1
+                        break
+                else:
+                    if isv is None:
+                        continue
+                if visv.equals_to(isv):
+                    eq += 1
+                    break
+            else:
+                variants.append(isv)
+
+        if eq:
+            if len(variants) == 1:
+                return BackupView.EQUAL
+            else:
+                return BackupView.DIFFERENT
+        else:
+            if len(variants) == 1:
+                return BackupView.UNIQUE
+            else:
+                return BackupView.DIFFERENT
 
     def __iter_names__(self):
         return self.iter_views_names(SubimageProvider)
