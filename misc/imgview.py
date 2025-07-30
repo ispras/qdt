@@ -701,6 +701,10 @@ class SubimagesFrame(GUIFrame, ImageViewWidget):
         tv.bind("<Double-Button-1>", self._on_tv_2b1)
         tv.bind("<Return>", self._on_tv_enter)
 
+        tv.tag_configure(BackupView.EQUAL, background = "#AAFFAA")
+        tv.tag_configure(BackupView.DIFFERENT, background = "#FFCCAA")
+        tv.tag_configure(BackupView.UNIQUE, background = "#FFAAAA")
+
     def _on_tv_2b1(self, e):
         tv = e.widget
         iid = tv.identify("item", e.x, e.y)
@@ -728,6 +732,11 @@ class SubimagesFrame(GUIFrame, ImageViewWidget):
 
         sp = SubimageProvider(image)
 
+        try:
+            mv = image.view(BackupView)
+        except NotImplementedError:
+            mv = None
+
         for name, ciid in zip_longest(
             # TODO: this may take a while...
             sorted(sp, key = lambda n: (not sp[n].is_directory_like, n)),
@@ -746,7 +755,8 @@ class SubimagesFrame(GUIFrame, ImageViewWidget):
 
             cfg = dict(
                 text = name,
-                values = ["?"]
+                values = ["?"],
+                tags = [],
             )
 
             subimg = sp[name]
@@ -762,6 +772,9 @@ class SubimagesFrame(GUIFrame, ImageViewWidget):
                 pass
             else:
                 cfg["values"][0] = str(sv)
+
+            if mv is not None:
+                cfg["tags"].append(mv[name])
 
             tv.item(ciid, **cfg)
 
