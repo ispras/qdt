@@ -110,6 +110,24 @@ class StatView(ImageView):
     def __getitem__(self, name):
         return self._image.__get_stat__(name)
 
+    def equals_to(self, v):
+        for __, eq in self.iter_compare(v):
+            if not eq:
+                return False
+        return True
+
+    def iter_compare(self, v):
+        for name, vs, vv in self.iter_zip(v):
+            yield name, (vs == vv)
+
+    def iter_zip(self, v):
+        svs = dict((name, self[name]) for name in self)
+        for name in v:
+            vv = v[name]
+            yield name, svs.pop(name, None), vv
+        for name, sv in svs.items():
+            yield name, sv, None
+
 
 class SummaryView(ImageView):
 
