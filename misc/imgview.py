@@ -129,10 +129,33 @@ class StatView(ImageView):
             yield name, sv, None
 
 
+class BackupView(ImageView):
+
+    class UNIQUE: pass
+    class DIFFERENT: pass
+    class EQUAL: pass
+
+    def __iter__(self):
+        return self._image.__iter_backup__()
+
+    def __contains__(self, name):
+        return self._image.__contains_backup__(name)
+
+    def __getitem__(self, name):
+        return self._image.__get_backup__(name)
+
+
 class SummaryView(ImageView):
 
     def __str__(self):
         return self._image.__summary_str__()
+
+
+class BackupStatView(StatView):
+    "backup relevant stats only"
+
+    def __iter__(self):
+        return self._image.__iter_backup_stat__()
 
 
 class Image:
