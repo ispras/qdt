@@ -25,6 +25,7 @@ from widgets import (
     READONLY,
     Statusbar,
     TextViewerToplevel,
+    tk_delayed,
     VarTreeview,
 )
 
@@ -156,8 +157,9 @@ class InstructionsTreeview(VarTreeview, object):
 
     def _on_open_close(self, __):
         # The item is not actually opened/closed right now.
-        self.after(1, self._update_rows_visible)
+        self._update_rows_visible = 1
 
+    @tk_delayed
     def _update_rows_visible(self):
         root_children = self.get_children()
 
@@ -199,41 +201,19 @@ class InstructionsTreeview(VarTreeview, object):
             print(action, *values)
 
     def update_window_shift(self, delay):
-        try:
-            self.__update_window_shift
-        except AttributeError:
-            self.__update_window_shift = self.after(delay,
-                self._update_window_shift
-            )
-        # else: # already scheduled
+        self._update_window_shift = delay
 
     def do_yscrollcommand(self, delay):
-        try:
-            self.__do_yscrollcommand
-        except AttributeError:
-            self.__do_yscrollcommand = self.after(delay,
-                self._do_yscrollcommand
-            )
-        # else: # already scheduled
+        self._do_yscrollcommand = delay
 
     if DEBUG_INST_TV:
         def _on_key_f5(self, __):
             self.update_window_shift(1)
 
     def _on_destroy(self, __):
-        try:
-            self.after_cancel(self.__update_window_shift)
-        except AttributeError:
-            pass # it's ok, no update has been scheduled
-        else:
-            del self.__update_window_shift
-
-        try:
-            self.after_cancel(self.__do_yscrollcommand)
-        except AttributeError:
-            pass # it's ok, no yscrollcommand has been scheduled
-        else:
-            del self.__do_yscrollcommand
+        del self._update_window_shift
+        del self._do_yscrollcommand
+        del self._update_rows_visible
 
     def _fill_window(self):
         # We need real number of top level rows in the Treeview
@@ -254,12 +234,9 @@ class InstructionsTreeview(VarTreeview, object):
         for inst in new_insts:
             _insert(inst)
 
-        self._update_rows_visible()
+        self._update_rows_visible = 1
 
     def _update_window_shift(self):
-        # remove self `after` callback identifier
-        del self.__update_window_shift
-
         # The window middle is moved to currently visible rows.
 
         f_scroll_start = float(VarTreeview.yview(self)[0])
@@ -319,11 +296,10 @@ class InstructionsTreeview(VarTreeview, object):
             for insert_index, inst in enumerate(new_insts):
                 _insert(inst, insert_index = insert_index)
 
-        self._update_rows_visible()
+        self._update_rows_visible = 1
 
+    @tk_delayed
     def _do_yscrollcommand(self):
-        del self.__do_yscrollcommand
-
         outer = self._outer_yscrollcommand
         if outer is not None:
             total = self.total_instructions
