@@ -37,7 +37,7 @@ class tk_delayed(_tk_after):
             o2id[o] = o.after(delay, call)
 
 
-class tk_periodic(object):
+class tk_periodic(_tk_after):
 
     def __set__(self, o, delay):
         o2id = self.o2id
