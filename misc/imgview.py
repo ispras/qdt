@@ -53,6 +53,9 @@ from six.moves.tkinter import (
 from six.moves.tkinter_ttk import (
     Treeview,
 )
+from time import (
+    time,
+)
 
 FS_EMPTY = frozenset()
 
@@ -940,6 +943,7 @@ class ImgviewTk(GUITk):
 
 
 def co_fs_node_analyzer(tree):
+    t0 = time()
     stack = [(_fs_node_visit, tree)]
     pop = stack.pop
     extend = stack.extend
@@ -947,6 +951,8 @@ def co_fs_node_analyzer(tree):
         phase, node = pop()
         yield True
         extend(phase(node))
+    t1 = time()
+    print("file system analysis took %f s" % (t1 - t0))
 
 
 def _fs_node_visit(img):
