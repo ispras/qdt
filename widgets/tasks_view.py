@@ -174,6 +174,18 @@ class TasksFrame(GUIFrame):
                 tv.detach(iid)
                 del iid2tn[iid]
 
+    _after__periodic_update = None
+    def start_periodic_update(self, co_disp, period = 100):
+        if self._after__periodic_update:
+            self.after_cancel(self._after__periodic_update)
+        def periodic_update():
+            self.update_tree(co_disp)
+            self._after__periodic_update = self.after(period, periodic_update)
+        self._after__periodic_update = self.after(period, periodic_update)
+
+    def stop_periodic_update(self):
+        self.after_cancel(self._after__periodic_update)
+
 
 class TasksWindow(GUIToplevel):
 
@@ -185,9 +197,4 @@ class TasksWindow(GUIToplevel):
         self._tf = tf = TasksFrame(self, sizegrip = True)
         tf.pack(fill = BOTH, expand = True)
 
-        self.after(100, self._update)
-
-    def _update(self):
-        if self.winfo_ismapped():
-            self._tf.update_tree(self.master.task_manager)
-        self.after(100, self._update)
+        tf.start_periodic_update(self.master.task_manager)
