@@ -71,6 +71,10 @@ from qemu import (
     MOp_SetNodeVarNameBase,
     Node,
 )
+from .tk_after import (
+    tk_delayed,
+    tk_periodic,
+)
 from .var_widgets import (
     VarMenu,
 )
@@ -797,15 +801,13 @@ IRQ line creation
             binding.enabled = False
 
     def __on_destroy__(self, *args, **kw):
+        del self._ph_sync_single
         self.var_physical_layout.set(False)
         if self.mht is not None:
             # the listener is not assigned in snapshot mode
             self.mht.unwatch_changed(self.on_machine_changed)
 
-        try:
-            self.after_cancel(self._update_selection_marks_onece)
-        except AttributeError:
-            pass
+        del self._update_selection_marks_once
 
         if self.hk:
             self.hk.delete_bindings(self.bindings)
@@ -2299,9 +2301,7 @@ IRQ line creation
     def invalidate(self):
         if self.current_ph_iteration:
             self.current_ph_iteration = None
-
-        if "_ph_sync_single" not in self.__dict__:
-            self._ph_sync_single = self.after(0, self.ph_sync_single)
+        self._ph_sync_single = 1
 
     def ph_iterate(self, t_limit_sec):
         if not self.current_ph_iteration:
@@ -2327,11 +2327,12 @@ IRQ line creation
         else:
             return t_limit_sec
 
-    def ph_sync_single(self):
+    @tk_delayed
+    def _ph_sync_single(self):
         self.ph_sync()
-        del self._ph_sync_single
 
-    def irq_circle_preview_update(self):
+    @tk_periodic
+    def _irq_circle_preview_update(self):
         if self.shown_irq_circle:
             if self.irq_circle_preview:
                 self.delete(self.irq_circle_preview)
@@ -2352,17 +2353,11 @@ IRQ line creation
             else:
                 self.coords(self.irq_circle_preview, *coords)
 
-        self._irq_circle_preview_update = self.after(10,
-            self.irq_circle_preview_update)
-
     def start_circle_preview(self):
-        self._irq_circle_preview_update = self.after(0,
-            self.irq_circle_preview_update)
+        self._irq_circle_preview_update = 10
 
     def stop_circle_preview(self):
-        if "_irq_circle_preview_update" in self.__dict__:
-            self.after_cancel(self._irq_circle_preview_update)
-            del self._irq_circle_preview_update
+        del self._irq_circle_preview_update
         if self.irq_circle_preview:
             self.delete(self.irq_circle_preview)
             self.irq_circle_preview = None
@@ -2411,9 +2406,8 @@ IRQ line creation
         for l in self.irq_lines:
             self.ph_process_irq_line(l)
 
-    def update_selection_marks_once(self):
-        del self._update_selection_marks_onece
-
+    @tk_delayed
+    def _update_selection_marks_once(self):
         for idx, sid in enumerate(self.selected):
             bbox = self.bbox(sid)
             self.coords(*[
@@ -2423,11 +2417,7 @@ IRQ line creation
             ])
 
     def update_selection_marks(self):
-        if "_update_selection_marks_onece" in self.__dict__:
-            return
-        self._update_selection_marks_onece = self.after(1,
-            self.update_selection_marks_once
-        )
+        self._update_selection_marks_once = 1
 
     def ph_sync(self):
         for n in self.nodes:
