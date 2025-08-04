@@ -159,13 +159,19 @@ class BackupStatView(StatView):
         return self._image.__iter_backup_stat__()
 
 
+IS_DIRECTORY_LIKE_VIEW = lambda VCls : issubclass(VCls, SubimageProvider)
+
+
 class Image:
 
     __views__ = ()
 
     @property
     def is_directory_like(self):
-        return bool(common_supers((SubimageProvider,), self.__views__))
+        for v in self.__views__:
+            if IS_DIRECTORY_LIKE_VIEW(v):
+                return True
+        return False
 
     def view_classes(self, *view_classes):
         return common_supers(self.__views__, view_classes)
