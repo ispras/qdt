@@ -895,7 +895,7 @@ class ImgviewTk(GUITk):
         apw.pack(fill = BOTH, expand = True)
         self._f_imgs = f = ImgviewFrame(apw)
         apw.add(f)
-        self._f_tasks = f = TasksFrame(apw)
+        self._f_tasks = f = TasksFrame(apw, sizegrip = True)
         apw.add(f)
         f.start_periodic_update(self.task_manager)
 
