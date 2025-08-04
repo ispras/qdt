@@ -22,6 +22,7 @@ from widgets import (
     GUITk,
     Pictures,
     pic_path,
+    TasksFrame,
 )
 
 from argparse import (
@@ -46,6 +47,7 @@ from six.moves import (
 from six.moves.tkinter import (
     BROWSE,
     END,
+    VERTICAL,
     X,
 )
 from six.moves.tkinter_ttk import (
@@ -889,16 +891,21 @@ class ImgviewTk(GUITk):
     def __init__(self, *a, **kw):
         GUITk.__init__(self, *a, **kw)
         self.title("Image view")
-        self._f = f = ImgviewFrame(self)
-        f.pack(fill = BOTH, expand = True)
+        self._apw = apw = AutoPanedWindow(self, orient = VERTICAL)
+        apw.pack(fill = BOTH, expand = True)
+        self._f_imgs = f = ImgviewFrame(apw)
+        apw.add(f)
+        self._f_tasks = f = TasksFrame(apw)
+        apw.add(f)
+        f.start_periodic_update(self.task_manager)
 
     @property
     def tree(self):
-        return self._f.tree
+        return self._f_imgs.tree
 
     @tree.setter
     def tree(self, tree):
-        self._f.tree = tree
+        self._f_imgs.tree = tree
 
 
 def main():
