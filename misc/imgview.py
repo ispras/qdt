@@ -631,6 +631,8 @@ class ImageViewWidget:
 class StatFrame(GUIFrame, ImageViewWidget):
 
     def __init__(self, *a, **kw):
+        sizegrip = kw.pop("sizegrip", False)
+
         GUIFrame.__init__(self, *a, **kw)
 
         self.rowconfigure(0, weight = 1)
@@ -642,7 +644,7 @@ class StatFrame(GUIFrame, ImageViewWidget):
         self._tv_cache = []  # of detached items
         tv.grid(row = 0, column = 0, sticky = "NESW")
 
-        add_scrollbars_native(self, tv, sizegrip = True)
+        add_scrollbars_native(self, tv, sizegrip = sizegrip)
 
     def __image_changed__(self, image):
         tv = self._tv
