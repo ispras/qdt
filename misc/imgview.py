@@ -15,6 +15,7 @@ from common import (
 )
 from widgets import (
     add_scrollbars_native,
+    AutoPanedWindow,
     BOTH,
     Chainview,
     GUIFrame,
@@ -790,8 +791,8 @@ class ImgviewFrame(GUIFrame):
         cv.bind(Chainview.EVENT_SELECT, self._on_chainview_select, "+")
         cv.pack(fill = X)
 
-        self._f_img_widgets = f = GUIFrame(self)
-        f.pack(fill = BOTH, expand = True)
+        self._apw_img_widgets = apw = AutoPanedWindow(self)
+        apw.pack(fill = BOTH, expand = True)
 
         self._img_w_cache = {}
 
@@ -818,8 +819,8 @@ class ImgviewFrame(GUIFrame):
         for name in self._cv.subchain:
             img = SubimageProvider(img)[name]
 
-        f = self._f_img_widgets
-        unused = set(f.pack_slaves())
+        apw = self._apw_img_widgets
+        unused = set(apw.winfo_children())
 
         if img is not None:
             WCls2w = dict((type(w), w) for w in unused)
@@ -839,20 +840,20 @@ class ImgviewFrame(GUIFrame):
                     unused.remove(img_w)
 
                 if img_w is None:
-                    img_w = WCls(f)
+                    img_w = WCls(apw)
                     img_w.bind(
                         img_w.EVENT_ENTER_SUBIMAGE,
                         self._on_enter_subimage
                     )
 
-                img_w.pack(fill = BOTH, expand = True)
+                apw.add(img_w)
                 img_w.image = img
 
         for img_w in unused:
             assert img_w is self._img_w_cache.setdefault(
                 type(img_w), img_w
             )
-            img_w.pack_forget()
+            apw.remove(img_w)
 
     def _on_enter_subimage(self, e):
         siname = e.widget.subimage_name
