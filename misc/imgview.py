@@ -702,6 +702,8 @@ class SubimagesFrame(GUIFrame, ImageViewWidget):
     )
 
     def __init__(self, *a, **kw):
+        sizegrip = kw.pop("sizegrip", False)
+
         GUIFrame.__init__(self, *a, **kw)
 
         self.rowconfigure(0, weight = 1)
@@ -716,7 +718,7 @@ class SubimagesFrame(GUIFrame, ImageViewWidget):
         self._tv_cache = []  # of detached items
         tv.grid(row = 0, column = 0, sticky = "NESW")
 
-        add_scrollbars_native(self, tv, sizegrip = True)
+        add_scrollbars_native(self, tv, sizegrip = sizegrip)
 
         tv.bind("<Double-Button-1>", self._on_tv_2b1)
         tv.bind("<Return>", self._on_tv_enter)
