@@ -442,6 +442,9 @@ class Merged(Image):
 
 class FSNode(Image):
 
+    n_inner_files = None
+    n_inner_dirs = None
+
     def __init__(self, path, parent = None):
         self._path = path
         self._parent = parent
@@ -486,7 +489,13 @@ class FSNode(Image):
                 raise KeyError(name)
         return ret
 
-    DIR_AUTO_STATS = ("n_files", "n_dirs", "n_total",)
+    DIR_AUTO_STATS = (
+        "n_files",
+        "n_dirs",
+        "n_total",
+        "n_inner_files",
+        "n_inner_dirs",
+    )
 
     def __iter_stat__(self):
         path = self._path
@@ -585,7 +594,11 @@ class FSNode(Image):
                     nd += 1
                 nt += 1
 
-            return "D %d/%d/%d" % (nd, nf, nt)
+            return "D %d/%d/%d %s/%s" % (nd, nf, nt,
+                "?" if self.n_inner_dirs is None else str(self.n_inner_dirs),
+                "?" if self.n_inner_files is None
+                    else str(self.n_inner_files),
+            )
 
         return "?"
 
@@ -926,6 +939,43 @@ class ImgviewTk(GUITk):
         self._f_imgs.tree = tree
 
 
+def co_fs_node_analyzer(tree):
+    stack = [(_fs_node_visit, tree)]
+    pop = stack.pop
+    extend = stack.extend
+    while stack:
+        phase, node = pop()
+        yield True
+        extend(phase(node))
+
+
+def _fs_node_visit(img):
+    if img.is_directory_like:
+        sp = img.view(SubimageProvider)
+        yield (_fs_node_leave, sp)
+        for name in sp:
+            si = sp[name]
+            yield (_fs_node_visit, si)
+
+
+def _fs_node_leave(sp):
+    n_dirs = 0
+    n_files = 0
+
+    for name in sp:
+        si = sp[name]
+        if si.is_directory_like:
+            n_dirs += si.n_inner_dirs + si.n_dirs
+            n_files += si.n_inner_files + si.n_files
+
+    img = sp._image
+    img.n_inner_dirs = n_dirs
+    img.n_inner_files = n_files
+
+    return
+    yield
+
+
 def main():
     ap = ArgumentParser()
     arg = ap.add_argument
@@ -942,6 +992,8 @@ def main():
     paths = args.path
     if len(paths) & 1:
         raise ValueError("paths must be paired, 'virtual path' 'OS path'")
+
+    os_nodes = []
 
     for v_path, os_path in byN(2, paths):
         if not v_path:
@@ -963,6 +1015,7 @@ def main():
             d = vd[n]
 
         os_node = FSNode(os_path)
+        os_nodes.append(os_node)
         if isinstance(d, VirtualDirectory):
             d._parent.override(n, Merged(d, os_node))
         else:
@@ -970,6 +1023,8 @@ def main():
 
     root = ImgviewTk()
     root.tree = vroot
+    for os_node in os_nodes:
+        root.enqueue(co_fs_node_analyzer(os_node))
     root.mainloop()
 
 
