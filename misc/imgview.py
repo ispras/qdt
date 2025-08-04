@@ -173,8 +173,13 @@ class Image:
                 return True
         return False
 
+    def iter_views_filtered(self, *view_classes):
+        for v in self.__views__:
+            if issubclass(v, view_classes):
+                yield v
+
     def view_classes(self, *view_classes):
-        return common_supers(self.__views__, view_classes)
+        return list(self.iter_views_filtered(*view_classes))
 
     def view_class(self, *view_classes):
         avl = self.view_classes(*view_classes)
