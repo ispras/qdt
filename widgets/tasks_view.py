@@ -101,8 +101,8 @@ class TasksFrame(GUIFrame):
             columns = ["desc"],
         )
         self._tv_cache = deque()
-        self._tn2iid = tn2iid = bidict()
-        self._iid2tn = tn2iid.mirror
+        self._t2iid = t2iid = bidict()
+        self._iid2t = t2iid.mirror
 
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
@@ -134,7 +134,7 @@ class TasksFrame(GUIFrame):
     def update_tree(self, co_disp):
         tv = self._tv
         cache = self._tv_cache
-        iid2tn, tn2iid = self._iid2tn, self._tn2iid
+        iid2t, t2iid = self._iid2t, self._t2iid
 
         nodes, roots = gen_task_graph(co_disp)
         used = set()
@@ -147,7 +147,7 @@ class TasksFrame(GUIFrame):
             parent_iid, node = stack.pop()
 
             try:
-                node_iid = tn2iid[node]
+                node_iid = t2iid[node.task]
             except KeyError:
                 try:
                     node_iid = cache.pop()
@@ -155,22 +155,23 @@ class TasksFrame(GUIFrame):
                     node_iid = tv.insert(parent_iid, END)
                 else:
                     tv.move(node_iid, parent_iid, END)
-                tn2iid[node] = node_iid
+                t2iid[node.task] = node_iid
 
-            cfg = dict(
-                text = node.name,
-                values = [
-                    node.description,
-                ],
-                open = True,
-                tags = [node.state],
-            )
+                cfg = dict(
+                    text = node.name,
+                    values = [
+                        node.description,
+                    ],
+                    open = True,
+                    tags = [node.state],
+                )
 
-            tv.item(node_iid, **cfg)
+                tv.item(node_iid, **cfg)
+
+                if node.state is TaskState.TS_CALLER:
+                    stack.append((node_iid, nodes[node.callee]))
+
             use(node_iid)
-
-            if node.state is TaskState.TS_CALLER:
-                stack.append((node_iid, nodes[node.callee]))
 
         stack = list(tv.get_children(""))
         while stack:
@@ -179,7 +180,7 @@ class TasksFrame(GUIFrame):
             if iid not in used:
                 cache.append(iid)
                 tv.detach(iid)
-                del iid2tn[iid]
+                del iid2t[iid]
 
     _after__periodic_update = None
     def start_periodic_update(self, co_disp, period = 100):
