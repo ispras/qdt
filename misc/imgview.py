@@ -451,6 +451,7 @@ class FileSystemCache(object):
     def __init__(self, ttl = 10.):
         self._tree = {}
         self.ttl = ttl
+        self.last_drop = time()
 
     def get(self, path, getter):
         global _fsc_empty_dict
@@ -482,6 +483,45 @@ class FileSystemCache(object):
 
     def stat(self, path):
         return self.get(path, stat)
+
+    def co_drop(self):
+        t = time()
+        ttl = self.ttl
+
+        print("dropping...")
+
+        tree = self._tree
+
+        stack = [(_fsc_drop_visit, tree, t, ttl, *nc) for nc in tree.items()]
+        pop = stack.pop
+        extend = stack.extend
+
+        while stack:
+            stage, *args = pop()
+            yield True
+            extend(stage(*args))
+
+        print("dropping took %f s" % (time() - t))
+
+        self.last_drop = t
+
+
+def _fsc_drop_leave(parent, name, node):
+    if not node:
+        del parent[name]
+    return
+    yield  # to be a generator
+
+
+def _fsc_drop_visit(parent, t, ttl, name, node):
+    if isinstance(node, dict):
+        yield _fsc_drop_leave, parent, name, node
+        for nc in node.items():
+            yield _fsc_drop_visit, node, t, ttl, *nc
+    else:
+        __, ts = node
+        if t - ts > ttl:
+            del parent[name]
 
 
 class FSNode(Image):
@@ -1087,6 +1127,16 @@ def main():
     root.tree = vroot
     for os_node in os_nodes:
         root.enqueue(co_fs_node_analyzer(os_node))
+
+    def co_drop():
+        yield FSNode.fs.co_drop()
+        root.after(int(FSNode.fs.ttl) * 1000, drop_fs_cache)
+
+    def drop_fs_cache():
+        root.enqueue(co_drop())
+
+    drop_fs_cache()
+
     root.mainloop()
 
 
