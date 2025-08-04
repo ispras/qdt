@@ -518,6 +518,24 @@ class FSNode(Image):
             return (name in self.DIR_AUTO_STATS) \
                 or hasattr(stat(path), name)
 
+    @property
+    def n_dirs(self):
+        count = 0
+        for n in self.__iter_names__():
+            count += isdir(join(self._path, n))
+        return count
+
+    @property
+    def n_files(self):
+        count = 0
+        for n in self.__iter_names__():
+            count += isfile(join(self._path, n))
+        return count
+
+    @property
+    def n_total(self):
+        return len(tuple(self.__iter_names__()))
+
     def __get_stat__(self, name):
         path = self._path
 
@@ -525,18 +543,8 @@ class FSNode(Image):
             return getattr(stat(path), name)
 
         if isdir(path):
-            if name == "n_total":
-                return len(tuple(self.__iter_names__()))
-            if name == "n_files":
-                count = 0
-                for n in self.__iter_names__():
-                    count += isfile(join(path, n))
-                return count
-            if name == "n_dirs":
-                count = 0
-                for n in self.__iter_names__():
-                    count += isdir(join(path, n))
-                return count
+            if name in self.DIR_AUTO_STATS:
+                return getattr(self, name)
             return getattr(stat(path), name)
 
     BYTE_MULTS = ("B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB")
