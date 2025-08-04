@@ -596,6 +596,8 @@ def iter_tree_lines(root, max_depth = None, indent = "\t"):
 
 class ImageViewWidget:
 
+    __side__ = 0
+
     EVENT_ENTER_SUBIMAGE = "<<EnterSubimage>>"
 
     __view2widget__ = {}
@@ -676,6 +678,8 @@ ImageViewWidget.__view2widget__[StatView] = StatFrame
 
 
 class SubimagesFrame(GUIFrame, ImageViewWidget):
+
+    __side__ = -1 # to the left
 
     icons = Pictures(
         subtree = pic_path("subtree.png"),
@@ -825,13 +829,20 @@ class ImgviewFrame(GUIFrame):
         if img is not None:
             WCls2w = dict((type(w), w) for w in unused)
 
-            available_views = common_supers(
-                img.__views__,
-                ImageViewWidget.__view2widget__,
+            available_views = sorted(
+                tuple(map(
+                    ImageViewWidget.__view2widget__.get,
+                    common_supers(
+                        img.__views__,
+                        ImageViewWidget.__view2widget__,
+                    )
+                )),
+                key = lambda cls : (
+                    cls.__side__,
+                    cls.__name__,
+                ),
             )
-            for VCls in available_views:
-                WCls = ImageViewWidget.__view2widget__[VCls]
-
+            for WCls in available_views:
                 img_w = WCls2w.pop(WCls, None)
 
                 if img_w is None:
