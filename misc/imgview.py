@@ -448,7 +448,7 @@ _fsc_empty_dict = {}
 
 class FileSystemCache(object):
 
-    def __init__(self, ttl = 60.):
+    def __init__(self, ttl = 10.):
         self._tree = {}
         self.ttl = ttl
 
