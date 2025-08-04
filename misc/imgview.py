@@ -459,10 +459,16 @@ class FSNode(Image):
         yield SummaryView
 
     def __iter_names__(self):
-        return iter(listdir(self._path))
+        try:
+            return iter(listdir(self._path))
+        except PermissionError:
+            return iter(())
 
     def __contains_subimage__(self, name):
-        return name in listdir(self._path)
+        try:
+            return name in listdir(self._path)
+        except PermissionError:
+            return None
 
     def __get_subimage__(self, name):
         cache = self._cache
