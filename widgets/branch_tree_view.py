@@ -5,6 +5,9 @@ __all__ = [
 from common import (
     mlget as _,
 )
+from .tk_after import(
+    tk_delayed,
+)
 from .tv_width_helper import (
     TreeviewWidthHelper,
 )
@@ -55,12 +58,10 @@ class BranchTreeview(VarTreeview, TreeviewWidthHelper):
     def __on_open_or_close__(self, *__):
         """ The rows are not already opened or closed. So, give them time to
         do it. Then recompute widths. """
-        self.__after_open_or_close = self.after_idle(
-            self.__after_open_or_close__
-        )
+        self.__after_open_or_close__ = 0
 
+    @tk_delayed
     def __after_open_or_close__(self):
-        del self.__after_open_or_close
         self.adjust_widths()
 
     def __on_heading_changed__(self, *__):
@@ -70,39 +71,20 @@ class BranchTreeview(VarTreeview, TreeviewWidthHelper):
         self.sequence_ml.trace_vdelete("w", self.__sequence_ml)
         self.description_ml.trace_vdelete("w", self.__description_ml)
         self.guipht.unwatch_changed(self.__on_operation__)
-
-        try:
-            self.after_cancel(self.__refresh_after)
-        except AttributeError:
-            pass
-        else:
-            del self.__refresh_after
-
-        try:
-            self.after_cancel(self.__after_open_or_close)
-        except AttributeError:
-            pass
-        else:
-            del self.__after_open_or_close
+        del self.__refresh_after__
+        del self.__after_open_or_close__
 
     def __on_operation__(self, __):
         self.__invalidate__()
 
     def __invalidate__(self):
-        try:
-            self.after_cancel(self.__refresh_after)
-        except AttributeError:
-            pass
-
-        # delay refreshing
-        self.__refresh_after = self.after(10, self.__refresh_after__)
+        self.__refresh_after__ = 10
 
     def gen_seq_iid(self, sequence):
         return "seq.%d" % sequence
 
+    @tk_delayed
     def __refresh_after__(self):
-        del self.__refresh_after
-
         existing_seq_iids = self.get_children()
         existing_seq_iids_iter = iter(existing_seq_iids)
 
