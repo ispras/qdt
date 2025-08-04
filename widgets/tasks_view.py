@@ -48,6 +48,14 @@ class TaskNode(object):
     def __lt__(self, n):
         return self.name < n.name
 
+    @property
+    def name(self):
+        return self.task.generator.__name__
+
+    @property
+    def description(self):
+        return self.task.description.get()
+
 
 def gen_task_graph(co_disp):
     nodes = defaultdict(TaskNode)
@@ -76,8 +84,7 @@ def gen_task_graph(co_disp):
         roots.add(n_t)
 
     for t, n in nodes.items():
-        n.name = t.generator.__name__
-        n.description = t.description.get()
+        n.task = t
 
     return nodes, roots
 
