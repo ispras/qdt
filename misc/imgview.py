@@ -536,19 +536,35 @@ class FSNode(Image):
 
     fs = FileSystemCache()
 
-    def __init__(self, path, parent = None, fs = None):
-        self._path = path
+    def __init__(self, name, parent = None, fs = None):
+        self._name = name
         self._parent = parent
         self._cache = {}
         if fs is not None and fs is not self.fs:
             self.fs = fs
+
+    def iter_reversed_path(self):
+        n = self
+        while n is not None:
+            yield n._name
+            n = n._parent
+
+    @property
+    def path(self, _cache = dict()):
+        path = _cache.get(self)
+        if path is None:
+            path = join(*reversed(tuple(self.iter_reversed_path())))
+            if len(_cache) > 10000:
+                _cache.clear()
+            _cache[self] = path
+        return path
 
     @property
     def __views__(self):
         return tuple(self.iter_views())
 
     def iter_views(self):
-        if self.fs.isdir(self._path):
+        if self.fs.isdir(self.path):
             yield SubimageProvider
         yield StatView
         yield BackupStatView
@@ -556,13 +572,13 @@ class FSNode(Image):
 
     def __iter_names__(self):
         try:
-            return iter(self.fs.listdir(self._path))
+            return iter(self.fs.listdir(self.path))
         except PermissionError:
             return iter(())
 
     def __contains_subimage__(self, name):
         try:
-            return name in self.fs.listdir(self._path)
+            return name in self.fs.listdir(self.path)
         except PermissionError:
             return None
 
@@ -570,14 +586,15 @@ class FSNode(Image):
         cache = self._cache
         fs = self.fs
         ret = cache.get(name)
+        path = self.path
         if ret is None:
-            subpath = join(self._path, name)
+            subpath = join(path, name)
             if (
                 exists(subpath)
                 # Broken symlinks are present in `listdir` but `not exists`.
-             or name in fs.listdir(self._path)
+             or name in fs.listdir(path)
             ):
-                ret = FSNode(subpath, parent = self, fs = fs)
+                ret = FSNode(name, parent = self, fs = fs)
                 cache[name] = ret
             else:
                 raise KeyError(name)
@@ -592,7 +609,7 @@ class FSNode(Image):
     )
 
     def __iter_stat__(self):
-        path = self._path
+        path = self.path
         fs = self.fs
 
         if fs.isfile(path):
@@ -611,7 +628,7 @@ class FSNode(Image):
     DIR_BACKUP_STATS = frozenset(DIR_AUTO_STATS)
 
     def __iter_backup_stat__(self):
-        path = self._path
+        path = self.path
 
         if self.fs.isdir(path):
             return iter(self.DIR_BACKUP_STATS)
@@ -619,7 +636,7 @@ class FSNode(Image):
             return iter(self.FILE_BACKUP_STATS)
 
     def __contains_stat__(self, name):
-        path = self._path
+        path = self.path
         fs = self.fs
 
         if fs.isfile(path):
@@ -632,7 +649,7 @@ class FSNode(Image):
     @property
     def n_dirs(self):
         isdir = self.fs.isdir
-        path = self._path
+        path = self.path
         count = 0
         for n in self.__iter_names__():
             count += isdir(join(path, n))
@@ -641,7 +658,7 @@ class FSNode(Image):
     @property
     def n_files(self):
         isfile = self.fs.isfile
-        path = self._path
+        path = self.path
         count = 0
         for n in self.__iter_names__():
             count += isfile(join(path, n))
@@ -652,7 +669,7 @@ class FSNode(Image):
         return len(tuple(self.__iter_names__()))
 
     def __get_stat__(self, name):
-        path = self._path
+        path = self.path
         fs = self.fs
 
         if fs.isfile(path):
@@ -666,7 +683,7 @@ class FSNode(Image):
     BYTE_MULTS = ("B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB")
 
     def __summary_str__(self):
-        path = self._path
+        path = self.path
         fs = self.fs
         isfile = fs.isfile
         isdir = fs.isdir
