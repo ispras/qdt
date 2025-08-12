@@ -451,7 +451,23 @@ class Merged(Image):
 
 _fsc_empty_dict = {}
 
-class FileSystemCache(object):
+
+class OSFileSystem:
+
+    def isdir(self, path):
+        return self.get(path, isdir)
+
+    def isfile(self, path):
+        return self.get(path, isfile)
+
+    def listdir(self, path):
+        return self.get(path, listdir)
+
+    def stat(self, path):
+        return self.get(path, stat)
+
+
+class FileSystemTTLCache(OSFileSystem):
 
     def __init__(self, ttl = 10.):
         self._tree = {}
@@ -477,18 +493,6 @@ class FileSystemCache(object):
         node[getter] = data, t
         return data
 
-    def isdir(self, path):
-        return self.get(path, isdir)
-
-    def isfile(self, path):
-        return self.get(path, isfile)
-
-    def listdir(self, path):
-        return self.get(path, listdir)
-
-    def stat(self, path):
-        return self.get(path, stat)
-
     def co_drop(self):
         t = time()
         ttl = self.ttl
@@ -509,6 +513,40 @@ class FileSystemCache(object):
         print("dropping took %f s" % (time() - t))
 
         self.last_drop = t
+
+
+class FileSystemCache(OSFileSystem):
+
+    def __init__(self, threshold = 100000):
+        self._tree = {}
+        self._threshold = threshold
+        self._n = 0
+
+    def get(self, path, getter):
+        global _fsc_empty_dict
+        node = self._tree
+        for name in split(path):
+            node = node.setdefault(name, _fsc_empty_dict)
+            if node is _fsc_empty_dict:
+                _fsc_empty_dict = {}
+        try:
+            return node[getter]
+        except KeyError:
+            pass
+
+        data = node.get(getter)
+        if data is None:
+            data = getter(path)
+            node[getter] = data
+            self._n += 1
+        return data
+
+    def co_drop(self):
+        if self._n < self._threshold:
+            return
+        yield
+        self._tree.clear()
+        self._n = 0
 
 
 def _fsc_drop_leave(parent, name, node):
@@ -1154,7 +1192,7 @@ def main():
 
     def co_drop():
         yield FSNode.fs.co_drop()
-        root.after(int(FSNode.fs.ttl) * 1000, drop_fs_cache)
+        root.after(1000, drop_fs_cache)
 
     def drop_fs_cache():
         root.enqueue(co_drop())
