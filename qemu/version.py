@@ -1005,6 +1005,7 @@ def define_only_qemu_2_6_0_types():
         cpu_h.add_type(Function("CPU_CLASS"))
 
     m_bool = Type["bool"]
+    m_int = Type["int"]
     m_int32_t = Type["int32_t"]
     m_int64_t = Type["int64_t"]
     m_uint32_t = Type["uint32_t"]
@@ -1283,6 +1284,14 @@ def define_only_qemu_2_6_0_types():
             )
         ),
         Function(
+            name = "float32_set_sign",
+            ret_type = m_float32,
+            args = (
+                m_float32("a"),
+                m_int("sign")
+            )
+        ),
+        Function(
             name = "float32_sqrt",
             ret_type = m_float32,
             args = (
@@ -1340,6 +1349,14 @@ def define_only_qemu_2_6_0_types():
                 m_float64("a"),
                 m_float64("b"),
                 m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float64_set_sign",
+            ret_type = m_float64,
+            args = (
+                m_float64("a"),
+                m_int("sign")
             )
         ),
         Function(
