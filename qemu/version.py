@@ -1189,6 +1189,13 @@ def define_only_qemu_2_6_0_types():
             )
         ),
         Function(
+            name = "float32_is_zero",
+            ret_type = m_bool,
+            args = (
+                m_float32("a")
+            )
+        ),
+        Function(
             name = "float64_is_any_nan",
             ret_type = m_bool,
             args = (
@@ -1222,6 +1229,13 @@ def define_only_qemu_2_6_0_types():
             args = (
                 m_float64("a"),
                 m_p_float_status("status")
+            )
+        ),
+        Function(
+            name = "float64_is_zero",
+            ret_type = m_bool,
+            args = (
+                m_float64("a")
             )
         ),
         # operations
