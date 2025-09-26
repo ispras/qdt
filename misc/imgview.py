@@ -177,6 +177,8 @@ class ObjectObserver(dict):
     __call__ = emit
 
 
+obs = ObjectObserver()
+
 class ImageView:
 
     def __init__(self, image):
@@ -287,6 +289,12 @@ class Image:
     def view(self, *view_classes):
         return self.view_class(*view_classes)(self)
 
+    def observe(self, cb, *events):
+        obs.observe(cb, self, *events)
+
+    def forget(self, cb, *events):
+        obs.forget(cb, self, *events)
+
 
 class VirtualDirectory(Image):
 
@@ -370,6 +378,14 @@ class Merged(Image):
 
     def __iter__(self):
         return iter(self._merged)
+
+    def observe(self, *a):
+        for image in self._merged:
+            image.observe(*a)
+
+    def forget(self, *a):
+        for image in self._merged:
+            image.forget(*a)
 
     MERGED_VIEWS = set([
         SubimageProvider,
@@ -901,11 +917,25 @@ class ImageViewWidget:
 class TkImageViewWidget(ImageViewWidget):
 
     def __image_changed__(self, __):
+        self.forget()
+        self.invalidate_image()
+
+    def observe(self, *events):
+        self._image.observe(self.__observe__, *events)
+
+    def forget(self, *events):
+        self._image.forget(self.__observe__, *events)
+
+    def __observe__(self, **__):
+        self.invalidate_image()
+
+    def invalidate_image(self):
         self.show_image = -100
 
     @tk_delayed
     def show_image(self):
         self.__show_image__()
+        self.observe()
 
 
 class StatFrame(GUIFrame, TkImageViewWidget):
@@ -1082,6 +1112,8 @@ class SubimagesFrame(GUIFrame, TkImageViewWidget):
 
             tv.item(ciid, **cfg)
 
+            subimg.observe(self.__observe__)
+
 ImageViewWidget.__view2widget__[SubimageProvider] = SubimagesFrame
 
 
@@ -1229,6 +1261,8 @@ def _fs_node_leave(sp):
     img = sp._image
     img.n_inner_dirs = n_dirs
     img.n_inner_files = n_files
+
+    obs(img, "n_inner")
 
     return
     yield
