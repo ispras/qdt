@@ -21,12 +21,22 @@ class _tk_after(object):
 
 
 class tk_delayed(_tk_after):
+    """
+Positive `delay` schedules `Tk.after` again.
+Negative `delay` schedules `Tk.after` if not yet scheduled.
+Zero `delay` is like negative but uses `Tk.after_idle`.
+    """
 
     def __set__(self, o, delay):
         o2id = self.o2id
-        cur_id = o2id.pop(o, None)
-        if cur_id is not None:
-            o.after_cancel(cur_id)
+        if delay > 0:
+            cur_id = o2id.pop(o, None)
+            if cur_id is not None:
+                o.after_cancel(cur_id)
+        else:
+            if o in o2id:
+                return
+            delay = -delay
         target = self.target
         def call():
             del o2id[o]
