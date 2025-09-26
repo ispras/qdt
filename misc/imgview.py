@@ -23,6 +23,7 @@ from widgets import (
     Pictures,
     pic_path,
     TasksFrame,
+    tk_delayed,
 )
 
 from argparse import (
@@ -814,7 +815,17 @@ class ImageViewWidget:
         self._image = image
 
 
-class StatFrame(GUIFrame, ImageViewWidget):
+class TkImageViewWidget(ImageViewWidget):
+
+    def __image_changed__(self, __):
+        self.show_image = -100
+
+    @tk_delayed
+    def show_image(self):
+        self.__show_image__()
+
+
+class StatFrame(GUIFrame, TkImageViewWidget):
 
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
@@ -832,7 +843,8 @@ class StatFrame(GUIFrame, ImageViewWidget):
 
         add_scrollbars_native(self, tv, sizegrip = sizegrip)
 
-    def __image_changed__(self, image):
+    def __show_image__(self):
+        image = self.image
         tv = self._tv
         tv_cache = self._tv_cache
 
@@ -878,7 +890,7 @@ class StatFrame(GUIFrame, ImageViewWidget):
 ImageViewWidget.__view2widget__[StatView] = StatFrame
 
 
-class SubimagesFrame(GUIFrame, ImageViewWidget):
+class SubimagesFrame(GUIFrame, TkImageViewWidget):
 
     __side__ = -1 # to the left
 
@@ -932,7 +944,8 @@ class SubimagesFrame(GUIFrame, ImageViewWidget):
         self.event_generate(self.EVENT_ENTER_SUBIMAGE)
         del self.subimage_name
 
-    def __image_changed__(self, image):
+    def __show_image__(self):
+        image = self.image
         tv = self._tv
         tv_cache = self._tv_cache
         ico_subtree = self.icons.subtree
