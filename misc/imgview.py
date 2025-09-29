@@ -1268,6 +1268,18 @@ def _co_fs_node_leave(sp):
     yield
 
 
+def fs_node_analyzer(tree):
+    t0 = time()
+    stack = [(_co_fs_node_visit, tree)]
+    pop = stack.pop
+    extend = stack.extend
+    while stack:
+        phase, node = pop()
+        extend(phase(node))
+    t1 = time()
+    print("file system analysis took %f s" % (t1 - t0))
+
+
 def main():
     ap = ArgumentParser()
     arg = ap.add_argument
