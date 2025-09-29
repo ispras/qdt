@@ -70,11 +70,14 @@ a `Dedicated` `Process`.
             except:
                 raise res
 
-    def __call__(self, *a, **kw):
-        self.launch(*a, **kw)
+    def roll(self):
         while self._running:
             ret = self.poll()
         return ret
+
+    def __call__(self, *a, **kw):
+        self.launch(*a, **kw)
+        return self.roll()
 
     def stop(self, clean = True):
         self.launch(self.stop_dedicated)
