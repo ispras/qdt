@@ -1228,7 +1228,7 @@ class ImgviewTk(GUITk):
 
 def co_fs_node_analyzer(tree):
     t0 = time()
-    stack = [(_fs_node_visit, tree)]
+    stack = [(_co_fs_node_visit, tree)]
     pop = stack.pop
     extend = stack.extend
     while stack:
@@ -1239,16 +1239,16 @@ def co_fs_node_analyzer(tree):
     print("file system analysis took %f s" % (t1 - t0))
 
 
-def _fs_node_visit(img):
+def _co_fs_node_visit(img):
     if img.is_directory_like:
         sp = img.view(SubimageProvider)
-        yield (_fs_node_leave, sp)
+        yield (_co_fs_node_leave, sp)
         for name in sp:
             si = sp[name]
-            yield (_fs_node_visit, si)
+            yield (_co_fs_node_visit, si)
 
 
-def _fs_node_leave(sp):
+def _co_fs_node_leave(sp):
     n_dirs = 0
     n_files = 0
 
