@@ -162,7 +162,7 @@ class Source(TypeContainer):
     ):
         if var.name in self.global_variables:
             raise RuntimeError("Variable with name %s is already in file %s"
-                % (var, self.name)
+                % (var, self.path)
             )
 
         TypeFixerVisitor(self, var).visit()
