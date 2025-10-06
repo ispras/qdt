@@ -295,7 +295,7 @@ def analyze_instruction_block(heading):
                 # Sometimes `SyntaxError` results in None return instead of
                 # exception raising,
                 errors.append(("[parser returned None]", parser))
-        except SyntaxError:
+        except:
             msg = format_exc()
             errors.append((msg, parser))
             setattr(heading, target, None)
@@ -691,7 +691,7 @@ def parse_multiline(parser, heading, **parse_kw):
 
     try:
         return parser.parse(code, **parse_kw), False
-    except SyntaxError:
+    except:
         # try to parse line with it's block as multiline statement
         block = heading.child
         if not block:
@@ -714,7 +714,7 @@ def parse_multiline(parser, heading, **parse_kw):
 
         try:
             res = parser.parse(block_code, **parse_kw)
-        except SyntaxError:
+        except:
             res = None
         else:
             return res, True
