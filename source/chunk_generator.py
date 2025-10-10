@@ -149,6 +149,7 @@ class ChunkGenerator(object):
             if not isinstance(body, BodyTree):
                 continue
             VarDeclarator(body, func.args).visit()
+            LateLinker(body).visit()
 
         for t in definer.types.values():
             if t.definer is definer:
