@@ -169,12 +169,12 @@ def main():
         qvd.qvc.stc.gen_header_inclusion_dot_file(arguments.gen_header_tree)
 
     if arguments.no_instruction_tree_optimizations:
-        for desc in project:
+        for desc in project.descriptions:
             if isinstance(desc, CPUDescription):
                 desc.instruction_tree_optimizations = False
 
     if arguments.instruction_tree_lookahead:
-        for desc in project:
+        for desc in project.descriptions:
             if isinstance(desc, CPUDescription):
                 desc.instruction_tree_lookahead = True
 
