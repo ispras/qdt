@@ -772,7 +772,7 @@ def append_A(opcode, name, semantics,
 ):
     "(Extended) Address Instruction"
 
-    msb, mask, carry = CINT("0x80000"), CINT("0xFFFFF"), CINT("100000")
+    msb, mask, carry = CINT("0x80000"), CINT("0xFFFFF"), CINT("0x100000")
 
     name += "a"
 
