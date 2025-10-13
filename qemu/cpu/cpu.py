@@ -60,6 +60,9 @@ from itertools import (
     count,
     chain,
 )
+from math import (
+    log10,
+)
 from os.path import (
     basename,
     dirname,
@@ -189,6 +192,19 @@ def add_global_array_with_reg_names(reg, arr_name, f):
     return names_array
 
 
+class counter(object):
+    __slots__ = ('count',)
+
+    def __init__(self, start = 0):
+        self.count = start
+
+    @property
+    def next(self):
+        ret = self.count
+        self.count += 1
+        return ret
+
+
 class CPUType(QOMCPU):
     __attribute_info__ = OrderedDict([
         ("target_bigendian", {
@@ -309,14 +325,19 @@ class CPUType(QOMCPU):
                 ))
             )
 
-        existing_instruction_names = defaultdict(lambda : count(0))
+        existing_instruction_names = defaultdict(lambda : counter(0))
         for i in instructions:
             name_base = CIdGen.generate(i.mnemonic).safe
-            i.name = "%s_%d" % (
+            i.name = (
                 name_base,
-                next(existing_instruction_names[name_base])
+                existing_instruction_names[name_base].next
             )
             i.read_bitsize = read_bitsize
+
+        for i in instructions:
+            i.name = "{}_{:0{}}".format(i.name[0], i.name[1],
+                int(log10(existing_instruction_names[i.name[0]].count)) + 1,
+            )
 
         bitsizes = [i.bitsize for i in instructions]
         try:
