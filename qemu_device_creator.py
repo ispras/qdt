@@ -186,8 +186,6 @@ def main():
             known_targets = qvd.qvc.known_targets,
             with_debug_comments = arguments.gen_debug_comments,
             translate_cpu_semantics = not arguments.no_i3s,
-            instruction_tree_lookahead
-                = arguments.instruction_tree_lookahead,
             include_paths = tuple(path for path, __ in qvd.include_paths)
         )
 
