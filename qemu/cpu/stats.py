@@ -1,11 +1,16 @@
 __all__ = [
     "compute_instruction_tree_stats"
   , "print_instruction_tree"
+  , "print_instruction_tree2"
   , "format_instruction"
   , "format_instructions"
   , "print_instructions"
   , "check_unreachable_instructions"
 ]
+
+from common import (
+    byN,
+)
 
 from collections import (
     namedtuple,
@@ -108,3 +113,66 @@ def check_unreachable_instructions(node, instructions):
             " encoding or priority):"
         )
         print_instructions(unreachable_instructions, indent = "    ")
+
+
+def print_instruction_tree2(tree, offset = "\t"):
+    _print_instruction_tree2(tree, dict(), 0, 0, offset)
+
+
+def _print_instruction_tree2(node, checked_bits, indent, max_bit_n, offset):
+    pfx = offset * indent
+
+    ins = node.instruction
+    if ins is None:
+        next_checked_bits_base = dict(checked_bits)
+        bitoffset, bitsize = node.interval
+        for n in range(bitoffset, bitoffset + bitsize):
+            next_checked_bits_base[n] = "."
+        max_bit_n = max(max_bit_n, n)
+
+        checkline = []
+        for i in range(max_bit_n + 1):
+            if i and not (i & 0x7):
+                checkline.append(" ")
+            if i in checked_bits:
+                checkline.append(checked_bits[i])
+            elif i < bitoffset or bitoffset + bitsize <= i:
+                checkline.append("?")
+            else:
+                checkline.append("x")
+
+        print(pfx + "".join(checkline))
+
+        code_fmt = "{0:0%db}" % bitsize
+        code_pfx = " " * bitoffset
+
+        for opcodes, sub_node in node.subtree.items():
+            if opcodes is None:
+                code_lines = [pfx + code_pfx + "*" * bitsize]
+            else:
+                for opcode in opcodes:
+                    if len(opcode) == 1:
+                        code_str = code_fmt.format(opcode[0])
+                        code_lines = [pfx + code_pfx + code_str]
+                    else:  # xxx...yyy
+                        code_lines = [
+                            pfx + code_pfx + code_fmt.format(opcode[0]),
+                            pfx + code_pfx + "." * bitsize,
+                            pfx + code_pfx+ code_fmt.format(opcode[1]),
+                        ]
+            for line in code_lines:
+                line = " ".join(
+                    "".join(byte) for byte in byN(8, line, "")
+                )
+                print(line)
+            if opcodes and len(opcodes) == 1 and len(opcodes[0]) == 1:
+                next_checked_bits = dict(next_checked_bits_base)
+                for i, b in enumerate(code_str, bitoffset):
+                    next_checked_bits[i] = b
+            else:
+                next_checked_bits = next_checked_bits_base
+            _print_instruction_tree2(
+                sub_node, next_checked_bits, indent + 1, max_bit_n, offset
+            )
+    else:
+        print(pfx + format_instruction(ins, max_bit_n))
