@@ -4,6 +4,7 @@ __all__ = [
 ]
 
 from common import (
+    ee,
     lazy,
 )
 from .constants import (
@@ -15,6 +16,8 @@ from .instruction import (
 )
 from .stats import (
     check_unreachable_instructions,
+    print_instruction_tree,
+    print_instruction_tree2,
 )
 from source import (
     CIdGen,
@@ -29,6 +32,9 @@ from itertools import (
 from re import (
     compile,
 )
+
+
+PRINT_INSTRUCTION_TREE = ee("QDT_PRINT_INSTRUCTION_TREE", "0")
 
 re_encoding_sep = compile(r" +")
 split_encoding_names = re_encoding_sep.split
@@ -61,6 +67,13 @@ class InstructionEncoding(object):
         self.tree = node = InstructionTreeNode()
         build_instruction_tree(node, self.instructions, read_bitsize, **opts)
         check_unreachable_instructions(node, self.instructions)
+        if PRINT_INSTRUCTION_TREE:
+            print("Encoding: " + self.name)
+            {
+                2: print_instruction_tree2
+            }.get(
+                PRINT_INSTRUCTION_TREE, print_instruction_tree
+            )(node)
         fill_tree_reading_seq(node, read_bitsize)
 
     def __lt__(self, enc):
