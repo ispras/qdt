@@ -1,6 +1,7 @@
 __all__ = [
     "compute_instruction_tree_stats"
   , "print_instruction_tree"
+  , "format_instruction"
   , "format_instructions"
   , "print_instructions"
   , "check_unreachable_instructions"
@@ -66,18 +67,22 @@ def print_instruction_tree(node, offset = ""):
             print_instruction_tree(subtree, offset + "    ")
 
 
+def format_instruction(i, max_bitsize = None):
+    if max_bitsize is None:
+        max_bitsize = i.bitsize
+    return "{1:<{0}} (priority {2}) mnemonic: {3}; comment: {4}".format(
+        max_bitsize,
+        i.opcode_bits_string,
+        i.priority,
+        i.mnemonic,
+        i.comment
+    )
+
 def format_instructions(instructions, indent = "", max_bitsize = None):
     if max_bitsize is None:
         max_bitsize = max(i.bitsize for i in instructions)
     return "\n".join(
-        "{0}{2:<{1}} (priority {3}) mnemonic: {4}; comment: {5}".format(
-            indent,
-            max_bitsize,
-            i.opcode_bits_string,
-            i.priority,
-            i.mnemonic,
-            i.comment
-        ) for i in instructions
+        indent + format_instruction(i, max_bitsize) for i in instructions
     )
 
 
