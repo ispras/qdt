@@ -148,23 +148,23 @@ def _print_instruction_tree2(node, checked_bits, indent, max_bit_n, offset):
 
         for opcodes, sub_node in node.subtree.items():
             if opcodes is None:
-                code_lines = [pfx + code_pfx + "*" * bitsize]
+                code_lines = [code_pfx + "*" * bitsize]
             else:
                 for opcode in opcodes:
                     if len(opcode) == 1:
                         code_str = code_fmt.format(opcode[0])
-                        code_lines = [pfx + code_pfx + code_str]
+                        code_lines = [code_pfx + code_str]
                     else:  # xxx...yyy
                         code_lines = [
-                            pfx + code_pfx + code_fmt.format(opcode[0]),
-                            pfx + code_pfx + "." * bitsize,
-                            pfx + code_pfx+ code_fmt.format(opcode[1]),
+                            code_pfx + code_fmt.format(opcode[0]),
+                            code_pfx + "." * bitsize,
+                            code_pfx+ code_fmt.format(opcode[1]),
                         ]
             for line in code_lines:
                 line = " ".join(
                     "".join(byte) for byte in byN(8, line, "")
                 )
-                print(line)
+                print(pfx + line)
             if opcodes and len(opcodes) == 1 and len(opcodes[0]) == 1:
                 next_checked_bits = dict(next_checked_bits_base)
                 for i, b in enumerate(code_str, bitoffset):
