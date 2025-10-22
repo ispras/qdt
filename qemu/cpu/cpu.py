@@ -1270,6 +1270,8 @@ class CPUType(QOMCPU):
             )
         )
 
+        print_insn = Type[self.print_insn_name]
+
         # TODO: this code is generic enough to be part of `source` module.
         spec_and_len2type = {}
         for specifiers, info in spec_and_len2typename.items():
@@ -1326,16 +1328,32 @@ class CPUType(QOMCPU):
 
                 # Derive argument names from `op_names`.
                 for op_name in op_names_lst:
-                    arg_name = op_name
-                    for j in count():
-                        for arg in args:
-                            if arg.name == arg_name:
-                                arg_name = op_name + str(j)
+                    # Adapter may require argument of print_insn function.
+                    # E.g. `info` or `addr`.
+                    for loc_var in print_insn.args:
+                        if loc_var.name != op_name:
+                            continue
+                        arg_name = op_name
+                        for j in count():
+                            for arg in args:
+                                if arg.name == arg_name:
+                                    arg_name = op_name + str(j)
+                                    break
+                            else:
                                 break
-                        else:
-                            break
+                        args.append(loc_var.type(arg_name))
+                        break
+                    else:
+                        arg_name = op_name
+                        for j in count():
+                            for arg in args:
+                                if arg.name == arg_name:
+                                    arg_name = op_name + str(j)
+                                    break
+                            else:
+                                break
 
-                    args.append(Type["uint64_t"](arg_name))
+                        args.append(Type["uint64_t"](arg_name))
 
                 if isinstance(adapter, FunctionType):
                     f = Function(
@@ -1381,7 +1399,7 @@ class CPUType(QOMCPU):
                     " before" % (op_names, fmt, adapter_name)
                 )
 
-        print_insn_def = Type[self.print_insn_name].gen_definition()
+        print_insn_def = print_insn.gen_definition()
         fill_print_insn_body(self, print_insn_def)
         c.add_type(print_insn_def)
 
