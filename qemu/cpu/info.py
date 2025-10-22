@@ -93,11 +93,16 @@ class CPUInfo(object):
 
         Keys must match (correspond) to place names inside
             Instruction.disas_format.
+        Values are tuples of (format_specifier, operand_value_adapter).
+
         A place is defined as comma separated <names, of, operands> inside
             <angle parenthesis>.
         One <name> is enough for simple operand formatting.
 
-        Values are tuples of (format_specifier, operand_value_adapter).
+        `name` can match argument of `print_insn_*`, the top level function of
+        encoding parser.
+        Then `operand_value_adapter` is given that argument, among with
+        instruction operands.
 
         format_specifier is either None or a (sub-)string, a part of format
         string of printf-like Qemu printing function (ex.: "%s").

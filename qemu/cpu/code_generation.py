@@ -1220,6 +1220,7 @@ def fill_print_insn_body(cputype, function):
 
     def print_ins_epilogue(node, instruction, operands, total_read, _):
         operands_dict = { o.name: o for o in operands }
+        operands_dict.update((a.name, a) for a in function.args)
 
         format_line = ''
         call_args = []
