@@ -148,6 +148,7 @@ class IRQHubLayout(object):
 
 
 class MachineType(QOMType):
+    "Machine draft"
 
     __qom_prefix__ = ("hw",)
 
