@@ -1330,8 +1330,9 @@ class CPUType(QOMCPU):
                 for op_name in op_names_lst:
                     # Adapter may require argument of print_insn function.
                     # E.g. `info` or `addr`.
+                    base_op_name = op_name.split('$')[0]
                     for loc_var in print_insn.args:
-                        if loc_var.name != op_name:
+                        if loc_var.name != base_op_name:
                             continue
                         arg_name = op_name
                         for j in count():
