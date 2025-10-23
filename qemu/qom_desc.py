@@ -2,6 +2,7 @@ __all__ = [
     "QOMDescription"
   , "describable"
   , "descriptionOf"
+  , "DESCRIPTION_TYPES"
 ]
 
 from .build import (
@@ -162,6 +163,9 @@ def describable(QOMTemplate):
     # The template is not actually changed.
     return QOMTemplate
 
+
+DESCRIPTION_TYPES = []
+
 """
 descriptionOf decorator is used to extend a class to one that could be used
 as description of QOM type template. Main purpose is to simplify definition
@@ -298,6 +302,8 @@ def __init__(self, {pa}, {kwa}, **compat):
             return False
 
         setattr(klass, "__same__", __same__)
+
+        DESCRIPTION_TYPES.append(klass)
 
         return klass
 
