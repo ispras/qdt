@@ -206,6 +206,8 @@ class counter(object):
 
 
 class CPUType(QOMCPU):
+    "CPU template"
+
     __attribute_info__ = OrderedDict([
         ("target_bigendian", {
             "short": _("Target is big-endian"),
