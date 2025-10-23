@@ -46,6 +46,8 @@ MACROS_2_HEADER = ee("QDT_SBD_MMIO_MACROS_TO_HEADER")
 
 @describable
 class SysBusDeviceType(QOMDevice):
+    "System bus device template"
+
     __attribute_info__ = OrderedDict([
         ("out_irq_num", { "short": _("Output IRQ quantity"), "input": int }),
         ("in_irq_num", { "short": _("Input IRQ quantity"), "input": int }),
