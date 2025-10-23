@@ -12,6 +12,7 @@ from .hotkey import (
     HKEntry,
 )
 from qemu import (
+    DESCRIPTION_TYPES,
     MOp_AddBus,
     POp_AddDesc,
 )
@@ -33,6 +34,11 @@ from six.moves.tkinter_messagebox import (
 msg_title = _("Description creation error")
 msg_name = _("Name '%s' is incorrect or already in use.")
 msg_empty_name = _("Name is empty.")
+
+
+def qom_desc_pretty(desc):
+    return _(desc.get_pretty_name())
+
 
 class AddDescriptionDialog(GUIDialog):
     # If project_history_tracker is None than the window works in demo mode.
@@ -73,14 +79,7 @@ class AddDescriptionDialog(GUIDialog):
         v = self.var_kind = StringVar()
         cb = self.cb_kind = VarCombobox(self,
             textvariable = v,
-            # TODO: automate filling of this
-            values = [
-                _("System bus device template"),
-                _("Machine draft"),
-                _("PCI(E) function template"),
-                _("CPU template"),
-                _("Immediate implementation code"),
-            ],
+            values = list(map(qom_desc_pretty, DESCRIPTION_TYPES)),
             state = "readonly"
         )
         v.set(cb.cget("values")[0].get())
@@ -142,24 +141,16 @@ class AddDescriptionDialog(GUIDialog):
             # check name only in demo mode
             return
 
-        """ TODO: Directory is defined by current Qemu source tree. Hence,
-        version API must be use there. """
-
         kind = self.cb_kind.current()
-        if kind == 0:
-            class_name = "SysBusDeviceDescription"
-            directory = ""
-        elif kind == 1:
-            class_name = "MachineNode"
-            directory = ""
-        elif kind == 2:
-            class_name = "PCIExpressDeviceDescription"
+        class_name = DESCRIPTION_TYPES[kind].__name__
+
+        # TODO: Directory is defined by current Qemu source tree. Hence,
+        # version API must be use there.
+        if class_name == "PCIExpressDeviceDescription":
             directory = "pci"
-        elif kind == 3:
-            class_name = "CPUDescription"
+        elif class_name == "CPUDescription":
             directory = cur_name
-        elif kind == 4:
-            class_name = "ImmImplDescription"
+        else:
             directory = ""
 
         add_op = self.pht.stage(POp_AddDesc, class_name,
@@ -168,7 +159,7 @@ class AddDescriptionDialog(GUIDialog):
             directory = directory
         )
 
-        if kind == 1:
+        if class_name == "MachineNode":
             # automatically create system bus in the machine
             self.pht.stage(MOp_AddBus, "SystemBusNode",
                 0, # id for the bus
