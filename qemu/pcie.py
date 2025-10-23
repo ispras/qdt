@@ -42,6 +42,8 @@ from .version import (
 
 @describable
 class PCIExpressDeviceType(QOMDevice):
+    "PCI(E) function template"
+
     __attribute_info__ = OrderedDict([
         # Note that multiple NIC generation is not implemented yet.
         ("nic_num", { "short": _("Network interface"), "input": bool }),
