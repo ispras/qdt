@@ -35,6 +35,7 @@ from qemu import (
     ImmImplDescription,
     MachineDescription,
     MachineNode,
+    PatchImplDescription,
     PCIExpressDeviceDescription,
     POp_AddDesc,
     QemuTypeName,
@@ -509,7 +510,10 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             parent_name = "machine"
         elif isinstance(desc, CPUDescription):
             parent_name = "cpu"
-        elif isinstance(desc, ImmImplDescription):
+        elif isinstance(desc, (
+            ImmImplDescription,
+            PatchImplDescription,
+        )):
             parent_name = None
         else:
             raise NotImplementedError
