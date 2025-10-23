@@ -129,6 +129,19 @@ class QOMDescription(object):
             yield True
             register_src_in_build_system(src, sname, directory)
 
+    @classmethod
+    def get_pretty_name(cls):
+        for doc in (
+            cls.__doc__,
+            cls.__qom_template__.__doc__,
+            type(cls).__name__,
+        ):
+            if not doc:
+                continue
+            for line in doc.splitlines():
+                line = line.strip()
+                if line:
+                    return line
 
 """
 GUI may edit only QOM templates which have the corresponding description
