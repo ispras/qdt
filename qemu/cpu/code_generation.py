@@ -351,13 +351,7 @@ def fill_cpuclass_tlb_fill_body(function):
         Declare(
             OpDeclareAssign(
                 prot,
-                OpOr(
-                    MCall("PAGE_READ"),
-                    OpOr(
-                        MCall("PAGE_WRITE"),
-                        MCall("PAGE_EXEC")
-                    )
-                )
+                MCall("PAGE_READ") | MCall("PAGE_WRITE") | MCall("PAGE_EXEC")
             )
         ),
         OpCombAssign(function.args[1], MCall("TARGET_PAGE_MASK"), "&"),
