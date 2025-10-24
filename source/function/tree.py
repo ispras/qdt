@@ -970,19 +970,37 @@ class BinaryOperator(Operator):
 
     # subclass must define `op_str`
 
+    # associativity
+    left2right = True
+
     @property
     def delim(self):
         return "@b" + self.op_str + "@s"
+
+    def add_child(self, child):
+        super(BinaryOperator, self).add_child(child)
+
+        if not isinstance(child, BinaryOperator):
+            return
+        if self.prior != child.prior:
+            return
+        right = self.children[0] is not child
+
+        # assuming both a `bool` `True` or `False`
+        if right is self.left2right:
+            child.parenthesis = True
 
 
 class OpAssign(BinaryOperator):
 
     op_str = "="
+    left2right = False
 
 
 class OpDeclareAssign(BinaryOperator):
 
     op_str = "="
+    left2right = False
 
     @staticmethod
     def out_child(child, writer):
@@ -1005,6 +1023,7 @@ class OpDeclareAssign(BinaryOperator):
 
 
 class OpCombAssign(BinaryOperator):
+    left2right = False
 
     def __init__(self, arg1, arg2, op_sym, **kw):
         super(OpCombAssign, self).__init__(arg1, arg2, **kw)
