@@ -161,6 +161,10 @@ class CINT(CConst):
         # Because `ll` looks like `11`.
         return "LL"
 
+    @property
+    def type(self):
+        return Type[self.type_name]
+
     def gen_c_code(self):
         val = self.v
 
