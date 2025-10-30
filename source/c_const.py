@@ -180,9 +180,7 @@ class CINT(CConst):
 
         val_str = prefix + val_str
 
-        if val.bit_length() > 32:
-            # Because `ll` looks like `11`.
-            val_str += "LL"
+        val_str += self.suffix
 
         return val_str
 
