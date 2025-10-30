@@ -138,6 +138,24 @@ class CINT(CConst):
             return "long int"
         return "long long int"
 
+    @property
+    def suffix(self):
+        val = self.v
+        if isinstance(val, str):
+            ret = ""
+            for c in val:
+                if c in "lL":
+                    ret += c
+            return ret
+
+        l = val.bit_length()
+        if l <= 32:
+            return ""
+        if l <= 64:
+            return "L"
+        # Because `ll` looks like `11`.
+        return "LL"
+
     def gen_c_code(self):
         val = self.v
 
