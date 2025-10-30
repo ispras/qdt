@@ -224,6 +224,13 @@ def print_insn(insn,
     print("encoding: " + insn.encoding)
     if print_disas_format:
         print("disas_format: %r" % insn.disas_format)
+    comment = insn.comment
+    if comment:
+        print("comment:")
+        for l in comment.splitlines():
+            print("\t" + l)
+    else:
+        print("comment: %r" % (comment,))  # None / empty `str`ing / ...
     if print_semantics:
         try:
             sem = str_as_function_body(insn.semantics)
