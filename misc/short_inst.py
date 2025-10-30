@@ -216,7 +216,7 @@ def print_function(t):
         ))
 
 
-def handle_insn(insn,
+def print_insn(insn,
     print_disas_format = False,
     print_semantics = False,
 ):
@@ -979,7 +979,7 @@ Converts short form instructions definitions to script defines them.
         check_dump(i)
 
         print("\n\n")
-        handle_insn(i,
+        print_insn(i,
             print_disas_format = args.print_disas_format,
             print_semantics = args.print_semantics,
         )
