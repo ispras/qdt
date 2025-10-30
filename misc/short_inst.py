@@ -221,7 +221,6 @@ def handle_insn(insn,
     print_semantics = False,
 ):
     print("\n\n")
-    check_dump(insn)
     print_layout(insn)
     print("encoding: " + insn.encoding)
     if print_disas_format:
@@ -977,6 +976,8 @@ Converts short form instructions definitions to script defines them.
         same_insts.append(i)
         if 1 < len(duplicates[code]):
             continue
+
+        check_dump(i)
 
         handle_insn(i,
             print_disas_format = args.print_disas_format,
