@@ -120,6 +120,24 @@ class CINT(CConst):
                 "Cannot assign value of type %s" % type(value).__name__
             )
 
+    @property
+    def type_name(self):
+        val = self.v
+
+        if isinstance(val, str):
+            ret = "int"
+            for c in val:
+                if c in "lL":
+                    ret = "long " + ret
+            return ret
+
+        l = val.bit_length()
+        if l <= 32:
+            return "int"
+        if l <= 64:
+            return "long int"
+        return "long long int"
+
     def gen_c_code(self):
         val = self.v
 
