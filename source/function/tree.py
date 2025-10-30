@@ -239,6 +239,9 @@ class Ifdef(Node):
 
 class CNode(Node):
 
+    # Subclasses should override it if type can be evaluated.
+    type = None
+
     def add_child(self, child):
         if isinstance(child, str):
             child = CConst.parse(child)
@@ -622,6 +625,10 @@ class Call(SemicolonPresence):
             gen.pprint_join(", ", self.args, per_line = False)
         gen.line(")")
 
+    @property
+    def type(self):
+        return self.func.ret_type
+
 
 class Declare(SemicolonPresence):
 
@@ -815,6 +822,21 @@ class Operator(SemicolonPresence):
             gen.pprint(self.parenthesis)
         gen.gen_end()
 
+    @property
+    def type(self):
+        ret = None
+        for c in self.children:
+            ctype = c.type
+            if ctype is None:
+                continue
+            if ret is None:
+                ret = ctype
+                continue
+            if ret is not ctype:
+                pass
+                # TODO: a complex check is required
+        return ret
+
 
 class OpCast(Operator):
 
@@ -826,6 +848,10 @@ class OpCast(Operator):
             type_or_name = Type[type_or_name]
         super(OpCast, self).__init__(type_or_name, arg, **kw)
 
+    @property
+    def type(self):
+        return self.children[0]
+
 
 class OpIndex(Operator):
 
@@ -836,6 +862,25 @@ class OpIndex(Operator):
     def add_child(self, child):
         # Note, ignore `Operator.add_child` to suppress unnecessary parentheses
         super(Operator, self).add_child(child)
+
+    @property
+    def array(self):
+        return self.children[0]
+
+    @property
+    def index(self):
+        return self.children[1]
+
+    @property
+    def type(self):
+        a = self.array
+        if isinstance(a, Pointer):
+            return a.type
+        if isinstance(a, Variable):
+            if a.array_size is None:
+                raise ValueError("%s: indexing non-aray" % (a,))
+            return a.type
+        # return None  # can't get
 
 
 class OpSDeref(Operator):
