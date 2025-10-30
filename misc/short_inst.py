@@ -223,6 +223,7 @@ def handle_insn(insn,
     print("\n\n")
     check_dump(insn)
     print_layout(insn)
+    print("encoding: " + insn.encoding)
     if print_disas_format:
         print("disas_format: %r" % insn.disas_format)
     if print_semantics:
