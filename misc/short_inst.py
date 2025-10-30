@@ -220,7 +220,6 @@ def handle_insn(insn,
     print_disas_format = False,
     print_semantics = False,
 ):
-    print("\n\n")
     print_layout(insn)
     print("encoding: " + insn.encoding)
     if print_disas_format:
@@ -979,6 +978,7 @@ Converts short form instructions definitions to script defines them.
 
         check_dump(i)
 
+        print("\n\n")
         handle_insn(i,
             print_disas_format = args.print_disas_format,
             print_semantics = args.print_semantics,
