@@ -9,6 +9,11 @@ if __name__ == "__main__":
 else:
     from .c_str_adapter import str2c
 
+from .model import (
+    Pointer,
+    Type,
+)
+
 from math import (
     log
 )
@@ -312,6 +317,10 @@ class CSTR(CConst):
         elif isinstance(v, CSTR):
             return self.v == v.v
         return False
+
+    @property
+    def type(self):
+        return Pointer(Type["char"])
 
 
 class QCLexerError(ValueError): pass
