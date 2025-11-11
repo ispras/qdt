@@ -252,6 +252,12 @@ class Type(TypeContainer):
         #    (other matches possible).
         return "t_" + "_".join(self.name.split())
 
+    # This prevents pickle from spawning Type objects with same name.
+    # This does NOT means the model supports pickle.
+    def __reduce__(self):
+        if self.is_named:
+            return (Type.lookup, (self.name,))
+
 
 class Structure(Type):
 
