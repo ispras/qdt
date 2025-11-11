@@ -247,8 +247,10 @@ class Type(TypeContainer):
             gen.gen_code(self)
 
     def __var_base__(self):
-        # reminder ex. `short int`
-        return "_".join(self.name.split())
+        # 1. reminder ex. `short int`
+        # 2. "t_" prevents generating Python variables with name "int"/"long"
+        #    (other matches possible).
+        return "t_" + "_".join(self.name.split())
 
 
 class Structure(Type):
