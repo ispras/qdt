@@ -257,6 +257,7 @@ class Type(TypeContainer):
     def __reduce__(self):
         if self.is_named:
             return (Type.lookup, (self.name,))
+        return object.__reduce__(self)
 
 
 class Structure(Type):
