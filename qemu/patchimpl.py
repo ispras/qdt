@@ -80,6 +80,12 @@ New sources can be added too, but consider `ImmImplDescription`.
         self.patch_args = patch_args
 
 
+def lower_string_tuple(strings):
+    return tuple(
+        (s.lower() if isinstance(s, str) else lower_string_tuple(s))
+            for s in strings)
+
+
 @descriptionOf(PatchImplType)
 class PatchImplDescription(QOMDescription):
 
@@ -126,9 +132,10 @@ class PatchImplDescription(QOMDescription):
         patch_args = self.patch_args
         cwd = abspath(join(src, self.directory))
 
-        for __, ospath, __ in sorted(patches):
+        for __, ospath, __ in sorted(patches, key = lower_string_tuple):
             # TODO: should we change `patch` CWD according to patch file
             # relative name?
+            print("Applying path %r" % ospath)
             yield co_process(
                 run,
                 "patch " + patch_args.format(patch = ospath),
