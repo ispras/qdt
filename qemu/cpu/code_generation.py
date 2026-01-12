@@ -1223,6 +1223,8 @@ def fill_print_insn_body(cputype, function):
         operands_dict = { o.name: o for o in operands }
         operands_dict.update((a.name, a) for a in function.args)
 
+        node(OpAssign(length, instruction.bitsize // BYTE_BITSIZE))
+
         format_line = ''
         call_args = []
         name_to_format = cputype.name_to_format
@@ -1268,8 +1270,6 @@ def fill_print_insn_body(cputype, function):
 
         if format_line:
             node(Call(fpr, stream, format_line, *call_args))
-
-        node(OpAssign(length, instruction.bitsize // BYTE_BITSIZE))
 
     unknown_instruction_case_nodes = [
         Call("fprintf", MCall("stderr"), "Unknown instruction\\n"),
