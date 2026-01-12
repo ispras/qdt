@@ -934,7 +934,6 @@ class CPUType(QOMCPU):
         disas_context = Structure("DisasContext",
             Pointer(Type["TranslationBlock"])("tb"),
             Type["uint64_t"]("pc"),
-            Type["uint64_t"]("opcode"),
             Type["int"]("bstate"),
             Type["bool"]("singlestep_enabled")
         )
