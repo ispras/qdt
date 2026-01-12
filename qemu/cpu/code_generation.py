@@ -456,8 +456,8 @@ def fill_decode_opc_encoding_body(cputype, function, encoding,
 ):
     function.body = body = BodyTree()
 
-    result = Type["int"]("result")
-    body(Declare(OpDeclareAssign(result, 0)))
+    length = Type["int"]("length")
+    body(Declare(OpDeclareAssign(length, 0)))
 
     ctx = function.args[1]
     ctx_pc = OpSDeref(ctx, "pc")
@@ -537,7 +537,7 @@ def fill_decode_opc_encoding_body(cputype, function, encoding,
                 )
             )
 
-        node(OpAssign(result, instruction.bitsize // BYTE_BITSIZE))
+        node(OpAssign(length, instruction.bitsize // BYTE_BITSIZE))
 
     ParseTreeCodeBuilder(
         cputype.encodings[encoding].tree,
@@ -549,7 +549,7 @@ def fill_decode_opc_encoding_body(cputype, function, encoding,
         unknown_instruction_case_nodes
     )
 
-    body(Return(result))
+    body(Return(length))
 
 def fill_disas_set_info_body(cputype, function):
     function.body = BodyTree()(
