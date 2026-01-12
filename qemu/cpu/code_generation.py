@@ -513,6 +513,8 @@ def fill_decode_opc_encoding_body(cputype, function, encoding,
                 *semantics
             )
 
+        node(OpAssign(length, instruction.bitsize // BYTE_BITSIZE))
+
         node(Call(func, ctx, *operands))
 
         if DEBUG_DECODER:
@@ -536,8 +538,6 @@ def fill_decode_opc_encoding_body(cputype, function, encoding,
                     Type["BS_BRANCH"]
                 )
             )
-
-        node(OpAssign(length, instruction.bitsize // BYTE_BITSIZE))
 
     ParseTreeCodeBuilder(
         cputype.encodings[encoding].tree,
