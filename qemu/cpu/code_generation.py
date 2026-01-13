@@ -459,6 +459,7 @@ def fill_decode_opc_encoding_body(cputype, function, encoding,
     length = Type["int"]("length")
     body(Declare(OpDeclareAssign(length, 0)))
 
+    cpu = function.args[0]
     ctx = function.args[1]
     ctx_pc = OpSDeref(ctx, "pc")
     set_pc_ref = {Type["set_pc"]}
@@ -492,11 +493,20 @@ def fill_decode_opc_encoding_body(cputype, function, encoding,
         try:
             func = Type[instruction.name]
         except TypeNotRegistered:
+            if instruction.variable_length:
+                func_args = (
+                    [
+                        cpu.type("cpu"),
+                        ctx.type("ctx"),
+                        Pointer(length.type)("length"),
+                    ] + operands_to_args
+                )
+            else:
+                func_args = [ ctx.type("ctx") ] + operands_to_args
+
             func = Function(
                 name = instruction.name,
-                args = (
-                    [ Pointer(Type["DisasContext"])("ctx") ] + operands_to_args
-                ),
+                args = func_args,
                 static = True,
                 inline = True
             )
@@ -515,7 +525,10 @@ def fill_decode_opc_encoding_body(cputype, function, encoding,
 
         node(OpAssign(length, instruction.bitsize // BYTE_BITSIZE))
 
-        node(Call(func, ctx, *operands))
+        if instruction.variable_length:
+            node(Call(func, cpu, ctx, OpAddr(length), *operands))
+        else:
+            node(Call(func, ctx, *operands))
 
         if DEBUG_DECODER:
             node(
