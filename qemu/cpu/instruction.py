@@ -349,6 +349,10 @@ class Instruction(object):
     One is `"default"` other must have different `"string"` name.
     An instruction can present in multiple encodings given using
     `"space separated strings"`.
+
+:param variable_length:
+    flag marks a variable-length instruction
+    (e.g. constants of different sizes are possible after the instruction)
     """
 
 # TODO: an ASCII-art schematic with field layout (bit enumeration) relative to
@@ -366,6 +370,7 @@ class Instruction(object):
         self.semantics = kw_args.get("semantics", no_semantics)
         self.priority = kw_args.get("priority", 0)
         self.encoding = kw_args.get("encoding", "default")
+        self.variable_length = kw_args.get("variable_length", False)
 
     __pygen_deps__ = ("semantics",)
 
