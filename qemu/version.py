@@ -152,6 +152,8 @@ def define_only_qemu_2_6_0_types():
                 "MO_TE",
                 "MO_BE",
                 "MO_LE",
+                "MO_BEUW",
+                "MO_BEUL",
             ],
             typedef_name = memop_type_name
         )
