@@ -100,11 +100,13 @@ C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg}\n"
 
 
 def c2t_exit(msg, prog = __file__):
-    print(C2T_ERRMSG_FORMAT.format(
-        prog = basename(prog),
-        msg = msg.decode(),
-    ))
-    killpg(0, SIGKILL)
+    try:
+        print(C2T_ERRMSG_FORMAT.format(
+            prog = basename(prog),
+            msg = msg,
+        ))
+    finally:
+        killpg(0, SIGKILL)
 
 
 C2T_DIR = dirname(__file__) or '.'
@@ -372,6 +374,15 @@ class ProcessWithErrCatching(Thread):
 
         self.process = process = Popen(*self.popen_args, **self.popen_kw)
         __, err = process.communicate()
+
+        if not isinstance(err, str):
+            try:
+                err = err.decode("utf-8")
+            except:
+                try:
+                    err = err.decode("charmap")
+                except:
+                    err = repr(err)
 
         # If the process has been explicitly wiped, do not `c2t_exit`
         if not self._wiped:
@@ -843,7 +854,7 @@ def main():
     try:
         execfile(config, glob)
     except Exception as e:
-        c2t_exit(e, prog = config)
+        c2t_exit(str(e), prog = config)
     else:
         global c2t_cfg
         for val in glob.values():
