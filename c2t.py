@@ -222,7 +222,7 @@ class DebugSession(object):
         lineno = 1
 
         with open(self.srcfile, 'r') as f:
-            re_comment = compile("^.*//\$(.+)$")
+            re_comment = compile("^.*//[$](.+)$")
             for line in f:
                 mi = re_comment.match(line)
                 if mi:
@@ -232,7 +232,7 @@ class DebugSession(object):
 
     @property
     def _var_size(self):
-        re_size = compile("^.+_(?:u?(\d+))_.+$")
+        re_size = compile("^.+_(?:u?(\\d+))_.+$")
         size_str = re_size.match(basename(self.srcfile)).group(1)
         return int(size_str) // 8
 
@@ -770,7 +770,7 @@ def main():
             )
         )
     )
-    DEFAULT_REGEXPS = testfilter([(testfilter.RE_INCLD, ".*\.c"),])
+    DEFAULT_REGEXPS = testfilter([(testfilter.RE_INCLD, ".*[.]c"),])
     arg("-t", "--include",
         type = str,
         metavar = "RE_INCLD",
