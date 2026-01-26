@@ -852,7 +852,7 @@ def main():
     try:
         execfile(config, glob)
     except Exception as e:
-        c2t_exit(e, prog = config)
+        c2t_exit(str(e), prog = config)
     else:
         global c2t_cfg
         for val in glob.values():
