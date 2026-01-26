@@ -503,7 +503,7 @@ def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
                 qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
 
                 if not wait_for_tcp_port(qemu_port):
-                    c2t_exit("qemu malfunction")
+                    c2t_exit("qemu (gdbstub) tcp:%d malfunction" % qemu_port)
 
                 if qmp_port and wait_for_tcp_port(qmp_port):
                     qmp = QMP(qmp_port)
