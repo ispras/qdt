@@ -518,6 +518,7 @@ class CPUType(QOMCPU):
             "cpu.c",
             "helper.c",
             "machine.c",
+            "monitor.c",
             "translate.c",
         ]
         if get_vp("cpu-param header exists"):
@@ -1405,6 +1406,12 @@ class CPUType(QOMCPU):
         print_insn_def = print_insn.gen_definition()
         fill_print_insn_body(self, print_insn_def)
         c.add_type(print_insn_def)
+
+    def _gen_monitor_c(self, src):
+        target_monitor_defs_proto = Type["target_monitor_defs"]
+        target_monitor_defs = target_monitor_defs_proto.gen_definition()
+        src.add_type(target_monitor_defs)
+        fill_target_monitor_defs(self, target_monitor_defs)
 
 
 @descriptionOf(CPUType)

@@ -28,6 +28,7 @@ __all__ = [
   , "fill_restore_state_to_opc_body"
   , "fill_set_pc_body"
   , "fill_set_pc_inc_body"
+  , "fill_target_monitor_defs"
   , "fill_tcg_init_body"
   , "fill_tlb_fill_body"
 ]
@@ -69,6 +70,7 @@ from source import (
     Goto,
     Header,
     Ifdef,
+    Initializer,
     Label,
     LoopDoWhile,
     LoopFor,
@@ -1542,6 +1544,54 @@ def fill_set_pc_body(cputype, function):
 
 def fill_set_pc_inc_body(function, pc):
     function.body = BodyTree()(OpAssign(pc, function.args[0]))
+
+def fill_target_monitor_defs(cputype, function):
+    env_state_name = cputype.env_state_name
+
+    lines = []
+    l = lines.append
+
+    # TODO: MD_TLONG/MD_I32
+    # TODO: get_value for other bit lengths
+
+    l("{")
+    for reg in cputype.registers:
+        if reg.bank_size:
+            for i, name in enumerate(reg.reg_names):
+                l('    { "%s", offsetof(%s, %s[%d]) },' % (
+                    name,
+                    env_state_name,
+                    reg.name,
+                    i
+                ))
+        else:
+            l('    { "%s", offsetof(%s, %s) },' % (
+                reg.name,
+                env_state_name,
+                reg.name
+            ))
+    l("    { NULL }")
+    l("}")
+
+    init = Initializer(
+        code = "\n".join(lines),
+        used_types = [
+            Type[env_state_name],
+            Type["offsetof"],
+        ],
+    )
+    monitor_defs = Type["MonitorDef"](
+        "monitor_defs",
+        const = True,
+        array_size = 0,
+        initializer = init,
+    )
+    function.definer.add_global_variable(monitor_defs)
+
+    function.body = body = BodyTree()
+    body(
+        Return(monitor_defs),
+    )
 
 def fill_tcg_init_body(cputype, function, reg_vars, cpu_env):
     function.body = body = BodyTree()
