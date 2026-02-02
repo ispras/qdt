@@ -1379,6 +1379,23 @@ def define_only_qemu_2_6_0_types():
     )
     Header["fpu/softfloat-helpers.h"]
 
+    hmp_target_h = Header["monitor/hmp-target.h"]
+    MonitorDef = Structure("MonitorDef",
+        Pointer(Type["const char"])("name"),
+        Type["int"]("offset"),
+        # TODO: function pointer definition
+        Pointer(Type["void"])("get_value"),
+        Type["int"]("type"),
+    )
+    hmp_target_h(
+        MonitorDef,
+        Function(
+            name = "target_monitor_defs",
+            ret_type = Pointer(MonitorDef, const = True),
+        )
+    )
+
+
 def define_qemu_2_6_5_types():
     add_base_types()
     define_only_qemu_2_6_0_types()
