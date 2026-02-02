@@ -514,8 +514,13 @@ class CPUType(QOMCPU):
         yield True
 
         self.gen_files = OrderedDict()
-        file_list = ["cpu.h", "translate.inc.c", "cpu.c", "helper.c",
-            "machine.c", "translate.c"
+        file_list = [
+            "cpu.h",
+            "translate.inc.c",
+            "cpu.c",
+            "helper.c",
+            "machine.c",
+            "translate.c",
         ]
         if get_vp("cpu-param header exists"):
             file_list = ["cpu-param.h"] + file_list
