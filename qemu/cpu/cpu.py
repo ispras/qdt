@@ -631,7 +631,7 @@ class CPUType(QOMCPU):
                 save = False,
             )
 
-        env_state_name = "CPU" + self.cpu_name.upper() + "State"
+        env_state_name = self.env_state_name
 
         env_state_desc = StateStruct(env_state_name)
 

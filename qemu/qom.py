@@ -1074,6 +1074,7 @@ class QOMCPU(QOMType):
 
         # redefinition of struct_name
         self.struct_name = self.cpu_name.upper() + "CPU"
+        self.env_state_name = "CPU" + self.cpu_name.upper() + "State"
 
         # all derived strings in one place
         self.struct_class_name = self.qtn.for_struct_name.upper() + "Class"
