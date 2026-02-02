@@ -705,8 +705,9 @@ class Pointer(Type):
         const: a constant pointer
         """
         if const:
-            raise NotImplementedError(
-                "A constant pointer is not fully implemented"
+            print(
+                # TODO: `gen_pointer_chunks`?
+                "%s: a constant pointer is not fully implemented" % name
             )
 
         # pygen compatible way
@@ -774,6 +775,13 @@ class Pointer(Type):
             super(Pointer, self).__c__(writer)
         else:
             writer.write(self.declaration_string)
+
+    @property
+    def declaration_string(self):
+        ret = super(Pointer, self).declaration_string
+        if self.const:
+            ret = "const " + ret
+        return ret
 
     def __get_init_arg_val__(self, name):
         if name == "_type":
