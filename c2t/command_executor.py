@@ -2,6 +2,9 @@ __all__ = [
     "DebugCommandExecutor"
 ]
 
+from traceback import (
+    format_exc,
+)
 
 class DebugCommandExecutor(dict):
     """ This class executes commands passed in the comments of the test source
@@ -39,7 +42,12 @@ file and sets names of tracked variables
             self.executing = command
             if command not in self.executed:
                 self.executed.append(command)
-                exec_command(self.lineno)
+                try:
+                    exec_command(self.lineno)
+                except:
+                    print("executing command %r failed..." % command)
+                    print(format_exc())
+                    raise
         return self
 
     # supported debugging commands:
