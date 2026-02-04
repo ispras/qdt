@@ -229,7 +229,11 @@ class DebugSession(object):
                 mi = re_comment.match(line)
                 if mi:
                     glob = DebugCommandExecutor(locals(), lineno)
-                    exec(mi.group(1), glob)
+                    try:
+                        exec(mi.group(1), glob)
+                    except:
+                        print("executing line comment: %r" % line)
+                        raise
                 lineno += 1
 
     @property
