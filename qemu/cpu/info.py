@@ -17,11 +17,13 @@ from six import (
 class CPURegister(object):
     "Class is used to describe CPUState registers and register groups."
 
-    def __init__(self, name, bitsize, *reg_names):
+    def __init__(self, name, bitsize, *reg_names, **kw):
         """
     :param reg_names:
         if the tuple is not empty then the CPURegister describes a group of
     registers
+    :param gdb:
+        **kw-only. if this register is accessible to gdb. Default: `True`.
         """
         if bitsize > 64:
             raise ValueError("Unsupported size %d bits for register %s" % (
@@ -34,6 +36,7 @@ class CPURegister(object):
         self.field_bitsize = (bitsize + 31) & ~31
         self.reg_names = reg_names
         self.bank_size = len(reg_names) if reg_names else None
+        self.gdb = kw.get("gdb", True)
 
 
 class CPUEnvField(QOMTypeStateField):
