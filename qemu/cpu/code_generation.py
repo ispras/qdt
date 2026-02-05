@@ -680,6 +680,9 @@ def fill_gdb_rw_register_body(cputype, function, is_write = False):
     reg_number = 0
     cases = []
     for reg in cputype.registers:
+        if not reg.gdb:
+            continue
+
         bank_size = reg.bank_size
         raw_bitsize = reg.raw_bitsize
         env_reg = OpSDeref(env, reg.name)

@@ -1019,7 +1019,9 @@ class CPUType(QOMCPU):
             fn_name("class_init"),
             static = True
         )
-        num_core_regs = sum(r.bank_size or 1 for r in self.registers)
+        num_core_regs = sum(
+            r.bank_size or 1 for r in self.registers if r.gdb
+        )
         fill_class_init_body(self, cpu_class_init, num_core_regs,
             self.gen_files["cpu.h"].global_variables[
                 "vmstate_" + self.qtn.for_id_name
