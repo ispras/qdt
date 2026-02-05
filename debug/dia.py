@@ -239,18 +239,22 @@ pyelftools's `DWARFInfo`.
     def find_line_map(self, file_name):
         rpath = tuple(reversed(file_name.split(bsep)))
         try:
-            lm, __ = trie_find(self.srcmap, rpath)
-        except KeyError:
-            try:
-                cu = self.get_CU_by_reversed_path(rpath)
-            except (KeyError, ValueError):
-                # XXX: headers are not supported yet
-                raise ValueError("Cannot find line program for file %s" % (
-                    file_name
-                ))
-
-            self.account_line_program_CU(cu)
-            lm, __ = trie_find(self.srcmap, rpath)
+            while True:
+                # Not a loop.
+                # Catching ValueError from several `trie_find` calls.
+                try:
+                    lm, __ = trie_find(self.srcmap, rpath)
+                except KeyError:
+                    try:
+                        for cu in self.iter_CUs_by_reversed_path(rpath):
+                            self.account_line_program_CU(cu)
+                    except ValueError:
+                        # XXX: headers are not supported yet
+                        raise RuntimeError(
+                    "Cannot find line program for file %s" % (file_name)
+                        )
+                    lm, __ = trie_find(self.srcmap, rpath)
+                break
         except ValueError:
             raise ValueError("File name suffix '%s' is not long enough to"
                 " unambiguously identify line map" % file_name)
@@ -388,19 +392,10 @@ pyelftools's `DWARFInfo`.
             name = tag.value
             parts = name.split(bsep)
             rparts = tuple(reversed(parts))
-            self._account_cu_by_reversed_name(rparts, cu)
+            # print("Accounting %s" % str(rparts))
+            trie_add(self.name2cu, rparts, []).append(cu)
 
             yield cu, rparts
-
-    def _account_cu_by_reversed_name(self, rparts, cu):
-        # print("Accounting %s" % str(rparts))
-
-        if trie_add(self.name2cu, rparts, cu) is not cu:
-            print("CU with path %s is already accounted, first one will be"
-                " used only" % (
-                    cu.get_top_DIE().attributes["DW_AT_name"].value
-                )
-            )
 
     def get_CU_by_idx(self, idx):
         idx2cu = self.idx2cu
@@ -417,15 +412,11 @@ pyelftools's `DWARFInfo`.
 
         return cu
 
-    def get_CU_by_name(self, suffix):
-        parts = suffix.split(bsep)
-        rparts = tuple(reversed(parts))
-        return self.get_CU_by_reversed_path(rparts)
-
-    def get_CU_by_reversed_path(self, rpath):
+    def iter_CUs_by_reversed_path(self, rpath):
         rparts = rpath
 
         d = self.name2cu
+        CUs_idx = 0
 
         # scan suffix tree, starting from file name
         for i, p in enumerate(rparts, 1):
@@ -441,16 +432,27 @@ pyelftools's `DWARFInfo`.
             v = d[p]
 
             if isinstance(v, dict):
-                # There are several CUs with such suffix. Try next suffix part.
+                # There are several CUs with such suffix. Try next path part.
                 d = v
                 continue
 
-            # There is only one parsed CU with such suffix in the tree.
-            cu, cu_rparts = v
+            CUs, cu_rparts = v
 
             # Check parts of suffix those are not in the tree yet.
             if cu_rparts[:len(rparts) - i] == rparts[i:]:
-                return cu
+                while True:
+                    if CUs_idx == len(CUs):
+                        # There could be several CUs with same path.
+                        # Sume compillers do the things...
+                        for __ in self._cu_parser_state:
+                            if CUs_idx < len(CUs):
+                                break
+                        else:
+                            if CUs_idx == len(CUs):
+                                # Parsing ended. No more CU.
+                                return
+                    yield CUs[CUs_idx]
+                    CUs_idx += 1
             else:
                 # Some parts differs. Continue DWARF info parsing. It is
                 # possible that the CU being looked for is not yet parsed.
