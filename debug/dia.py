@@ -319,6 +319,11 @@ pyelftools's `DWARFInfo`.
                 continue
 
             file_idx = s.file - 1
+            if len(files) <= file_idx:
+                print(
+    "There is no file with index %d. A malformed line program?" % file_idx
+                )
+                continue
             line_map = line_maps[file_idx]
 
             if line_map is None:
