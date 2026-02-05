@@ -374,7 +374,13 @@ pyelftools's `DWARFInfo`.
 
         for cu in citer:
             idx2cu.append(cu)
-            name = cu.get_top_DIE().attributes["DW_AT_name"].value
+            die = cu.get_top_DIE()
+            try:
+                tag = die.attributes["DW_AT_name"]
+            except KeyError:
+                print("A nameless CU found. A malformed debug info")
+                continue
+            name = tag.value
             parts = name.split(bsep)
             rparts = tuple(reversed(parts))
             self._account_cu_by_reversed_name(rparts, cu)
