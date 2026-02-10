@@ -177,16 +177,16 @@ re_format_specifier = compile("(?<!%)(?:%%)*(%(?:"
 )
 
 
-def add_global_array_with_reg_names(reg, arr_name, f):
+def add_global_array_with_reg_names(mreg, arr_name, f):
     names_array = Pointer(Type["const char"])(arr_name,
         initializer = Initializer(
             # TODO: `Initializer` should support iterables as `code` for arrays
             code = '{\n    "%s"\n}' % (
-                '",\n    "'.join(reg.reg_names)
+                '",\n    "'.join(mreg["reg_names"])
             )
         ),
         static = True,
-        array_size = reg.bank_size
+        array_size = mreg["bank_size"]
     )
     f.add_global_variable(names_array)
     return names_array
@@ -312,6 +312,33 @@ class CPUType(QOMCPU):
 
         self.registers = info.registers
         self.pc_register = info.pc_register
+
+        # GDB RSP may spread register banks in raw register package format.
+        # E.g.: R0 R1 ... R15 PC SP R16 R17 ... R32.
+        # I.e. R register bank is not a continuous sequence.
+        # To describe this same named `CPURegister`s must be defined with
+        # different `reg_names`.
+        self.merged_registers = merged_registers = OrderedDict()
+
+        for reg in self.registers:
+            try:
+                mreg = merged_registers[reg.name]
+            except KeyError:
+                mreg = dict(
+                    name = reg.name,
+                    regs = [reg],
+                    reg_names = list(reg.reg_names),
+                    bank_size = reg.bank_size,
+                    field_bitsize = reg.field_bitsize,
+                )
+                reg.bank_offset =  0
+                merged_registers[reg.name] = mreg
+            else:
+                mreg["regs"].append(reg)
+                reg.bank_offset = mreg["bank_size"]  # intermediate value
+                mreg["bank_size"] += reg.bank_size
+                mreg["reg_names"].extend(reg.reg_names)
+                assert mreg["field_bitsize"] == reg.field_bitsize
 
         self.name_to_format = info.name_to_format
         self.instructions = instructions = info.instructions
@@ -636,11 +663,11 @@ class CPUType(QOMCPU):
 
         env_state_desc = StateStruct(env_state_name)
 
-        for reg in self.registers:
+        for mreg in self.merged_registers.values():
             env_state_desc.add_field(QOMTypeStateField(
-                "uint%d_t" % (reg.field_bitsize),
-                reg.name,
-                array_size = reg.bank_size,
+                "uint%d_t" % (mreg["field_bitsize"]),
+                mreg["name"],
+                array_size = mreg["bank_size"],
                 save_in_vmsd = True,
             ))
 
@@ -888,16 +915,20 @@ class CPUType(QOMCPU):
             )
 
     def _gen_translate_inc_c(self, h):
-        for reg in self.registers:
-            if reg.field_bitsize == self.target_long_bits:
+        for mreg in self.merged_registers.values():
+            field_bitsize = mreg["field_bitsize"]
+            if field_bitsize == self.target_long_bits:
                 type_name = "tcg"
-            elif reg.field_bitsize == 32:
+            elif field_bitsize == 32:
                 type_name = "short tcg"
             else:
                 type_name = "long tcg"
 
             h.add_global_variable(
-                Type[type_name](reg.name, array_size = reg.bank_size)
+                Type[type_name](
+                    mreg["name"],
+                    array_size = mreg["bank_size"]
+                )
             )
 
         disas_context = Structure("DisasContext",
@@ -1019,9 +1050,11 @@ class CPUType(QOMCPU):
             fn_name("class_init"),
             static = True
         )
-        num_core_regs = sum(
-            r.bank_size or 1 for r in self.registers if r.gdb
-        )
+        num_core_regs = 0
+        for mreg in self.merged_registers.values():
+            for reg in mreg["regs"]:
+                if reg.gdb:
+                    num_core_regs += reg.bank_size or 1
         fill_class_init_body(self, cpu_class_init, num_core_regs,
             self.gen_files["cpu.h"].global_variables[
                 "vmstate_" + self.qtn.for_id_name
@@ -1127,23 +1160,25 @@ class CPUType(QOMCPU):
             cpu_env = tcg_h.global_variables["cpu_env"]
 
         reg_vars = []
-        for reg in self.registers:
-            if reg.field_bitsize == self.target_long_bits:
+        for name, mreg in self.merged_registers.items():
+            if mreg["field_bitsize"] == self.target_long_bits:
                 type_name = "TCGv"
             else:
-                type_name = "TCGv_i" + str(reg.field_bitsize)
+                type_name = "TCGv_i" + str(mreg["field_bitsize"])
 
-            var = Type[type_name](reg.name, array_size = reg.bank_size)
+            bank_size = mreg["bank_size"]
+
+            var = Type[type_name](name, array_size = bank_size)
             c.add_global_variable(var)
 
-            if reg.bank_size:
+            if bank_size:
                 names_array = add_global_array_with_reg_names(
-                    reg, reg.name + "_names", c
+                    mreg, name + "_names", c
                 )
             else:
                 names_array = None
 
-            reg_vars.append((reg, var, names_array))
+            reg_vars.append((mreg, var, names_array))
 
         cpu_dump_state_def = Type[
             self.gen_func_name("dump_state")
@@ -1288,10 +1323,10 @@ class CPUType(QOMCPU):
                 spec_and_len2type[specifier] = len2type
 
         reg_names_arrays = set()
-        for reg in self.registers:
-            if reg.bank_size:
+        for name, mreg in self.merged_registers.items():
+            if mreg["bank_size"]:
                 reg_names_arrays.add(
-                    add_global_array_with_reg_names(reg, reg.name, c)
+                    add_global_array_with_reg_names(mreg, name, c)
                 )
 
         added = {}
