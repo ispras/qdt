@@ -604,31 +604,33 @@ def fill_dump_state_body(cputype, function, reg_vars):
         NewLine()
     )
 
-    for r, __, names_array in reg_vars:
-        if r.bank_size:
+    for mr, __, names_array in reg_vars:
+        bank_size = mr["bank_size"]
+        name = mr["name"]
+        if bank_size:
             # Print a new line after the last register in the bank even if the
             # bank_size is not a multiple of 4.
-            if r.bank_size % 4:
+            if bank_size % 4:
                 newline_cond = OpLogOr(
-                    OpEq(i, r.bank_size - 1),
+                    OpEq(i, bank_size - 1),
                     OpEq(OpRem(i, 4), 3)
                 )
             else:
                 newline_cond = OpEq(OpRem(i, 4), 3)
 
             body(
-                LoopFor(OpAssign(i, 0), OpLess(i, r.bank_size), OpPreInc(i))(
+                LoopFor(OpAssign(i, 0), OpLess(i, bank_size), OpPreInc(i))(
                     Call(
                         fprintf_func,
                         out_file,
                         StrConcat(
                             "%s=",
                             _gen_reg_printf_format(
-                                getattr(env_struct, r.name).type
+                                getattr(env_struct, name).type
                             ),
                         ),
                         OpIndex(names_array, i),
-                        OpIndex(OpSDeref(env, r.name), i)
+                        OpIndex(OpSDeref(env, name), i)
                     ),
                     BranchIf(newline_cond)(
                         Call(fprintf_func, out_file, "\\n"),
@@ -642,13 +644,13 @@ def fill_dump_state_body(cputype, function, reg_vars):
                     fprintf_func,
                     out_file,
                     StrConcat(
-                        r.name + "=",
+                        name + "=",
                         _gen_reg_printf_format(
-                            getattr(env_struct, r.name).type
+                            getattr(env_struct, name).type
                         ),
                         "\\n"
                     ),
-                    OpSDeref(env, r.name)
+                    OpSDeref(env, name)
                 )
             )
 
@@ -690,7 +692,7 @@ def fill_gdb_rw_register_body(cputype, function, is_write = False):
         if bank_size:
             env_reg = OpIndex(
                 env_reg,
-                OpSub(n, reg_number) if reg_number else n
+                OpSub(n, reg_number - reg.bank_offset) if reg_number else n
             )
             case_val = CaseRange(reg_number, reg_number + bank_size - 1)
             reg_number += bank_size
@@ -1558,20 +1560,20 @@ def fill_target_monitor_defs(cputype, function):
     # TODO: get_value for other bit lengths
 
     l("{")
-    for reg in cputype.registers:
-        if reg.bank_size:
-            for i, name in enumerate(reg.reg_names):
+    for bank_name, mreg in cputype.merged_registers.items():
+        if mreg["bank_size"]:
+            for i, name in enumerate(mreg["reg_names"]):
                 l('    { "%s", offsetof(%s, %s[%d]) },' % (
                     name,
                     env_state_name,
-                    reg.name,
+                    bank_name,
                     i
                 ))
         else:
             l('    { "%s", offsetof(%s, %s) },' % (
-                reg.name,
+                bank_name,
                 env_state_name,
-                reg.name
+                bank_name
             ))
     l("    { NULL }")
     l("}")
@@ -1633,26 +1635,28 @@ def fill_tcg_init_body(cputype, function, reg_vars, cpu_env):
         )
 
     cpu_arch_state = Type[cputype.struct_name].env.type
-    for r, var, names_array in reg_vars:
-        if r.bank_size:
+    for mr, var, names_array in reg_vars:
+        bank_size = mr["bank_size"]
+        name = mr["name"]
+        if bank_size:
             parent_node = LoopFor(
-                OpAssign(i, 0), OpLess(i, r.bank_size), OpPreInc(i)
+                OpAssign(i, 0), OpLess(i, bank_size), OpPreInc(i)
             )
             body(parent_node)
             v = OpIndex(var, i)
-            state_field = OpIndex(CId(r.name), i)
+            state_field = OpIndex(CId(name), i)
             string_name = OpIndex(names_array, i)
         else:
             parent_node = body
             v = var
-            state_field = CId(r.name)
-            string_name = r.name
+            state_field = CId(name)
+            string_name = name
 
         parent_node(
             OpAssign(
                 v,
                 Call(
-                    "tcg_global_mem_new_i" + str(r.field_bitsize),
+                    "tcg_global_mem_new_i" + str(mr["field_bitsize"]),
                     cpu_env,
                     MCall("offsetof", cpu_arch_state, state_field),
                     string_name
