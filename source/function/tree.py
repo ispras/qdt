@@ -499,6 +499,10 @@ class BranchSwitch(CBlock):
 
 class SwitchCase(CBlock):
 
+    __node__ = CBlock.__node__ + ("const",)
+    __type_references__ = ("const",)
+    __pygen_deps__ = __node__
+
     def __init__(self, const, add_break = True, **kw):
         super(SwitchCase, self).__init__(**kw)
         self.add_break = add_break
