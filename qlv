@@ -1,0 +1,13 @@
+#!/bin/bash
+
+DIR=$(dirname "$0")
+ABSDIR=$(cd "$DIR" && pwd)
+PYTHON=$(which python)
+if [ "$PYTHON" = "" ] ; then
+	PYTHON=$(which python3)
+fi
+if [ "$PYTHON" = "" ] ; then
+	echo "No python in the PATH"
+	exit 1
+fi
+"$PYTHON" "$ABSDIR/qlv.py" "$@"
