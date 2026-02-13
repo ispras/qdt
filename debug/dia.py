@@ -83,6 +83,9 @@ pyelftools's `DWARFInfo`.
         # cache keyed by CU's offset.
         self.cu_off2files = {}
 
+        # ".debug_info" section offset to CU
+        self.off2cu = intervalmap()
+
     @lazy
     def cfi(self):
         "Call Frame Information"
@@ -385,9 +388,16 @@ pyelftools's `DWARFInfo`.
     def _cu_parser(self):
         citer = self.di._parse_CUs_iter()
         idx2cu = self.idx2cu
+        off2cu = self.off2cu
 
         for cu in citer:
             idx2cu.append(cu)
+            cu.cu_boundary = (
+                cu.cu_offset +
+                cu['unit_length'] +
+                cu.structs.initial_length_field_size()
+            )
+            off2cu[cu.cu_offset:cu.cu_boundary] = cu
             die = cu.get_top_DIE()
             try:
                 tag = die.attributes["DW_AT_name"]
@@ -516,14 +526,16 @@ pyelftools's `DWARFInfo`.
 
         """
 
-        cu = self.di._cu_cache[offset]
+        cu = self.off2cu[offset]
 
         if cu is None:
             # not parsed yet
             for cu, __ in self._cu_parser_state:
                 # cu_boundary points to the byte just after last byte of the CU
-                if cu.cu_boundary <= offset:
-                    continue
+                if cu.cu_offset <= offset and offset < cu.cu_boundary:
+                    break
+            else:
+                return None
 
         return cu
 
