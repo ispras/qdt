@@ -321,7 +321,10 @@ stack at runtime.
 
         fb = self.die.attributes["DW_AT_frame_base"]
 
-        if fb.form == "DW_FORM_exprloc":
+        if fb.form in (
+            "DW_FORM_exprloc",
+            "DW_FORM_block1",  # location expressios is block1 in DWARF3
+        ):
             return self.dic.expr_builder.build(fb.value)
         else: # loc.form == "DW_FORM_loclistptr" ?
             raise NotImplementedError("%s: %s" % (self.name, fb.form))
