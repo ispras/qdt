@@ -11,6 +11,7 @@ void main(void)
     volatile int8_t a = 0x3b, c;
 
     c = func(a);
+    FLUSH_PIPELINE;
     c = 0;     //$ch.c
 
     return;    //$bre

@@ -6,6 +6,7 @@ void main(void)
     register uint32_t c;
     c = 10;
     while (c--) {
+        FLUSH_PIPELINE;
         i++; //$ch.i
     }
     return; //$bre

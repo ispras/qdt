@@ -30,6 +30,7 @@ loop_start:
 loop_end:
 #endif
     c = a[3];
+    FLUSH_PIPELINE;
     c = 0; //$ch.c
 
     return;    //$bre

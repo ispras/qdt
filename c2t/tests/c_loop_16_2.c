@@ -29,6 +29,7 @@ loop_start:
     goto loop_start;
 loop_end:
 #endif
+    FLUSH_PIPELINE;
     c = 0; //$ch.c
 
     return;    //$bre

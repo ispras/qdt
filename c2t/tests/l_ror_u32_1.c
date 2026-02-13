@@ -11,6 +11,7 @@ void main(void)
     volatile uint32_t a = 0xa0f585f, b = 0xc, c;
 
     c = rotr32(a, b);
+    FLUSH_PIPELINE;
     c = 0;      //$ch.c
 
     return;    //$bre
