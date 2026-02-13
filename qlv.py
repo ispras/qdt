@@ -815,7 +815,7 @@ def main():
     ap = ArgumentParser(
         prog = "QEMU Log Viewer"
     )
-    DEFAULT_LIMIT = "1000"
+    DEFAULT_LIMIT = "100000"
     ap.add_argument("-l",
         metavar = "N",
         default = DEFAULT_LIMIT,
