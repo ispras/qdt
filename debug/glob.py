@@ -73,8 +73,8 @@ of this datum at runtime.
 
         if loc.form == "DW_FORM_exprloc":
             return self.dic.expr_builder.build(loc.value)
-        else: # loc.form == "DW_FORM_loclistptr"
-            raise NotImplementedError("%s: location list" % self.name)
+        else: # loc.form == "DW_FORM_loclistptr" ?
+            raise NotImplementedError("%s: %s" % (self.name, loc.form))
 
     # DWARF specific
 
