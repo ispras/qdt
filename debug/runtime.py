@@ -2,30 +2,31 @@ __all__ = [
     "Runtime"
 ]
 
-from traceback import (
-    print_exc
-)
-from threading import (
-    Event,
-    Thread
-)
-from collections import (
-    defaultdict,
-    deque
-)
-from itertools import (
-    repeat
-)
 from common import (
-    charcodes,
     bstr,
-    notifier,
     cached,
-    reset_cache
+    charcodes,
+    notifier,
+    reset_cache,
 )
 from .value import (
     Returned,
-    Value
+    Value,
+)
+
+from collections import (
+    defaultdict,
+    deque,
+)
+from itertools import (
+    repeat,
+)
+from threading import (
+    Event,
+    Thread,
+)
+from traceback import (
+    print_exc,
 )
 
 
