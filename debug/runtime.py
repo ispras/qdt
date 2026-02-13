@@ -96,7 +96,7 @@ class Runtime(object):
         self.target = target
         self.dic = dic
 
-        self.pc = target.registers.index(target.pc_reg)
+        self.pc_idx = target.registers.index(target.pc_reg)
         self.base_address = base_address
 
         # cache of register values converted to integer
@@ -225,7 +225,7 @@ not actual now.
                     self.run()
             except:
                 print_exc()
-                print("Target PC 0x%x" % (self.get_reg(self.pc)))
+                print("Target PC 0x%x" % (self.pc))
 
             try:
                 target.send(b"k")
@@ -240,18 +240,26 @@ not actual now.
             yield False
 
     @cached
+    def pc(self):
+        return self.get_reg(self.pc_idx)
+
+    @cached
+    def bpc(self):
+        return self.pc - self.base_address
+
+    @cached
     def returned_value(self):
         """ Value being returned by current subprogram. Note that it is
 normally correct only when the target is stopped at the subprogram epilogue.
         """
-        pc = self.get_reg(self.pc) - self.base_address
+        pc = self.bpc
         val_desc = Returned(self.dic, self.return_reg, pc)
         return Value(val_desc, runtime = self, version = self.version)
 
     @cached
     def subprogram(self):
         "Subprogram corresponding to current program counter."
-        pc = self.get_reg(self.pc) - self.base_address
+        pc = self.bpc
         return self.dic.subprogram(pc)
 
     @cached
@@ -263,7 +271,7 @@ normally correct only when the target is stopped at the subprogram epilogue.
 
     @cached
     def cfa(self):
-        pc = self.get_reg(self.pc) - self.base_address
+        pc = self.bpc
         cfa_expr = self.dic.cfa(pc)
         cfa = cfa_expr.eval(self)
         return cfa
