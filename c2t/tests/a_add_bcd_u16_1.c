@@ -30,6 +30,7 @@ void main(void)
 #else
     c = bcd_add_knuth(a, b);
 #endif
+    FLUSH_PIPELINE;
     c = 0;     //$ch.c
 
     return;    //$bre

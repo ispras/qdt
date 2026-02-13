@@ -17,6 +17,7 @@ int main(void)
 #else
     c = ~a & b;
 #endif
+    FLUSH_PIPELINE;
     c = 0;  //$ch.c
 
     return 0;   //$bre

@@ -15,6 +15,7 @@ void main(void)
 #else
     c = ((a >> 8) & 0xFF) | ((a & 0xFF) << 8);
 #endif
+    FLUSH_PIPELINE;
     c = 0;     //$ch.c
 
     return;    //$bre
