@@ -320,6 +320,6 @@ stack at runtime.
 
         if fb.form == "DW_FORM_exprloc":
             return self.dic.expr_builder.build(fb.value)
-        else: # loc.form == "DW_FORM_loclistptr"
-            raise NotImplementedError("%s: location list" % self.name)
+        else: # loc.form == "DW_FORM_loclistptr" ?
+            raise NotImplementedError("%s: %s" % (self.name, fb.form))
 
