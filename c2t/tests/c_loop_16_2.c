@@ -1,6 +1,6 @@
 /* Control flow instruction */
 
-#include <stdint.h>
+#include "common.h"
 
 volatile int16_t a[4] = {1, 2, 3, 0};
 

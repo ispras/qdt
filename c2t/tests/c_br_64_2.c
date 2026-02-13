@@ -1,6 +1,6 @@
 /* Control flow instruction */
 
-#include <stdint.h>
+#include "common.h"
 
 void main(void)
 {

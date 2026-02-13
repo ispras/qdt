@@ -1,6 +1,6 @@
 /* Logical instruction */
 
-#include <stdint.h>
+#include "common.h"
 
 int main(void)
 {

@@ -1,6 +1,6 @@
 /* Control flow instruction */
 
-#include <stdint.h>
+#include "common.h"
 
 uint8_t func(uint8_t a0, uint8_t a1, uint8_t a2, uint8_t a3, uint8_t a4,
     uint8_t a5, uint8_t a6, uint8_t a7, uint8_t a8, uint8_t a9,
