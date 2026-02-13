@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include "common.h"
 
 int main(void) {
     volatile uint32_t a = 0xABCDEF, b = 0x12345678, c = 0, i;

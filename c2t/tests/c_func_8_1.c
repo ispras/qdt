@@ -1,6 +1,6 @@
 /* Control flow instruction */
 
-#include <stdint.h>
+#include "common.h"
 
 int8_t func(int8_t a) {
     return a;

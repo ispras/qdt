@@ -1,6 +1,6 @@
 /* Control flow instruction */
 
-#include <stdint.h>
+#include "common.h"
 
 uint16_t func(uint16_t a0, uint16_t a1, uint16_t a2, uint16_t a3, uint16_t a4,
     uint16_t a5, uint16_t a6, uint16_t a7, uint16_t a8, uint16_t a9,
