@@ -176,6 +176,12 @@ class Runtime(object):
             addr = self.target.reg_fmt % (addr + ba)
         self.add_br(addr, *a, **kw)
 
+    def rbr(self, addr, *a, **kw):
+        ba = self.base_address
+        if isinstance(addr, integer_types):
+            addr = self.target.reg_fmt % (addr + ba)
+        self.remove_br(addr, *a, **kw)
+
     def remove_br(self, addr_str, cb = None, quiet = False):
         cbs = self.brs[addr_str]
         cbs.unwatch_break(cb)
