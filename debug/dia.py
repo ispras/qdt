@@ -261,6 +261,11 @@ pyelftools's `DWARFInfo`.
 
         return lm
 
+    def iter_line_addrs(self, file_name, line):
+        lm = self.find_line_map(file_name)
+        lds = lm[line]
+        return (ld.state.address for ld in lds)
+
     def get_CU_files(self, cu):
         """
     :returns:
