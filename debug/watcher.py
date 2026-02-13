@@ -96,11 +96,7 @@ Leading spaces are ignored.
                         continue
                     raw_file_name, line = line_adapter.failback()
 
-                line_map = dic.find_line_map(raw_file_name)
-                line_descs = line_map[line]
-
-                for desc in line_descs:
-                    addr = desc.state.address
+                for addr in dic.iter_line_addrs(raw_file_name, line):
                     brs.append((addr, cb, raw_file_name, line))
             except Exception as e:
                 # This location format is compatible with PyDev (Eclipse)
