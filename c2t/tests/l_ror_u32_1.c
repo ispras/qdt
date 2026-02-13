@@ -1,6 +1,6 @@
 /* Logical instruction */
 
-#include <stdint.h>
+#include "common.h"
 
 uint32_t rotr32 (uint32_t a, uint32_t b) {
     return (a >> b) | (a << (((sizeof a) << 3) - b));

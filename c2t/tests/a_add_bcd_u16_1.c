@@ -1,6 +1,6 @@
 /* Arithmetic instruction */
 
-#include <stdint.h>
+#include "common.h"
 
 #if __MSP430__ == 1
 #include "msp430.h"
