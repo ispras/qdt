@@ -21,6 +21,9 @@ from collections import (
 from itertools import (
     repeat,
 )
+from six import (
+    integer_types,
+)
 from threading import (
     Event,
     Thread,
@@ -166,6 +169,12 @@ class Runtime(object):
         if not cbs:
             self.target.set_br_a(addr_str, cbs, quiet)
         cbs.watch_break(cb)
+
+    def br(self, addr, *a, **kw):
+        ba = self.base_address
+        if isinstance(addr, integer_types):
+            addr = self.target.reg_fmt % (addr + ba)
+        self.add_br(addr, *a, **kw)
 
     def remove_br(self, addr_str, cb, quiet = False):
         cbs = self.brs[addr_str]
