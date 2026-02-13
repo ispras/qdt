@@ -232,7 +232,9 @@ class DebugSession(object):
                     try:
                         exec(mi.group(1), glob)
                     except:
-                        print("executing line comment: %r" % line)
+                        print("%r: executing line comment: %r" % (
+                            self.srcfile, line)
+                        )
                         raise
                 lineno += 1
 
