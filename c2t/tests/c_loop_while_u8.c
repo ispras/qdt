@@ -6,7 +6,7 @@ void main(void)
     c = 10;
     while (--c) {
         FLUSH_PIPELINE;
-        i++; //$ch.i ch.c
+        i++; //$ch.i, ch.c
     }
     return; //$bre
 }
