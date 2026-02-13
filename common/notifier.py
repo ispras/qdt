@@ -101,8 +101,11 @@ def gen_event_helpers(klass, event, event_stats):
     def add_callback(self, callback):
         getattr(self, cb_list_name).append(callback)
 
-    def remove_callback(self, callback):
-        getattr(self, cb_list_name).remove(callback)
+    def remove_callback(self, callback = None):
+        if callback is None:
+            del getattr(self, cb_list_name)[:]
+        else:
+            getattr(self, cb_list_name).remove(callback)
 
     def notify(self, *args, **kw):
         callbacks = getattr(self, cb_list_name)
