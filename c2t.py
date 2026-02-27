@@ -14,6 +14,7 @@ from common import (
     filefilter,
     HelpFormatter,
     makedirs,
+    prefix_std,
     pypath,
     qdtdirs,
 )
@@ -422,6 +423,8 @@ class ProcessWithErrCatching(Thread):
 def oracle_tests_run(tests_queue, port_queue, res_queue, is_finish, verbose,
     timeout
 ):
+    prefix_std("oracle: ")
+
     while True:
         try:
             test_src, test_elf = tests_queue.get(timeout = 0.1)
@@ -483,6 +486,8 @@ def run_qemu(test_elf, qemu_port, qmp_port, verbose):
 def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
     verbose, timeout
 ):
+    prefix_std("target: ")
+
     qemu = None
     session = None
     qmp_port = None
