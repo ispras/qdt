@@ -218,6 +218,10 @@ class DebugSession(object):
         for desc in line_descs:
             addr = self.rt.target.reg_fmt % desc.state.address
             self.addr2line[addr] = lineno
+            if self.verbose:
+                print("%s %s:%d > %s" % (
+                    self.session_type, self.srcfile, lineno, addr
+                ))
             self.rt.add_br(addr, cb)
 
     def _execute_debug_comment(self):
