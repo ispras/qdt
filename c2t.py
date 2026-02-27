@@ -210,9 +210,9 @@ class DebugSession(object):
         # be duplicated in several addresses. So, breakpoints are set on all
         # addresses to catch the control flow everywhere.
         if self.verbose and 1 < len(line_descs):
-            print("Breakpoint at %s:%d has many addresses in %s session."
+            print("Breakpoint at %s:%d has many addresses."
                 " The test may be incorrect." % (
-                    self.srcfile, lineno, self.session_type
+                    self.srcfile, lineno
                 )
             )
 
@@ -220,9 +220,7 @@ class DebugSession(object):
             addr = self.rt.target.reg_fmt % desc.state.address
             self.addr2line[addr] = lineno
             if self.verbose:
-                print("%s %s:%d > %s" % (
-                    self.session_type, self.srcfile, lineno, addr
-                ))
+                print("%s:%d > %s" % (self.srcfile, lineno, addr))
             self.rt.add_br(addr, cb)
 
     def _execute_debug_comment(self):
