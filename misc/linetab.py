@@ -4,7 +4,18 @@ from argparse import (
 
 
 def main():
-    ap = ArgumentParser()
+    ap = ArgumentParser(
+        description = """\
+Given `prefix`es the script separates lines of `infile`.
+It produces `outfile` with a table.
+Each `prefix` is assigned a column.
+The column has all line with the prefix.
+Lines with unspecified prefix are assigned common column.
+Each line occupy a row exclusively, cells to the left/right are empty.
+Original line order is peserved.
+Tabs are replaced with spaces.
+"""     ,
+    )
     arg = ap.add_argument
     arg("infile")
     arg("outfile")
