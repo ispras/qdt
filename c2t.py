@@ -211,7 +211,7 @@ class DebugSession(object):
         # `DebugComparator`. However, some statements (like `return`) can
         # be duplicated in several addresses. So, breakpoints are set on all
         # addresses to catch the control flow everywhere.
-        if self.verbose and 1 < len(addrs):
+        if self.verbose or 1 < len(addrs):
             print("Breakpoint at %s:%d has many addresses."
                 " The test may be incorrect." % (
                     self.srcfile, lineno
