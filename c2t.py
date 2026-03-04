@@ -194,10 +194,12 @@ class DebugSession(object):
         self.chc_line2var = defaultdict(list)
 
     def set_br_by_line(self, lineno, cb):
-        line_map = self.rt.dic.find_line_map(bstr(basename(self.srcfile)))
-        line_descs = line_map[lineno]
+        raw_file_name = bstr(basename(self.srcfile))
+        addrs = tuple(self.rt.dic.iter_line_addrs(raw_file_name, lineno,
+            no_stmt = False
+        ))
 
-        if len(line_descs) < 1:
+        if len(addrs) < 1:
             raise RuntimeError(
                 "No breakpoint addresses for line %s:%d (%s)" % (
                     self.srcfile, lineno, self.session_type
@@ -209,15 +211,15 @@ class DebugSession(object):
         # `DebugComparator`. However, some statements (like `return`) can
         # be duplicated in several addresses. So, breakpoints are set on all
         # addresses to catch the control flow everywhere.
-        if self.verbose and 1 < len(line_descs):
+        if self.verbose and 1 < len(addrs):
             print("Breakpoint at %s:%d has many addresses."
                 " The test may be incorrect." % (
                     self.srcfile, lineno
                 )
             )
 
-        for desc in line_descs:
-            addr = self.rt.target.reg_fmt % desc.state.address
+        for addr_int in addrs:
+            addr = self.rt.target.reg_fmt % addr_int
             self.addr2line[addr] = lineno
             if self.verbose:
                 print("%s:%d > %s" % (self.srcfile, lineno, addr))
