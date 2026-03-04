@@ -264,10 +264,10 @@ pyelftools's `DWARFInfo`.
 
         return lm
 
-    def iter_line_addrs(self, file_name, line):
+    def iter_line_addrs(self, file_name, line, no_stmt = True):
         lm = self.find_line_map(file_name)
         lds = lm[line]
-        return (ld.state.address for ld in lds)
+        return (ld.state.address for ld in lds if no_stmt or ld.state.is_stmt)
 
     def get_CU_files(self, cu):
         """
