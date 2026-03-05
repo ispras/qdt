@@ -397,6 +397,7 @@ class Instruction(object):
             "semantics",
             "priority",
             "encoding",
+            "variable_length",
         ):
             gen.gen_field(a + " = "); gen.pprint(getattr(self, a))
         gen.gen_end()
