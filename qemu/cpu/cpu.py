@@ -653,7 +653,6 @@ class CPUType(QOMCPU):
 
             Header["exec/cpu-defs.h"].add_reference(Type["TARGET_LONG_BITS"])
 
-
         if get_vp("CPUNegativeOffsetState exists"):
             self.add_state_field_h("CPUNegativeOffsetState", "neg",
                 save = False,
