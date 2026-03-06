@@ -1238,6 +1238,12 @@ def fill_print_insn_body(cputype, function):
 
         node(OpAssign(length, instruction.bitsize // BYTE_BITSIZE))
 
+        inject_disas = instruction.inject_disas
+
+        if isinstance(inject_disas, FunctionType):
+            inject_disas = inject_disas()
+            node(*inject_disas)
+
         format_line = ''
         call_args = []
         name_to_format = cputype.name_to_format
