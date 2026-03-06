@@ -344,6 +344,7 @@ class CPUType(QOMCPU):
         self.instructions = instructions = info.instructions
         self.read_bitsize = read_bitsize = info.read_size * BYTE_BITSIZE
         self.reg_types = info.reg_types
+        self.reg_disas_types = info.reg_disas_types
         self.name_shortener = info.name_shortener
         self.env_extra_fields = info.env_extra_fields
 
@@ -1307,6 +1308,8 @@ class CPUType(QOMCPU):
                 args = [ Pointer(Type["const bfd_byte"])("addr") ]
             )
         )
+
+        self.reg_disas_types(c)
 
         print_insn = Type[self.print_insn_name]
 

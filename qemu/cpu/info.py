@@ -79,6 +79,7 @@ class CPUInfo(object):
         instructions = (),
         read_size = 1,
         reg_types = no_reg_types,
+        reg_disas_types = no_reg_types,
         name_shortener = (lambda args, comment : None),
         env_extra_fields = (),
     ):
@@ -147,6 +148,10 @@ class CPUInfo(object):
         callable object which gets source `translate.inc.c` and must register
         types and functions that can be used in several instruction semantics
 
+    :param reg_disas_types:
+        callable object which gets disas source and must register types and
+        functions that can be used in several instruction prints
+
     :param name_shortener:
         callable object that is may rename `args` (corresponding to the
         `Instruction` operands) of semantics boilerplate `Function` from
@@ -163,5 +168,6 @@ class CPUInfo(object):
         self.instructions = list(instructions)
         self.read_size = read_size
         self.reg_types = reg_types
+        self.reg_disas_types = reg_disas_types
         self.name_shortener = name_shortener
         self.env_extra_fields = env_extra_fields
