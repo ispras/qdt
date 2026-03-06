@@ -315,6 +315,9 @@ re_disas_format = compile("<((?:[a-zA-Z_]).*?)>|(.+?)")
 def no_semantics(function, source):
     return []
 
+def no_inject_disas():
+    return []
+
 class Instruction(object):
     """ This class store information about one instruction.
 
@@ -353,6 +356,9 @@ class Instruction(object):
 :param variable_length:
     flag marks a variable-length instruction
     (e.g. constants of different sizes are possible after the instruction)
+
+:param inject_disas:
+    is an iterable of function body tree elements.
     """
 
 # TODO: an ASCII-art schematic with field layout (bit enumeration) relative to
@@ -371,6 +377,7 @@ class Instruction(object):
         self.priority = kw_args.get("priority", 0)
         self.encoding = kw_args.get("encoding", "default")
         self.variable_length = kw_args.get("variable_length", False)
+        self.inject_disas = kw_args.get("inject_disas", no_inject_disas)
 
     __pygen_deps__ = ("semantics",)
 
@@ -398,6 +405,7 @@ class Instruction(object):
             "priority",
             "encoding",
             "variable_length",
+            "inject_disas",
         ):
             gen.gen_field(a + " = "); gen.pprint(getattr(self, a))
         gen.gen_end()
