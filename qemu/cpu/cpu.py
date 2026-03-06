@@ -1372,30 +1372,40 @@ class CPUType(QOMCPU):
                     # Adapter may require argument of print_insn function.
                     # E.g. `info` or `addr`.
                     base_op_name = op_name.split('$')[0]
-                    for loc_var in print_insn.args:
-                        if loc_var.name != base_op_name:
-                            continue
-                        arg_name = op_name
+                    if base_op_name == "&length":
+                        arg_name = "length"
                         for j in count():
                             for arg in args:
                                 if arg.name == arg_name:
-                                    arg_name = op_name + str(j)
+                                    arg_name = "length" + str(j)
                                     break
                             else:
                                 break
-                        args.append(loc_var.type(arg_name))
-                        break
+                        args.append(Pointer(Type["int"])(arg_name))
                     else:
-                        arg_name = op_name
-                        for j in count():
-                            for arg in args:
-                                if arg.name == arg_name:
-                                    arg_name = op_name + str(j)
+                        for loc_var in print_insn.args:
+                            if loc_var.name != base_op_name:
+                                continue
+                            arg_name = op_name
+                            for j in count():
+                                for arg in args:
+                                    if arg.name == arg_name:
+                                        arg_name = op_name + str(j)
+                                        break
+                                else:
                                     break
-                            else:
-                                break
-
-                        args.append(Type["uint64_t"](arg_name))
+                            args.append(loc_var.type(arg_name))
+                            break
+                        else:
+                            arg_name = op_name
+                            for j in count():
+                                for arg in args:
+                                    if arg.name == arg_name:
+                                        arg_name = op_name + str(j)
+                                        break
+                                else:
+                                    break
+                            args.append(Type["uint64_t"](arg_name))
 
                 if isinstance(adapter, FunctionType):
                     f = Function(
