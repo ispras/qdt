@@ -523,7 +523,7 @@ class QLVWindow(GUITk):
         windows_menu = self._windows_menu
 
         fr_trace_text = GUIFrame(panes_trace_text)
-        panes_trace_text.add(fr_trace_text)
+        panes_trace_text.add(fr_trace_text, minsize = 100)
 
         fr_trace_text.rowconfigure(0, weight = 1)
         fr_trace_text.columnconfigure(0, weight = 1)
