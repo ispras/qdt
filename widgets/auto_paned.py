@@ -79,6 +79,24 @@ class AutoPanedWindow(PanedWindow):
                 self._prev_size = size
                 self.after_idle(self._update_sashes)
 
+    def sash_pos(self, i):
+        x, y = self.sash_coord(i)
+        if self.cget("orient") == HORIZONTAL:
+            return x
+        else:
+            return y
+
+    def sash_place(self, i, *coords):
+        if len(coords) == 1:
+            x, y = self.sash_coord(i)
+            if self.cget("orient") == HORIZONTAL:
+                x, = coords
+            else:
+                y, = coords
+            coords = x, y
+
+        PanedWindow.sash_place(self, i, *coords)
+
     def _update_sashes(self):
         """ Immediate sashes moving during `_on_configure` is buggy. Instead,
 move them after a while.
