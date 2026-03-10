@@ -400,8 +400,9 @@ STYLE_WARNING = (TAG_WARNING,)
 
 class QLVWindow(GUITk):
 
-    def __init__(self):
+    def __init__(self, limit = None):
         GUITk.__init__(self)
+        self.limit = limit
 
         self.title(_("QEmu Log Viewer"))
 
@@ -490,13 +491,17 @@ class QLVWindow(GUITk):
             self.clipboard_clear()
             self.clipboard_append(text)
 
-    def show_logs(self, qlogs):
+    def show_logs(self, file_names):
         panes_trace_text = self.panes_trace_text
         qlog_trace_texts = self.qlog_trace_texts
         windows_menu = self._windows_menu
         # TODO: re-usage?
 
-        for qlog in qlogs:
+        if len(file_names) > 1:
+            print("Comparison mode")
+
+        qlogs = []
+        for file_name in file_names:
             fr_trace_text = GUIFrame(panes_trace_text)
             panes_trace_text.add(fr_trace_text)
 
@@ -516,7 +521,8 @@ class QLVWindow(GUITk):
                 foreground = "#FF0000"
             )
 
-            file_name = qlog.file_name
+            print("Start feeding of " + file_name)
+            qlogs.append(QEMULog(file_name, self.limit))
 
             w = TextViewerToplevel(self)
             w.file_name = file_name
@@ -819,25 +825,17 @@ def main():
     ap.add_argument("-l",
         metavar = "N",
         default = DEFAULT_LIMIT,
-        help = "limit number of log lines (default %s)" % DEFAULT_LIMIT
+        help = "limit number of log lines (default %s)" % DEFAULT_LIMIT,
+        type = int,
     )
     # Note, code below assumes that there is at least one log.
     ap.add_argument("qlog", nargs = "+")
 
     args = ap.parse_args()
 
-    qlogs = []
-    for qlogFN in args.qlog:
-        print("Start feeding of " + qlogFN)
-
-        qlog = QEMULog(qlogFN, int(args.l))
-
-        qlogs.append(qlog)
-
-    if len(qlogs) > 1:
-        print("Comparison mode")
-
-    tk = QLVWindow()
+    tk = QLVWindow(
+        limit = args.l,
+    )
     tk.geometry("1200x800")
 
     tkstyle = Style()
@@ -845,7 +843,7 @@ def main():
 
     print("Building full trace(s)")
     # Launch trace building (and comparison).
-    tk.show_logs(qlogs)
+    tk.show_logs(args.qlog)
 
     tk.mainloop()
 
