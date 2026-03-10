@@ -17,6 +17,7 @@ from qemu import (
 )
 from widgets import (
     add_scrollbars_native,
+    askopen,
     AutoPanedWindow,
     GUIFrame,
     GUIText,
@@ -407,6 +408,10 @@ class QLVWindow(GUITk):
         self.title(_("QEmu Log Viewer"))
 
         with MenuBuilder(self) as menubar:
+            with menubar(_("File")) as filemenu:
+                filemenu(_("Add"),
+                    command = self._on_add,
+                )
             with menubar(_("Analysis")) as anmenu:
                 anmenu(_("Check instruction counter"),
                     command = self._on_check_ic
@@ -729,6 +734,12 @@ class QLVWindow(GUITk):
             # missmatch
             break
 
+    def _on_add(self):
+        file_name = askopen(self, [(_("Qemu log text"), ".*")],
+            title = _("Add Qemu log"),
+        )
+        self.show_log(file_name)
+
     def _on_instruction_selected(self, __):
         qlog_trace_texts = self.qlog_trace_texts
         qlogs = self.qlogs
@@ -841,7 +852,7 @@ def main():
         type = int,
     )
     # Note, code below assumes that there is at least one log.
-    ap.add_argument("qlog", nargs = "+")
+    ap.add_argument("qlog", nargs = "*")
 
     args = ap.parse_args()
 
