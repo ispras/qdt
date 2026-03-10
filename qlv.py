@@ -464,7 +464,12 @@ class QLVWindow(GUITk):
         sb.right(var)
         sb.right(_("I/sec"))
 
+        self.qlogs = []
+        # Instructions are kept in lists: one per qlog.
+        # This is list of those lists.
+        self.all_instructions = []
         self.qlog_trace_texts = []
+        self.main_log_finished = False
 
     def _hk_copy(self):
         w = self.hk.event.widget
@@ -492,54 +497,52 @@ class QLVWindow(GUITk):
             self.clipboard_append(text)
 
     def show_logs(self, file_names):
+        for file_name in file_names:
+            self.show_log(file_name)
+
+    def show_log(self, file_name):
         panes_trace_text = self.panes_trace_text
         qlog_trace_texts = self.qlog_trace_texts
         windows_menu = self._windows_menu
-        # TODO: re-usage?
 
-        if len(file_names) > 1:
-            print("Comparison mode")
+        fr_trace_text = GUIFrame(panes_trace_text)
+        panes_trace_text.add(fr_trace_text)
 
-        qlogs = []
-        for file_name in file_names:
-            fr_trace_text = GUIFrame(panes_trace_text)
-            panes_trace_text.add(fr_trace_text)
+        fr_trace_text.rowconfigure(0, weight = 1)
+        fr_trace_text.columnconfigure(0, weight = 1)
 
-            fr_trace_text.rowconfigure(0, weight = 1)
-            fr_trace_text.columnconfigure(0, weight = 1)
+        trace_text = GUIText(fr_trace_text, state = READONLY, wrap = NONE)
+        qlog_trace_texts.append(trace_text)
 
-            trace_text = GUIText(fr_trace_text, state = READONLY, wrap = NONE)
-            qlog_trace_texts.append(trace_text)
+        trace_text.grid(row = 0, column = 0, sticky = "NESW")
 
-            trace_text.grid(row = 0, column = 0, sticky = "NESW")
+        add_scrollbars_native(fr_trace_text, trace_text)
 
-            add_scrollbars_native(fr_trace_text, trace_text)
+        trace_text.tag_configure(TAG_FILE, foreground = "#AAAAAA")
+        trace_text.tag_configure(TAG_WARNING, foreground = "#FFBB66")
+        trace_text.tag_configure(STYLE_DIFFERENCE[0],
+            foreground = "#FF0000"
+        )
 
-            trace_text.tag_configure(TAG_FILE, foreground = "#AAAAAA")
-            trace_text.tag_configure(TAG_WARNING, foreground = "#FFBB66")
-            trace_text.tag_configure(STYLE_DIFFERENCE[0],
-                foreground = "#FF0000"
-            )
+        print("Start feeding of " + file_name)
+        qlog = QEMULog(file_name, self.limit)
 
-            print("Start feeding of " + file_name)
-            qlogs.append(QEMULog(file_name, self.limit))
+        w = TextViewerToplevel(self)
+        w.file_name = file_name
+        w.withdraw() # hide initially
 
-            w = TextViewerToplevel(self)
-            w.file_name = file_name
-            w.withdraw() # hide initially
+        w.protocol("WM_DELETE_WINDOW", w.withdraw)
 
-            w.protocol("WM_DELETE_WINDOW", w.withdraw)
+        windows_menu.add_command(
+            label = file_name,
+            command = w.deiconify
+        )
 
-            windows_menu.add_command(
-                label = file_name,
-                command = w.deiconify
-            )
+        trace_text.tag_bind(TAG_LINK, "<Double-ButtonPress-1>",
+            self._gen_on_link_double_1(w), "+"
+        )
 
-            trace_text.tag_bind(TAG_LINK, "<Double-ButtonPress-1>",
-                self._gen_on_link_double_1(w), "+"
-            )
-
-        self.task_manager.enqueue(self.co_trace_builder(qlogs))
+        self.task_manager.enqueue(self.co_trace_builder(qlog))
 
     def _gen_on_link_double_1(self, w):
         def _on_link_double_1(e):
@@ -553,7 +556,7 @@ class QLVWindow(GUITk):
 
         return _on_link_double_1
 
-    def co_trace_builder(self, qlogs):
+    def co_trace_builder(self, qlog):
         t1 = time()
 
         tv = self.tv_instructions
@@ -561,15 +564,20 @@ class QLVWindow(GUITk):
         var_ips_n = self.var_inst_per_sec
         ips = self.inst_per_sec
 
-        self.qlogs = qlogs
+        qlogs = self.qlogs
+        log_idx = len(qlogs)
+        qlogs.append(qlog)
 
-        # Instructions are kept in lists: one per qlog.
-        # This is list of those lists.
-        self.all_instructions = all_instructions = list(list() for __ in qlogs)
+        if len(qlogs) > 1:
+            print("Comparison mode")
+
+        all_instructions = self.all_instructions
+        all_instructions.append(list())
         main_log = all_instructions[0]
+        log_instrs = all_instructions[-1]
 
-        trace_iters = list(qlog.iter_instructions() for qlog in qlogs)
-        idx = 0
+        qlog_iter = qlog.iter_instructions()
+        end_idx = 0
 
         # Instructions Per Yield.
         # Big values results in GUI freezing. Small values result in overhead.
@@ -578,11 +586,16 @@ class QLVWindow(GUITk):
         IPY = 600 // len(qlogs)
 
         # show N different rows
-        differences_to_show = 3 # + 1 = N
+        differences_to_show = 3
+        differences = 0
 
-        while True:
-            start_idx = idx
-            end_idx = idx + IPY
+        working = True
+
+        while working:
+            yield True
+
+            start_idx = end_idx
+            end_idx = start_idx + IPY
 
             # This counter should correlate with var_inst_n which shows
             # amount of _displayed_ instructions. Not total amount in all logs.
@@ -591,92 +604,91 @@ class QLVWindow(GUITk):
             # Build subtrace for first log and then try to compare it with
             # subtraces of rest logs.
 
-            iter_of_iters = iter(trace_iters)
-
             subtrace = list(
-                zip(xrange(start_idx, end_idx), next(iter_of_iters))
+                zip(xrange(start_idx, end_idx), qlog_iter)
             )
 
             if not subtrace:
-                print("Trace has been built")
+                print("Trace %d has been built" % log_idx)
+                if log_idx == 0:
+                    self.main_log_finished = True
                 break
 
-            main_log.extend(ii[1] for ii in subtrace)
-            var_inst_n.set(len(main_log))
+            if log_idx == 0:
+                # main log
+                log_instrs.extend(ii[1] for ii in subtrace)
+                tv.append_instructions(ii[1] for ii in subtrace)
+                var_inst_n.set(len(log_instrs))
+
+                if DEBUG < 3:
+                    for i in iter(ii[1] for ii in subtrace):
+                        if isinstance(i, TraceInstr):
+                            print("0x%08X: %s" % (i.addr, i.disas))
+                        else:
+                            print(i) # use default `__str__`
+
+                continue
 
             difference = False
 
-            for log_idx, qlog_iter_2 in enumerate(iter_of_iters, 1):
-                i1_idx = start_idx - 1
+            for i2_idx, i2 in subtrace:
+                if difference:
+                    difference = False
+                    differences += 1
+                    print("Difference found, index: %d" % (i2_idx - 1))
+                    if differences_to_show == differences:
+                        # `i2_idx`-th instruction is not compared actually.
+                        i2_idx -= 1
+                        break
 
-                log_instrs = all_instructions[log_idx]
+                # Wait for main log to be filled.
+                while len(main_log) <= i2_idx:
+                    if self.main_log_finished:
+                        working = False
+                        print("Trace %d is longer" % log_idx)
+                        # `i2_idx`-th instruction is not compared actually.
+                        i2_idx -= 1
+                        differences += 1
+                        break
+                    else:
+                        yield False
 
-                for (i1_idx, i1), i2 in zip(subtrace, qlog_iter_2):
-                    if difference:
-                        if differences_to_show:
-                            differences_to_show -= 1
-                        else:
-                            # `i1_idx`-th instruction is not compared actually
-                            # (see `compared` evaluation below).
-                            i1_idx -= 1
-                            break
+                if not working:
+                    break
 
-                    log_instrs.append(i2)
+                i1 = main_log[i2_idx]
 
-                    type_i1 = type(i1)
+                log_instrs.append(i2)
 
-                    if type_i1 is not type(i2):
+                type_i1 = type(i1)
+
+                if type_i1 is not type(i2):
+                    difference = True
+                    i1.difference = i2
+                    continue
+
+                if issubclass(type_i1, TraceInstr):
+                    # Currently, comparison is address based only.
+                    if i1.addr != i2.addr:
                         difference = True
                         i1.difference = i2
                         continue
 
-                    if issubclass(type_i1, TraceInstr):
-                        # Currently, comparison is address based only.
-                        if i1.addr != i2.addr:
-                            difference = True
-                            i1.difference = i2
-                            continue
-
-                compared = i1_idx - start_idx + 1
-                if compared < len(subtrace):
-                    # Log 2 ended earlier.
-                    subtrace = subtrace[:compared]
-
-                if not differences_to_show:
-                    break
-
-            if not subtrace:
-                print("Trace has been built")
+            if differences_to_show == differences:
+                print("Too many differences were found, stopping")
                 break
 
-            tv.append_instructions(ii[1] for ii in subtrace)
-            var_inst_n.set(tv.total_instructions)
+        if len(log_instrs) < len(main_log):
+            # different log size
+            print("Trace %d is shorter" % log_idx)
+            differences += 1
 
-            if DEBUG < 3:
-                for i in iter(ii[1] for ii in subtrace):
-                    if isinstance(i, TraceInstr):
-                        print("0x%08X: %s" % (i.addr, i.disas))
-                    else:
-                        print(i) # use default `__str__`
-
-            idx = subtrace[-1][0] + 1
-
-            if difference:
-                # idx does always point to an instruction with difference,
-                # because it's last in `subtrace`.
-                tv.see_instruction(idx)
-                print("Difference found, stopping")
-                break
-
-            # No more instructions in the trace
-            if idx < end_idx:
-                print("Trace has been built")
-                break
-
-            yield True
+        if differences:
+            # i2_idx does always point to an instruction with difference.
+            tv.see_instruction(i2_idx)
 
         t2 = time()
-        print("In %f second(s)" % (t2 - t1))
+        print("Trace %d handled in %f second(s)" % (log_idx, t2 - t1))
 
     def _on_check_ic(self):
         if not hasattr(self, "all_instructions"):
