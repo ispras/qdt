@@ -653,6 +653,7 @@ class QLVWindow(GUITk):
                     difference = False
                     differences += 1
                     print("Difference found, index: %d" % (i2_idx - 1))
+                    tv.refresh_instruction(i2_idx - 1)
                     if differences_to_show == differences:
                         # `i2_idx`-th instruction is not compared actually.
                         i2_idx -= 1
