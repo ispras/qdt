@@ -148,6 +148,18 @@ class InstructionsTreeview(VarTreeview, object):
         # But the feedback must always be passed to an outer observer.
         self.do_yscrollcommand(10)
 
+    def refresh_instruction(self, idx):
+        if idx < self._window_start:
+            return
+        offset = idx - self._window_start
+        current_items = self.get_children()
+        instrs_in_window = len(current_items)
+        if instrs_in_window <= offset:
+            return
+        # TODO: use item configuration
+        self.delete(*current_items[offset:])
+        self._fill_window()
+
     def config(self, *a, **kw):
         # intercept outer yscrollcommand callback
         self._outer_yscrollcommand = kw.pop(
