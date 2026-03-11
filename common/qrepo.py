@@ -35,10 +35,17 @@ from git import (
 from multiprocessing import (
     Process,
 )
+from os import (
+    listdir,
+)
 from os.path import (
     abspath,
+    dirname,
     exists,
+    isdir,
+    isfile,
     join,
+    samefile,
 )
 
 
@@ -67,6 +74,61 @@ class QRepo(object):
         )(
             GitWorktreeListParser(self, handler)
         )
+
+    def co_get_worktrees_raw(self, handler = _nop):
+        """This variant of `co_get_worktrees` does not rely on Git CLI.
+Instead, it do analyze internal files.
+It more robust vs exceptional cases, malformed/moved worktrees and can fix it.
+But it less robust vs Git internal mechanism/format changes.
+        """
+        wts = self.worktrees
+        worktrees = join(self.repo.git_dir, "worktrees")
+        for name in listdir(worktrees):
+            wt = join(worktrees, name)
+            if not isdir(wt):
+                continue
+            wt_gitdir = join(wt, "gitdir")
+            if not isfile(wt_gitdir):
+                continue
+            with open(wt_gitdir, "r") as f:
+                wt_dot_git = f.read().strip()
+            if not isfile(wt_dot_git):
+                continue
+            with open(wt_dot_git, "r") as f:
+                data = f.read()
+            dot_git = dict()
+            for l in data.splitlines():
+                l = l.strip()
+                if not l: continue
+                k, v = l.split(":", 1)
+                dot_git[k.strip()] = v.strip()
+            try:
+                back_wt = dot_git["gitdir"]
+            except KeyError:
+                print("%r: unknown/wrong format" % (wt_dot_git))
+                continue
+            wt_workdir = dirname(wt_dot_git)
+            if exists(back_wt):
+                if not samefile(back_wt, wt):
+                    print("%r: linked to another database %r" % (
+                        wt_workdir, back_wt
+                    ))
+                    continue
+            else:
+                print("%r: fixing database reference %r -> %r" % (
+                    wt_workdir, back_wt, wt
+                ))
+                dot_git["gitdir"] = wt
+                data = "\n".join(map("%s: %s".__mod__, dot_git.items()))
+                with open(wt_dot_git, "w") as f:
+                    f.write(data + "\n")
+
+            try:
+                wt = wts[wt_workdir]
+            except KeyError:
+                wt = QWorkTree(wt_workdir, self)
+                wts[wt_workdir] = wt
+            handler(wt)
 
     def co_prune(self):
         return PopenWorker("git", "worktree", "prune", cwd = self.path)(
