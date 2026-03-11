@@ -86,6 +86,7 @@ class InstructionsTreeview(VarTreeview, object):
     def __init__(self, master, **kw):
         kw["columns"] = [
             "addr",
+            "repeats",
             "size",
             "disas"
         ]
@@ -100,10 +101,12 @@ class InstructionsTreeview(VarTreeview, object):
         )
 
         self.heading("addr", text = _("Address"))
+        self.heading("repeats", text = _("Repeats"))
         self.heading("size", text = _("Size"))
         self.heading("disas", text = _("Disassembly"))
         self.column("#0", width = 10)
         self.column("addr", minwidth = 120, width = 120)
+        self.column("repeats", minwidth = 30, width = 30)
         self.column("size", minwidth = 30, width = 30)
         self.column("disas", width = 600)
 
@@ -363,7 +366,7 @@ class InstructionsTreeview(VarTreeview, object):
             return self.insert(parent, insert_index,
                 text = str(step.icount),
                 tags = tags,
-                values = ("-", "-", str(step))
+                values = ("-", "-", "-", str(step))
             )
 
     def _insert_interrupt_row(self, parent, insert_index, interrupt, tags):
@@ -373,7 +376,7 @@ class InstructionsTreeview(VarTreeview, object):
         return self.insert(parent, insert_index,
             text = str(interrupt.icount),
             tags = tags,
-            values = ("-", "-", str(interrupt))
+            values = ("-", "-", "-", str(interrupt))
         )
 
     def _insert_instruction_row(self, parent, insert_index, inst, tags):
@@ -383,7 +386,7 @@ class InstructionsTreeview(VarTreeview, object):
         return self.insert(parent, insert_index,
             text = str(inst.icount),
             tags = tags,
-            values = (INSTR_ADDR_FMT % inst.addr, "-", str(inst))
+            values = (INSTR_ADDR_FMT % inst.addr, inst.repeats, "-", str(inst))
         )
 
     @property
