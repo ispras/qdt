@@ -132,29 +132,22 @@ class GitWorktreeListParser(PopenResult):
             try:
                 wt = wts[path]
             except KeyError:
-                pass
-            else:
-                self.handler(wt)
-                return
-
-            repo = Repo(path)
-
-            wt = QWorkTree(
-                repo,
-                self.qrepo,
-                **attrs
-            )
-            wts[path] = wt
+                wt = QWorkTree(
+                    path,
+                    self.qrepo,
+                    **attrs
+                )
+                wts[path] = wt
             self.handler(wt)
 
 
 class QWorkTree(Extensible):
 
-    def __init__(self, repo, qrepo, **kw):
+    def __init__(self, path, qrepo, **kw):
         super(QWorkTree, self).__init__(**kw)
-        self.path = repo.working_dir
+        self.path = path
         self.qrepo = qrepo
-        self.repo = repo
+        self.repo = Repo(path)
         self.build_dirs = {}
 
     def __str__(self):
