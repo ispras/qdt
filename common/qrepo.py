@@ -87,7 +87,12 @@ It more robust vs exceptional cases, malformed/moved worktrees and can fix it.
 But it less robust vs Git internal mechanism/format changes.
         """
         wts = self.worktrees
-        worktrees = join(self.repo.git_dir, "worktrees")
+        git_dir = self.repo.git_dir
+
+        # be like co_get_worktrees
+        handler(wts[dirname(git_dir)])
+
+        worktrees = join(git_dir, "worktrees")
         for name in listdir(worktrees):
             wt = join(worktrees, name)
             if not isdir(wt):
