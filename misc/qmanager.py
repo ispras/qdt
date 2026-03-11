@@ -362,11 +362,21 @@ class QMGUI(GUITk):
 
 
 def _repo_column_values(repo):
-    head = repo.head
-    return (
-        _("[detached]") if head.is_detached else head.reference.name,
-        head.commit.hexsha
-    )
+    return tuple(_iter_repo_column_values(repo))
+
+repo_column_value_getters = [
+    (lambda r:
+        _("[detached]") if r.head.is_detached else r.head.reference.name
+    ),
+    (lambda r: r.head.commit.hexsha),
+]
+
+def _iter_repo_column_values(repo):
+    for getter in repo_column_value_getters:
+        try:
+            yield getter(repo)
+        except BaseException as e:
+            yield "[%r]" % e
 
 
 class WorkTreeCreationDialog(GUIDialog):
