@@ -16,6 +16,9 @@ from common import (
     pipeline,
 )
 
+from collections import (
+    defaultdict,
+)
 from itertools import (
     count,
 )
@@ -169,14 +172,16 @@ It can have runtime (trace) information.
     __slots__ = (
         "in_instr",
         "trace",
+        "repeats",
     )
 
-    def __init__(self, in_instr, trace, icount):
+    def __init__(self, in_instr, trace, icount, repeats = None):
         super(TraceInstr, self).__init__()
 
         self.in_instr = in_instr
         self.trace = trace
         self.icount = icount
+        self.repeats = repeats
 
     # Proxify static info.
 
@@ -459,6 +464,8 @@ class QEMULog(object):
         instrs = []
         interrupts = []
 
+        repeats = defaultdict(count)
+
         next_icount = 0
 
         while True:
@@ -517,7 +524,9 @@ class QEMULog(object):
             if instr is not None:
                 instr = instr[0]
 
-                instr = TraceInstr(instr, t, next_icount)
+                instr = TraceInstr(instr, t, next_icount,
+                    repeats = next(repeats[instr.addr]),
+                )
                 next_icount += 1
 
                 tb = instr.tb
@@ -580,7 +589,9 @@ class QEMULog(object):
 
                         nextInstr = nextInstr[0]
 
-                    instr = TraceInstr(nextInstr, None, next_icount)
+                    instr = TraceInstr(nextInstr, None, next_icount,
+                        repeats = next(repeats[nextInstr.addr]),
+                    )
                     next_icount += 1
 
     def cache_overwritten(self):
