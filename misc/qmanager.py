@@ -317,7 +317,7 @@ class QMGUI(GUITk):
             self.tv_repos.selection_set(self.repo2iid[r])
 
         yield r.co_prune()
-        yield r.co_get_worktrees(self._on_worktree)
+        yield r.co_get_worktrees_raw(self._on_worktree)
 
     def _forget_repo(self, r):
         self.repos.remove(r)
