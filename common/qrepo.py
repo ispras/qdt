@@ -163,7 +163,7 @@ But it less robust vs Git internal mechanism/format changes.
         else:
             handler = _nop
 
-        yield self.co_get_worktrees(handler)
+        yield self.co_get_worktrees_raw(handler)
 
 
 class GitWorktreeListParser(PopenResult):
