@@ -278,6 +278,10 @@ class QMGUI(GUITk):
         # TODO: implement
 
     def _on_worktree(self, wt):
+        if wt.is_main:
+            # don't show main repo as worktree
+            return
+
         r2i, w2i = self.repo2iid, self.worktree2iid
 
         w2i[wt] = self.tv_repos.insert(r2i[wt.qrepo], END,
