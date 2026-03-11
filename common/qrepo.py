@@ -222,6 +222,10 @@ class QWorkTree(Extensible):
         self.repo = Repo(path)
         self.build_dirs = {}
 
+    @property
+    def is_main(self):
+        return self.repo.working_dir == self.qrepo.repo.working_dir
+
     def __str__(self):
         return self.path
 
