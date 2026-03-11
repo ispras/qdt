@@ -166,7 +166,7 @@ class MeasureLaunch(object):
         try:
             worktree = qrepo.worktree
         except:
-            yield qrepo.co_get_worktrees()
+            yield qrepo.co_get_worktrees_raw()
             worktree = qrepo.worktree
 
         build_dir = BuildDir(worktree,
