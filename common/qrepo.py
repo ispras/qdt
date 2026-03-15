@@ -59,7 +59,7 @@ class QRepo(object):
         self.path = abspath(path)
         self.repo = Repo(path)
         self.worktrees = {
-            # `git worktree list` also retiurns "main" repo.
+            # `git worktree list` also returns "main" repo.
             # `co_get_worktrees_raw` does not.
             # It is to be invariant.
             path : QWorkTree(path, self)
