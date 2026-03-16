@@ -262,8 +262,17 @@ class Source(TypeContainer):
 
         return self
 
-    def __call__(self, *types):
-        return self.add_types(types)
+    def __call__(self, *items):
+        t = self.add_type
+        v = self.add_global_variable
+        for i in items:
+            if isinstance(i, Type):
+                t(i)
+                continue
+            if isinstance(i, Variable):
+                v(i)
+                continue
+            raise ValueError(repr(i))
 
     def add_type(self, _type):
         _type.definer = self
