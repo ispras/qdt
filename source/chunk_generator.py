@@ -235,9 +235,11 @@ class ChunkGenerator(object):
                                 )
                             ]
                     else:
-                        # A variable in a header does always have `extern`
-                        # modifier.
-                        if self.for_header:
+                        # Assume that,
+                        # a variable in a header is either `extern` (defined
+                        # outside of the header) or `static` ("inlined" in
+                        # the header).
+                        if self.for_header and not origin.static:
                             kw["extern"] = True
                             chunks = gen_variable_declaration_chunks(
                                 origin, self, **kw
