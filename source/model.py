@@ -1167,7 +1167,7 @@ class Variable(TypeContainer):
         self.initializer = initializer
         self.static = static
         self.const = const
-        self.array_size = array_size
+        self._array_size = array_size
         self.used = used
         # a header
         self.declarer = None
@@ -1178,6 +1178,19 @@ class Variable(TypeContainer):
         "type",
         "initializer",
     )
+
+    @property
+    def array_size(self):
+        sz = self._array_size
+        if sz is None:
+            i = self.initializer
+            if i is not None:
+                sz = i.array_size
+        return sz
+
+    @array_size.setter
+    def array_size(self, array_size):
+        self._array_size = array_size
 
     def __var_base__(self):
         return self.name
