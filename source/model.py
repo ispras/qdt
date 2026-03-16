@@ -382,7 +382,7 @@ class Structure(Type):
         code = init.code
         if not isinstance(code, dict):
             # Support for legacy initializers
-            return code
+            return super(Structure, self).gen_usage_string(init)
 
         # Use entries of given dict to initialize fields. Field name is used
         # as entry key.
