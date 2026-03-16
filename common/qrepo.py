@@ -93,6 +93,9 @@ But it less robust vs Git internal mechanism/format changes.
         handler(wts[dirname(git_dir)])
 
         worktrees = join(git_dir, "worktrees")
+        if not isdir(worktrees):
+            return
+
         for name in listdir(worktrees):
             wt = join(worktrees, name)
             if not isdir(wt):
