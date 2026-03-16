@@ -1137,6 +1137,13 @@ class Initializer(TypeContainer):
 
         return val_str
 
+    @property
+    def array_size(self):
+        code = self.code
+        if isinstance(code, (list, tuple)):
+            return len(code)
+        # return None
+
     # Note, if `code` is a `str`ing, the type analysis just ignore it.
     __type_references__ = ["used_types", "used_variables", "code"]
 
