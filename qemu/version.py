@@ -314,6 +314,7 @@ def define_only_qemu_2_6_0_types():
     Header["migration/vmstate.h"].add_types([
         Type("VMStateField", False),
         Structure("VMStateDescription",
+            # Only required fields. See StateStruct.gen_vmstate_initializer.
             Type["char*"]("name"),
             Type["int"]("version_id"),
             Type["int"]("minimum_version_id"),
