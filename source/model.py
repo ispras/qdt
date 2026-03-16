@@ -1186,6 +1186,11 @@ class Variable(TypeContainer):
             i = self.initializer
             if i is not None:
                 sz = i.array_size
+                if isinstance(sz, int):
+                    # Generate `[]` instead of `[N]` when size of an array
+                    # is defined by its initializer.
+                    # TODO: it's a coding style preference.
+                    sz = 0
         return sz
 
     @array_size.setter
