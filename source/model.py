@@ -27,9 +27,9 @@ from common import (
 )
 from six import (
     add_metaclass,
+    binary_type,
     string_types,
     text_type,
-    binary_type
 )
 from collections import (
     OrderedDict
