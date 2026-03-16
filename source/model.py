@@ -1100,7 +1100,7 @@ class Initializer(TypeContainer):
         self.code = code
         self.used_types = set(used_types)
         self.used_variables = used_variables
-        if isinstance(code, dict):
+        if isinstance(code, (dict, list, tuple)):
             # automatically get types used in the code
             self.used_types.update(TypesCollector(code).visit().used_types)
 
