@@ -392,11 +392,18 @@ class Structure(Type):
         # as entry key.
 
         fields_code = []
-        for name in self.fields.keys():
+        for field in self.fields.values():
+            name = field.name
             try:
-                val_str = init[name]
+                value = code[name]
             except KeyError: # no initializer for this field
                 continue
+            if isinstance(value, Type):
+                val_str = value.c_name
+            else:
+                val_str = field.type.gen_usage_string(Initializer(value))
+
+            val_str = "\n    ".join(val_str.splitlines(False))
             fields_code.append("    .%s@b=@s%s" % (name, val_str))
 
         return "{\n" + ",\n".join(fields_code) + "\n}";
