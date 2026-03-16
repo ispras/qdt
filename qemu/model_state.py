@@ -4,6 +4,7 @@ __all__ = [
 
 from source import (
     Initializer,
+    MacroUsage,
     Structure,
     Type,
     TypeNotRegistered,
@@ -55,19 +56,21 @@ class StateStruct(object):
         return s
 
     def gen_vmstate_initializer(self, name):
-        lines = []
-        l = lines.append
-        l("{")
-        l('    .name@b=@s"' + name + '",')
-        if self.vmsd_version_id is not None:
-            l("    .version_id@b=@s%d," % self.vmsd_version_id)
-        if self.vmsd_min_version_id is not None:
-            l("    .minimum_version_id@b=@s%d," % self.vmsd_min_version_id)
-        l("    .fields@b=@s(VMStateField[])@b{")
+        fields = []
 
-        used_types = set()
+        code = dict(
+            name = '"' + name + '"',
+            fields = fields,
+        )
+        if self.vmsd_version_id is not None:
+            code["version_id"] = str(self.vmsd_version_id)
+        if self.vmsd_min_version_id is not None:
+            code["minimum_version_id"] = str(self.vmsd_min_version_id)
+
         used_vars = set()
         global type2vmstate
+
+        s_c_type_name = Type[self.c_type_name]
 
         for f in self:
             if not f.need_save_in_vmsd:
@@ -99,15 +102,14 @@ class StateStruct(object):
                             #      this shell be automatically
                             field_vmsd.used = True
 
-                            used_types.add(c_type)
                             used_vars.add(field_vmsd)
 
                             fdict = {
                                 "_field": f.name,
-                                "_state": self.c_type_name,
+                                "_state": s_c_type_name,
                                 "_version": str(type_desc.vmsd_version_id),
                                 "_vmsd": field_vmsd.name,
-                                "_type": f_c_type_name,
+                                "_type": c_type,
                             }
 
                             if f.array_size is None:
@@ -119,10 +121,10 @@ class StateStruct(object):
                 # code of macro initializer is dict
                 fdict = {
                     "_f": f.name,
-                    "_s": self.c_type_name,
+                    "_s": s_c_type_name,
                     # Macros may use different argument names
                     "_field": f.name,
-                    "_state": self.c_type_name
+                    "_state": s_c_type_name
                 }
 
                 if f.array_size is not None:
@@ -137,23 +139,18 @@ class StateStruct(object):
                 )
 
             vms_macro = Type[vms_macro_name]
-            used_types.add(vms_macro)
-
-            l(" " * 8 + vms_macro.gen_usage_string(Initializer(fdict)) + ",")
+            fields.append(
+                MacroUsage(vms_macro,
+                    initializer = Initializer(fdict),
+                )
+            )
 
         # Generate VM state list terminator macro.
         vms_macro = Type["VMSTATE_END_OF_LIST"]
-        used_types.add(vms_macro)
-        l(" " * 8 + vms_macro.gen_usage_string())
-        l("    }")
-        l("}")
+        fields.append(MacroUsage(vms_macro))
 
         init = Initializer(
-            code = "\n".join(lines),
-            used_types = used_types.union([
-                Type["VMStateField"],
-                Type[self.c_type_name],
-            ]),
+            code = code,
             used_variables = used_vars,
         )
         return init
