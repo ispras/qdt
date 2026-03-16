@@ -37,6 +37,7 @@ from collections import (
 )
 from .code_gen_helpers import (
     gen_array_declaration,
+    gen_init_string,
 )
 from .type_container import (
     TypeContainer,
@@ -814,6 +815,52 @@ class Pointer(Type):
                 self.asterisks.replace("*", "p")
                 + "_" + self.full_deref.__var_base__()
             )
+
+    def gen_usage_string(self, init):
+        code = init.code
+        if not isinstance(code, (list, tuple)):
+            return super(Pointer, self).gen_usage_string(init)
+
+        # This is an array initializer.
+
+        ptype = self.type
+        if ptype.is_named and not ptype.incomplete:
+            cast = "(%s[])@b" % ptype.c_name
+        else:
+            cast = ""
+
+        if not len(code):
+            return cast + "{}"
+
+        lines = []
+        line = lines.append
+
+        line(cast + "{")
+
+        for el in code:
+            if isinstance(el, Variable):
+                elstring = gen_init_string(el.type, el.initializer,
+                    indent = "    ",
+                )
+            # TODO: fix circular dependency
+            # elif isinstance(el, CConst):
+            #     elstring = el.gen_c_code()
+            elif isinstance(el, Type):
+                elstring = el.c_name
+            else:
+                raise NotImplementedError(repr(el))
+
+            for elline in elstring.splitlines(False):
+                line("    " + elline)
+
+            lines[-1] += ","
+
+        # remove last comma
+        lines[-1] = lines[-1][:-1]
+
+        line("}")
+
+        return "\n".join(lines)
 
     __type_references__ = ["type"]
 
