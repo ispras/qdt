@@ -192,6 +192,10 @@ class Type(TypeContainer):
     def gen_usage_string(self, initializer):
         # Usage string for an initializer is code of the initializer. It is
         # legacy behavior.
+        if not isinstance(initializer.code, str):
+            raise RuntimeError(
+                "%s: only immediate `str`ing initializer is supported" % (self)
+            )
         return initializer.code
 
     def __eq__(self, other):
