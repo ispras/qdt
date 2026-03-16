@@ -312,8 +312,13 @@ def define_only_qemu_2_6_0_types():
     disas_header.add_type(dis_info)
 
     Header["migration/vmstate.h"].add_types([
-        Type("VMStateDescription", False),
         Type("VMStateField", False),
+        Structure("VMStateDescription",
+            Type["char*"]("name"),
+            Type["int"]("version_id"),
+            Type["int"]("minimum_version_id"),
+            Type["VMStateField*"]("fields"),
+        ),
         Function(name = "vmstate_register_ram_global")
     ]).add_reference(osdep_fake_type)
 
