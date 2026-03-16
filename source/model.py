@@ -28,6 +28,7 @@ from common import (
 from six import (
     add_metaclass,
     binary_type,
+    integer_types,
     string_types,
     text_type,
 )
@@ -1111,6 +1112,8 @@ class Initializer(TypeContainer):
             val_str = val
         elif isinstance(val, Type):
             val_str = val.c_name
+        elif isinstance(val, integer_types) or type(val) is float:
+            return str(val)
         else:
             raise TypeError("Unsupported initializer entry type '%s'"
                 % type(val).__name__
