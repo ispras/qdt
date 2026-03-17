@@ -31,6 +31,8 @@ from common import (
     ee,
     OrderedSet,
     path2tuple,
+    trie_add,
+    trie_find,
 )
 from .chunks import (
     FunctionDeclaration,
@@ -82,7 +84,15 @@ OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
 NO_GLOBAL_HEADERS = ee("QDT_NO_GLOBAL_HEADERS", "True")
 
 
+@add_metaclass(registry)
 class Source(TypeContainer):
+    # This is a reversed path trie. Like in debug..DWARFInfoAccelerator.
+    sources = {}
+
+    @classmethod
+    def lookup(cls, path):
+        rpath = tuple(reversed(path2tuple(path)))
+        return trie_find(cls.sources, rpath)[0]
 
     # Only header can do it, see `Header`.
     inherit_references = False
@@ -95,7 +105,11 @@ class Source(TypeContainer):
     ):
         super(Source, self).__init__(**kw)
 
-        self.path = path
+        rpath = tuple(reversed(path2tuple(path)))
+        if trie_add(self.sources, rpath, self) is not self:
+            raise ValueError("%r: source file already exists" % path)
+
+        self._path = path
         self.types = {}
         self.inclusions = {}
         self.global_variables = {}
@@ -107,6 +121,10 @@ class Source(TypeContainer):
             self.locked_inclusions = locked_inclusions
         else:
             self.locked_inclusions = AUTO_LOCK_INCLUSIONS
+
+    @property
+    def path(self):
+        return self._path
 
     def iter_type_providers(self, name):
         "Iterates inclusion paths providing type with `name` given."
@@ -1011,6 +1029,7 @@ class SourceTreeContainer(object):
     current = None
 
     def __init__(self):
+        self.sources = {}
         self.reg_header = {}
         self.reg_type = {}
 
@@ -1129,6 +1148,7 @@ digraph HeaderInclusion {
         return list_headers
 
     def set_cur_stc(self):
+        Source.sources = self.sources
         Header.reg = self.reg_header
         Type.reg = self.reg_type
 
