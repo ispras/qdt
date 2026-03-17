@@ -13,6 +13,7 @@ __all__ = [
   , "iter_join_opcodes"
   , "re_disas_format"
   , "no_semantics"
+  , "no_inject_disas"
   , "Instruction"
   , "InstructionTreeNode"
   , "build_instruction_tree"
