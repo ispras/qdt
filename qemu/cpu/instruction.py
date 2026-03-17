@@ -12,6 +12,7 @@ __all__ = [
   , "iter_swap_fields_by_word"
   , "iter_join_opcodes"
   , "re_disas_format"
+  , "no_semantics"
   , "Instruction"
   , "InstructionTreeNode"
   , "build_instruction_tree"
