@@ -606,6 +606,11 @@ class Function(Type):
         **kw
     ):
         # args is list of Variables
+        if args is not None:
+            # This also checks that `args` is an iterable.
+            for a in args:
+                if not isinstance(a, Variable):
+                    raise ValueError("%r: argument must be a `Variable`" % a)
 
         super(Function, self).__init__(
             name = name,
