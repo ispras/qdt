@@ -1159,28 +1159,28 @@ def define_only_qemu_2_6_0_types():
             name = "float32_is_any_nan",
             ret_type = m_bool,
             args = (
-                m_float32("a")
+                m_float32("a"),
             )
         ),
         Function(
             name = "float32_is_denormal",
             ret_type = m_bool,
             args = (
-                m_float32("a")
+                m_float32("a"),
             )
         ),
         Function(
             name = "float32_is_infinity",
             ret_type = m_bool,
             args = (
-                m_float32("a")
+                m_float32("a"),
             )
         ),
         Function(
             name = "float32_is_neg",
             ret_type = m_bool,
             args = (
-                m_float32("a")
+                m_float32("a"),
             )
         ),
         Function(
@@ -1195,35 +1195,35 @@ def define_only_qemu_2_6_0_types():
             name = "float32_is_zero",
             ret_type = m_bool,
             args = (
-                m_float32("a")
+                m_float32("a"),
             )
         ),
         Function(
             name = "float64_is_any_nan",
             ret_type = m_bool,
             args = (
-                m_float64("a")
+                m_float64("a"),
             )
         ),
         Function(
             name = "float64_is_denormal",
             ret_type = m_bool,
             args = (
-                m_float64("a")
+                m_float64("a"),
             )
         ),
         Function(
             name = "float64_is_infinity",
             ret_type = m_bool,
             args = (
-                m_float64("a")
+                m_float64("a"),
             )
         ),
         Function(
             name = "float64_is_neg",
             ret_type = m_bool,
             args = (
-                m_float64("a")
+                m_float64("a"),
             )
         ),
         Function(
@@ -1238,7 +1238,7 @@ def define_only_qemu_2_6_0_types():
             name = "float64_is_zero",
             ret_type = m_bool,
             args = (
-                m_float64("a")
+                m_float64("a"),
             )
         ),
         # operations
@@ -1246,7 +1246,7 @@ def define_only_qemu_2_6_0_types():
             name = "float32_abs",
             ret_type = m_float32,
             args = (
-                m_float32("a")
+                m_float32("a"),
             )
         ),
         Function(
@@ -1314,7 +1314,7 @@ def define_only_qemu_2_6_0_types():
             name = "float64_abs",
             ret_type = m_float64,
             args = (
-                m_float64("a")
+                m_float64("a"),
             )
         ),
         Function(
