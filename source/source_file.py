@@ -229,6 +229,9 @@ class Source(TypeContainer):
                     )
                 )
             var.declarer = self
+            # Do not generate `__attribute__((unused))` if a variable is
+            # visible through a header.
+            var.used = True
 
         self.global_variables[var.name] = var
 
