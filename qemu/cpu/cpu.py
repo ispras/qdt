@@ -619,6 +619,10 @@ class CPUType(QOMCPU):
 
         self._gen_disas(disas)
 
+        yield True
+
+        self.reg_types(self.gen_files["translate.inc.c"])
+
     def _gen_cpu_param_h(self, h):
         # XXX: lock the header to prevent adding inclusions.
         h.locked_inclusions = True
@@ -966,8 +970,6 @@ class CPUType(QOMCPU):
         ])
 
         Header["exec/cpu_ldst.h"].add_reference(disas_context)
-
-        self.reg_types(h)
 
     def _gen_cpu_c(self, c):
         cpu_class = Type["CPUClass"]
