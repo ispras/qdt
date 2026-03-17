@@ -472,15 +472,36 @@ class Enumeration(Type):
             # Either ("name", value) tuple or just a "name" `str`ing.
             if isinstance(elem, str):
                 key = elem
-                init = None
+                val = None
             else:
                 key, val = elem
-                init = Initializer(str(val))
 
-            self.elems[key] = EnumerationElement(self, key, init)
+            self[key] = val
 
     def get_field(self, name):
         return self.elems[name]
+
+    __getitem__ = get_field
+
+    def __setitem__(self, key, val):
+        elems = self.elems
+        if key in elems:
+            el = self.elems[key]
+            if val is None:
+                el.initializer = None
+            else:
+                init = el.initializer
+                if init is None:
+                    el.initializer = Initializer(str(val))
+                else:
+                    init.code = str(val)
+        else:
+            if val is None:
+                init = None
+            else:
+                init = Initializer(str(val))
+
+            self.elems[key] = EnumerationElement(self, key, init)
 
     def __getattr__(self, name):
         "Tries to find undefined attributes among elements."
