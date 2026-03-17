@@ -1041,9 +1041,19 @@ class TypesCollector(TypeReferencesVisitor):
         self.used_types = set()
 
     def __visit__(self, cur):
-        if isinstance(cur, Type):
-            self.used_types.add(cur)
-            raise SkipVisiting()
+        if not isinstance(cur, Type):
+            return
+
+        # Only named types are the target of this collector.
+        # I.e. `struct`tures, functions, `typedef`s...
+        # Nameless "imaginary" types line `Pointer`s or `MacroUsage`s do not
+        # require a dependency satisfaction directly, only real types they are
+        # based on.
+        if not cur.is_named:
+            return
+
+        self.used_types.add(cur)
+        raise SkipVisiting()
 
 
 class GlobalsCollector(NodeVisitor):
