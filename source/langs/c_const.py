@@ -4,7 +4,7 @@ __all__ = [
 ]
 
 
-from ..c_const import (
+from ..c_consts import (
     CINT,
 )
 

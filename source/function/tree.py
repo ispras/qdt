@@ -75,7 +75,9 @@ __all__ = [
 
 from ..c_const import (
     CConst,
-    CINT
+)
+from ..c_consts import (
+    CINT,
 )
 from ..model import (
     Type,
