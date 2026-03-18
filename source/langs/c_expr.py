@@ -15,7 +15,7 @@ from .c_words import (
     CWords,
 )
 
-from source.c_const import (
+from source.c_consts import (
     CSTR,
 )
 from source.function.tree import (
