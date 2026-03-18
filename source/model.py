@@ -39,6 +39,9 @@ from .code_gen_helpers import (
     gen_array_declaration,
     gen_init_string,
 )
+from .c_const import (
+    CConst,
+)
 from .type_container import (
     TypeContainer,
 )
@@ -860,9 +863,8 @@ class Pointer(Type):
                 elstring = gen_init_string(el.type, el.initializer,
                     indent = "    ",
                 )
-            # TODO: fix circular dependency
-            # elif isinstance(el, CConst):
-            #     elstring = el.gen_c_code()
+            elif isinstance(el, CConst):
+                elstring = el.gen_c_code()
             elif isinstance(el, Type):
                 elstring = el.c_name
             else:
