@@ -193,14 +193,52 @@ class Type(TypeContainer):
         else:
             return [self.definer]
 
-    def gen_usage_string(self, initializer):
-        # Usage string for an initializer is code of the initializer. It is
-        # legacy behavior.
-        if not isinstance(initializer.code, str):
-            raise RuntimeError(
-                "%s: only immediate `str`ing initializer is supported" % (self)
-            )
-        return initializer.code
+    def gen_usage_string(self, init):
+        code = init.code
+        if not isinstance(code, (list, tuple)):
+            # Usage string for an initializer is code of the initializer.
+            # It is legacy behavior.
+            if not isinstance(code, str):
+                raise RuntimeError(
+            "%s: only immediate `str`ing initializer is supported" % (self)
+                )
+            return code
+
+        # This is an array initializer.
+
+        cast = "(%s[])@b" % self.declaration_string
+
+        if not len(code):
+            return cast + "{}"
+
+        lines = []
+        line = lines.append
+
+        line(cast + "{")
+
+        for el in code:
+            if isinstance(el, Variable):
+                elstring = gen_init_string(el.type, el.initializer,
+                    indent = "    ",
+                )
+            elif isinstance(el, CConst):
+                elstring = el.gen_c_code()
+            elif isinstance(el, Type):
+                elstring = el.c_name
+            else:
+                raise NotImplementedError(repr(el))
+
+            for elline in elstring.splitlines(False):
+                line("    " + elline)
+
+            lines[-1] += ","
+
+        # remove last comma
+        lines[-1] = lines[-1][:-1]
+
+        line("}")
+
+        return "\n".join(lines)
 
     def __eq__(self, other):
         # This code assumes that one type cannot be represented by several
@@ -836,47 +874,6 @@ class Pointer(Type):
                 self.asterisks.replace("*", "p")
                 + "_" + self.full_deref.__var_base__()
             )
-
-    def gen_usage_string(self, init):
-        code = init.code
-        if not isinstance(code, (list, tuple)):
-            return super(Pointer, self).gen_usage_string(init)
-
-        # This is an array initializer.
-
-        cast = "(%s[])@b" % self.declaration_string
-
-        if not len(code):
-            return cast + "{}"
-
-        lines = []
-        line = lines.append
-
-        line(cast + "{")
-
-        for el in code:
-            if isinstance(el, Variable):
-                elstring = gen_init_string(el.type, el.initializer,
-                    indent = "    ",
-                )
-            elif isinstance(el, CConst):
-                elstring = el.gen_c_code()
-            elif isinstance(el, Type):
-                elstring = el.c_name
-            else:
-                raise NotImplementedError(repr(el))
-
-            for elline in elstring.splitlines(False):
-                line("    " + elline)
-
-            lines[-1] += ","
-
-        # remove last comma
-        lines[-1] = lines[-1][:-1]
-
-        line("}")
-
-        return "\n".join(lines)
 
     __type_references__ = ["type"]
 
