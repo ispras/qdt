@@ -844,11 +844,7 @@ class Pointer(Type):
 
         # This is an array initializer.
 
-        ptype = self.type
-        if ptype.is_named and not ptype.incomplete:
-            cast = "(%s[])@b" % ptype.c_name
-        else:
-            cast = ""
+        cast = "(%s[])@b" % self.declaration_string
 
         if not len(code):
             return cast + "{}"
