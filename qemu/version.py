@@ -318,7 +318,7 @@ def define_only_qemu_2_6_0_types():
             Type["char*"]("name"),
             Type["int"]("version_id"),
             Type["int"]("minimum_version_id"),
-            Type["VMStateField*"]("fields"),
+            Type["VMStateField"]("fields", array_size = 0),
         ),
         Function(name = "vmstate_register_ram_global")
     ]).add_reference(osdep_fake_type)
