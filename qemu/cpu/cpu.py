@@ -918,6 +918,8 @@ class CPUType(QOMCPU):
                 )
             )
 
+        self.gen_property_macros(h)
+
     def _gen_translate_inc_c(self, h):
         for mreg in self.merged_registers.values():
             field_bitsize = mreg["field_bitsize"]
