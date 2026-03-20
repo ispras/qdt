@@ -231,15 +231,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                         w = PCIIdWidget(v, frame)
                         w.grid(row = 0, column = 0, sticky = "NEWS")
 
-            widget_val = v.get()
-
-            if _input is int:
-                try:
-                    widget_val = int(widget_val, base = 0)
-                except ValueError:
-                    widget_val = None
-
-            if widget_val != cur_val:
+            if not v._validate() or v._cast(v.get()) != cur_val:
                 v.set(cur_val)
 
         for cb in self._all_highlights:
