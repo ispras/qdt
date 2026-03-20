@@ -179,15 +179,43 @@ class ChunkGenerator(object):
         """ Given origin the method returns chunk list generating it on first
         access. """
         current = self.definer
-        if (    origin.definer is not current
-            # Note, it can be a type inside another type.
-            and isinstance(origin.definer, Source)
-        ):
-            key = origin.definer
-            foreign = True
+
+        while True: # Not a loop
+            if isinstance(origin, Variable):
+                if origin.declarer is current or origin.definer is current:
+                    # A global variable, declared or defined here.
+                    key = origin
+                    foreign = False
+                    break
+                if origin.declarer is not None:
+                    # A global variable, declared outside.
+                    key = origin.declarer
+                    foreign = True
+                    break
+                if origin.definer is None:
+                    # It is a variable inside something.
+                    key = origin
+                    foreign = False
+                    break
+                raise RuntimeError("Variable '%s' is only defined"
+                    " in '%s' but not declared in any header" % (
+                        origin, origin.definer.path
+                    )
+                )
+
+            if isinstance(origin, Type):
+                if (    origin.definer is not current
+                    # Note, it can be a type inside another type.
+                    and isinstance(origin.definer, Source)
+                ):
+                    key = origin.definer
+                    foreign = True
+                else:
+                    key = origin
+                    foreign = False
+                break
         else:
-            key = origin
-            foreign = False
+            raise ValueError(repr(origin))
 
         try:
             chunks = self.chunk_cache[key]
@@ -213,24 +241,13 @@ class ChunkGenerator(object):
             elif isinstance(origin, Variable):
                 if origin.definer is not None or origin.declarer is not None:
                     # It is a global variable
-                    if self.for_header:
-                        foreign = origin.declarer is not current
-                    else:
-                        foreign = origin.definer is not current
 
                     if foreign:
-                        declarer = origin.declarer
-                        if declarer is None:
-                            raise RuntimeError("Variable '%s' is only defined"
-                                " in '%s' but not declared in any header" % (
-                                    origin, origin.definer.path
-                                )
-                            )
                         try:
-                            chunks = self.chunk_cache[declarer]
+                            chunks = self.chunk_cache[key]
                         except KeyError:
                             chunks = [
-                                HeaderInclusion(declarer).add_reason(origin,
+                                HeaderInclusion(key).add_reason(origin,
                                     kind = "declares"
                                 )
                             ]
