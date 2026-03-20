@@ -34,8 +34,6 @@ from source import (
     Macro,
     Pointer,
     Source,
-    Structure,
-    TopComment,
     Type,
     TypeNotRegistered,
     Variable,
