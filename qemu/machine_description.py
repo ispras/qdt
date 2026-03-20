@@ -76,6 +76,8 @@ class MachineDescription(QOMDescription):
         gen.reset_gen(self)
         gen.gen_field('name = "' + self.name + '"')
         gen.gen_field('directory = "' + self.directory + '"')
+        gen.gen_field("default_ram_size = ")
+        gen.pprint(self.default_ram_size)
         gen.gen_compat(self)
         gen.gen_end()
 

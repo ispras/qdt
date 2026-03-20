@@ -19,6 +19,7 @@ from .qom import (
 )
 from source import (
     BodyTree,
+    CINT,
     Declare,
     OpDeclareAssign,
     MCall,
@@ -46,11 +47,15 @@ from .machine_nodes import (
 )
 from common import (
     cached,
+    mlget as _,
     reset_cache,
     sort_topologically
 )
 from .version import (
     get_vp
+)
+from collections import (
+    OrderedDict,
 )
 from six import (
     integer_types
@@ -152,6 +157,13 @@ class MachineType(QOMType):
 
     __qom_prefix__ = ("hw",)
 
+    __attribute_info__ = OrderedDict([
+        ("default_ram_size", {
+            "short": _("Default RAM size"),
+            "input": CINT,
+        }),
+    ])
+
     def __init__(self, name, directory,
             cpus = [],
             devices = [],
@@ -159,6 +171,7 @@ class MachineType(QOMType):
             irqs = [],
             mems = [],
             irq_hubs = [],
+            default_ram_size = None,
             **kw
         ):
         super(MachineType, self).__init__(name, directory, **kw)
@@ -173,6 +186,7 @@ class MachineType(QOMType):
         self.irqs = irqs
         self.mems = mems
         self.irq_hubs = irq_hubs
+        self.default_ram_size = default_ram_size
 
     __pygen_deps__ = ("cpus", "devices", "buses", "irqs", "mems", "irq_hubs")
 

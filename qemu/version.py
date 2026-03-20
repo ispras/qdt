@@ -6,6 +6,7 @@ from source import (
     add_base_types,
     BodyTree,
     Call,
+    CINT,
     Declare,
     Enumeration,
     Function,
@@ -604,7 +605,9 @@ def define_only_qemu_2_6_0_types():
             Pointer(Type["const char"])("desc"),
             Function(
                 args = [ Pointer(Type["MachineState"])("machine") ]
-            )("init")
+            )("init"),
+            # ram_addr_t, actually
+            Type["int"]("default_ram_size"),
         )
     ]).add_reference(osdep_fake_type)
 
@@ -1496,6 +1499,11 @@ def machine_register_2_5(mach):
             mach.instance_init
         )
     )
+    if mach.default_ram_size is not None:
+        class_init.body(OpAssign(
+            OpSDeref(mc, "default_ram_size"),
+            mach.default_ram_size
+        ))
     mach.class_init = class_init
     mach.source.add_type(class_init)
 
@@ -1576,6 +1584,11 @@ def machine_register_2_6(mach):
             mach.instance_init
         )
     )
+    if mach.default_ram_size is not None:
+        class_init.body(OpAssign(
+            OpSDeref(mc, "default_ram_size"),
+            mach.default_ram_size
+        ))
     mach.class_init = class_init
     mach.source.add_type(class_init)
 
