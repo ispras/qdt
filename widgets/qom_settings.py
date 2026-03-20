@@ -129,9 +129,9 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
     def _add_highlighting(self, var, widget, attr):
         def do_highlight(w = widget, v = var, attr = attr):
-            if not w._validate():
+            if not var._validate():
                 w._set_color("red")
-            elif w._cast(v.get()) != getattr(self.desc, attr):
+            elif var._cast(v.get()) != getattr(self.desc, attr):
                 w._set_color("#ffffcc")
             else:
                 w._set_color("white")
@@ -155,25 +155,25 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
             else:
                 return True
 
-        w._validate = validate
+        v._validate = validate
         w._set_color = lambda color : w.config(bg = color)
-        w._cast = lambda x : int(x, base = 0)
+        v._cast = lambda x : int(x, base = 0)
         return v, w
 
     def gen_str_widgets(self, master):
         v = StringVar()
         w = HKEntry(master, textvariable = v)
-        w._validate = lambda : True
+        v._validate = lambda : True
         w._set_color = lambda color : w.config(bg = color)
-        w._cast = lambda x : x
+        v._cast = lambda x : x
         return v, w
 
     def gen_bool_widgets(self, master):
         v = BooleanVar()
         w = Checkbutton(master, variable = v)
-        w._validate = lambda : True
+        v._validate = lambda : True
         w._set_color = lambda color : w.config(selectcolor = color)
-        w._cast = lambda x : x
+        v._cast = lambda x : x
         return v, w
 
     def gen_PCIId_widgets(self, master):
@@ -297,11 +297,9 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                                 desc_sn
                             )
             else:
-                if _input is int:
-                    try:
-                        new_val = int(new_val, base = 0)
-                    except ValueError: # bad value cannot be applied
-                        continue
+                if not v._validate():
+                    continue
+                new_val = v._cast(new_val)
 
                 if new_val != cur_val:
                     self.pht.stage(DOp_SetAttr, attr, new_val, desc_sn)
