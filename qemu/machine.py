@@ -370,6 +370,8 @@ class MachineType(QOMType):
         def_code = ""
         self.reset_generator()
 
+        main_ram_assumed = False
+
         skip_nl = False
 
         for idx, node in enumerate(all_nodes):
@@ -625,12 +627,25 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
                     if glob_mem:
                         self.use_type_name("vmstate_register_ram_global")
 
+                    size = node.size
+                    dbg_name = node.name.gen_c_code()
+                    if not size:
+                        if (    isinstance(node, MemoryRAMNode)
+                            and not main_ram_assumed
+                        ):
+                            # Assume that, this is a "main" RAM of the
+                            # `machine` which size is configurable through CLI.
+                            main_ram_assumed = True
+                            size = "machine->ram_size"
+                        else:
+                            raise ValueError("%s: wrong size" % dbg_name)
+
                     def_code += """\
     memory_region_init_ram(@a{mem_name},@sNULL,@s{dbg_name},@s{size},@sNULL);{glob}
 """.format(
     mem_name = mem_name,
-    dbg_name = node.name.gen_c_code(),
-    size = node.size,
+    dbg_name = dbg_name,
+    size = size,
     glob = (("\n    vmstate_register_ram_global(%s);" % mem_name) if glob_mem
         else ""
     )
