@@ -392,7 +392,7 @@ class QOMType(object):
                 continue
 
             t = Macro(field.prop_macro_name,
-                text = field.provide_property_name(),
+                text = '"' + field.provide_property_name() + '"',
             )
             source.add_type(t)
 

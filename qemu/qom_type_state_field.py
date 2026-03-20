@@ -25,14 +25,19 @@ class QOMTypeStateField(object):
         self.save_in_vmsd = save_in_vmsd
         self.is_property = is_property
         self.property_default = property_default
+
+        # legacy scripts compatibility
+        if property_name is not None:
+            property_name = property_name.strip('"')
         self.property_name = property_name
+
         self.property_macro_suffix = property_macro_suffix
 
     def provide_property_name(self):
         property_name = self.property_name
 
         if property_name is None:
-            property_name = '"' + self.name.replace('_', '-') + '"'
+            property_name = self.name.replace('_', '-')
 
         return property_name
 
@@ -42,7 +47,6 @@ class QOMTypeStateField(object):
         if property_macro_suffix is None:
             property_macro_suffix = (
                 self.provide_property_name()
-                    .strip('"')
                     .replace('-', '_')
                     .upper()
             )
