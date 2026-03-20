@@ -26,6 +26,9 @@ from qemu import (
     PCIId,
     POp_AddDesc,
 )
+from source import (
+    CINT,
+)
 from .var_widgets import (
     VarButton,
     VarLabel,
@@ -158,6 +161,26 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         v._validate = validate
         w._set_color = lambda color : w.config(bg = color)
         v._cast = lambda x : int(x, base = 0)
+        return v, w
+
+    def gen_CINT_widgets(self, master):
+        v = StringVar()
+        w = HKEntry(master, textvariable = v)
+
+        def validate():
+            val = v.get()
+            if not val:
+                return True
+            try:
+                (int(val, base = 0))
+            except ValueError:
+                return False
+            else:
+                return True
+
+        v._validate = validate
+        w._set_color = lambda color : w.config(bg = color)
+        v._cast = lambda x : CINT(x, base = 0) if x else None
         return v, w
 
     def gen_str_widgets(self, master):
