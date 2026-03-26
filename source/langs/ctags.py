@@ -37,7 +37,10 @@ def t_error(t):
     raise ValueError("Unexpected character in ctags: " + repr(t.value[0]))
 
 
-ctags_lexer = lex()
+ctags_lexer = lex(
+    lextab = "_ctags_lextab",
+    optimize = True,  # required to generate the table
+)
 
 
 def p_ctags(p):
@@ -160,4 +163,6 @@ class Fields(INode):
         return super(Fields, self).__getitem__(key)
 
 
-ctags_parser = yacc(write_tables = False)
+ctags_parser = yacc(
+    tabmodule = "_ctags_parsetab",
+)
