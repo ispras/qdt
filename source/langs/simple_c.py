@@ -72,7 +72,10 @@ def_tokens(globals())
 def t_error(t):
     raise ValueError("Unexpected character in ctags: " + repr(t.value[0]))
 
-simple_c_lexer = lex()
+simple_c_lexer = lex(
+    lextab = "_simple_c_lextab",
+    optimize = True,  # required to generate the table
+)
 
 def p_file(p):
     """ :
@@ -190,6 +193,5 @@ def p_error(p):
     raise ValueError("Unknown C syntax")
 
 simple_c_parser = yacc(
-    write_tables = False,
-    tabmodule = "simple_c_tab"
+    tabmodule = "_simple_c_parsetab",
 )
