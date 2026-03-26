@@ -47,7 +47,10 @@ def_tokens(globals())
 def t_error(t):
     raise AssertionError("How could this happen?")
 
-backslash_lexer = lex()
+backslash_lexer = lex(
+    lextab = "_backslash_lextab",
+    optimize = True,  # required to generate the table
+)
 
 def p_empty(p):
     "source :"
@@ -71,4 +74,4 @@ unify_rules(globals())
 
 p_error = t_error
 
-backslash_parser = yacc(write_tables = False)
+backslash_parser = yacc(tabmodule = "_backslash_parsetab")
