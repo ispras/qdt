@@ -79,7 +79,10 @@ def t_error(t):
     l = t.lexer
     raise ValueError("Syntax error at %d.%d" % (l.lineno, l.columnno))
 
-cpp_lexer = lex()
+cpp_lexer = lex(
+    lextab = "_cpp_lextab",
+    optimize = True,  # required to generate the table
+)
 
 def p_preprocessing_file(p):
     ": group_opt"
@@ -178,4 +181,4 @@ unify_rules(globals())
 
 p_error = t_error
 
-cpp_parser = yacc(write_tables = False)
+cpp_parser = yacc(tabmodule = "_cpp_parsetab")
