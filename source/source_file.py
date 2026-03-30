@@ -296,7 +296,12 @@ class Source(TypeContainer):
             raise ValueError(repr(i))
 
     def add_type(self, _type):
+        if _type.definer not in (self, None):
+            print("%s: definer changed %s -> %s" % (
+                _type, _type.definer, self
+            ))
         _type.definer = self
+
         if _type.is_named:
             self.types[_type.name] = _type
         else:
