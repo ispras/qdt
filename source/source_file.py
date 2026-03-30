@@ -45,6 +45,7 @@ from .late import (
 from .model import (
     CPPMacro,
     ForwardDeclarator,
+    Function,
     Macro,
     registry,
     Structure,
@@ -498,6 +499,10 @@ class Header(Source):
                 s._add_type_recursive(type_)
 
     def add_type(self, _type):
+        if _type.definer not in (self, None):
+            if isinstance(_type, Function) and not _type.static:
+                _type = _type.gen_declaration()
+
         super(Header, self).add_type(_type)
 
         # Auto add type references to self includers
