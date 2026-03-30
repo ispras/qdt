@@ -738,6 +738,17 @@ class Function(Type):
         )
         return new_f
 
+    def gen_declaration(self):
+        new_f = Function(
+            name = self.name + ".declaration",
+            ret_type = self.ret_type,
+            args = self.args,
+            static = self.static,
+            inline = self.inline,
+        )
+        self.declaration = new_f
+        return new_f
+
     def gen_definition(self,
         body = None,
         used_types = None,
