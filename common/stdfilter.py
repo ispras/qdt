@@ -6,6 +6,9 @@ __all__ = [
 ]
 
 import sys
+from time import (
+    sleep,
+)
 
 class StdFilter(object):
 
@@ -21,6 +24,15 @@ class StdFilter(object):
 
         def write(data, *a, **kw):
             dataf = self.__filter__(data, *a, **kw)
+            attempts = 10
+            while attempts:
+                try:
+                    return back_write(dataf, *a, **kw)
+                except BlockingIOError:
+                    # This error was only be met during running c2t inside
+                    # qemu-kvm virtual machine wth Ubuntu Linux 20.04.
+                    sleep(0.1)
+                attempts -= 1
             return back_write(dataf, *a, **kw)
 
         stream.write = write
