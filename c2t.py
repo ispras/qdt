@@ -700,12 +700,14 @@ def start_cpu_testing(tests, jobs, reuse, verbose,
             if errors2stop == 0:
                 killpg(0, SIGKILL)
 
-    oracle_tb.join()
-    target_tb.join()
-    pf.join()
     for oracle_trp, target_trp in tests_run_processes:
         oracle_trp.join()
         target_trp.join()
+
+    pf.join()
+
+    oracle_tb.join()
+    target_tb.join()
 
     if with_logs:
         logs_dir = join(
