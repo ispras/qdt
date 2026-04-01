@@ -683,6 +683,8 @@ def start_cpu_testing(tests, jobs, reuse, verbose,
         oracle_trp.start()
         target_trp.start()
 
+    prefixers = prefix_std("C2T: ")
+
     # Tests we are waiting for
     tests_left = set(tests)
 
@@ -699,6 +701,9 @@ def start_cpu_testing(tests, jobs, reuse, verbose,
             errors2stop -= 1
             if errors2stop == 0:
                 killpg(0, SIGKILL)
+
+    for p in prefixers:
+        p.revert()
 
     for oracle_trp, target_trp in tests_run_processes:
         oracle_trp.join()
