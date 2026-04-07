@@ -702,8 +702,7 @@ def start_cpu_testing(tests, jobs, reuse, verbose,
             if errors2stop == 0:
                 killpg(0, SIGKILL)
 
-    for p in prefixers:
-        p.revert()
+    prefixers.revert()
 
     for oracle_trp, target_trp in tests_run_processes:
         oracle_trp.join()
