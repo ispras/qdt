@@ -3,6 +3,7 @@ __all__ = [
  , "LineFilter"
      , "StdLinePrefixer"
  , "prefix_std"
+ , "Prefixers"
 ]
 
 import sys
@@ -83,8 +84,18 @@ class StdLinePrefixer(LineFilter, StdFilter):
         return self.prefix + line
 
 
+class Prefixers(tuple):
+
+    def __new__(cls, *a):
+        return tuple.__new__(Prefixers, a)
+
+    def revert(self):
+        for p in self:
+            p.revert()
+
+
 def prefix_std(prefix):
-    return (
+    return Prefixers(
         StdLinePrefixer(prefix),
         StdLinePrefixer(prefix, stream_name = "stderr"),
     )
