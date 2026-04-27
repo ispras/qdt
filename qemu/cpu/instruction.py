@@ -63,7 +63,8 @@ BUILD_INSTRUCTION_TREE_WARNINGS = ee("QDT_BUILD_INSTRUCTION_TREE_WARNINGS",
 
 NON_OPCODE_BIT = "x"
 
-DEFAULT_ENCODING_NAME = "default"
+# Avoid aliasing C keywords and frequently used IDs.
+DEFAULT_ENCODING_NAME = "normal"
 
 
 class InstructionDescriptionError(RuntimeError):
