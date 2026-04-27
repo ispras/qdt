@@ -843,6 +843,13 @@ class Operator(SemicolonPresence):
                 # TODO: a complex check is required
         return ret
 
+    @classmethod
+    def join(cls, v0, v1, *a):
+        if a:
+            return cls.join(cls(v0, v1), *a)
+        else:
+            return cls(v0, v1)
+
 
 class OpCast(Operator):
 
