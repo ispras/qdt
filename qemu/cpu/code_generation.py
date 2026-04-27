@@ -31,6 +31,7 @@ __all__ = [
   , "fill_target_monitor_defs"
   , "fill_tcg_init_body"
   , "fill_tlb_fill_body"
+  , "fill_unrealizefn_body"
 ]
 
 from ..version import (
@@ -227,7 +228,13 @@ def fill_class_init_body(cputype, function, num_core_regs, vmstate,
                 dc,
                 Type[fn_name("realizefn")],
                 OpAddr(OpSDeref(mcc, "parent_realize"))
-            )
+            ),
+            Call(
+                "device_class_set_parent_unrealize",
+                dc,
+                Type[fn_name("unrealizefn")],
+                OpAddr(OpSDeref(mcc, "parent_unrealize"))
+            ),
         )
     else:
         body(
@@ -238,7 +245,15 @@ def fill_class_init_body(cputype, function, num_core_regs, vmstate,
             OpAssign(
                 OpSDeref(dc, "realize"),
                 Type[fn_name("realizefn")]
-            )
+            ),
+            OpAssign(
+                OpSDeref(mcc, "parent_unrealize"),
+                OpSDeref(dc, "unrealize")
+            ),
+            OpAssign(
+                OpSDeref(dc, "unrealize"),
+                Type[fn_name("unrealizefn")]
+            ),
         )
 
     if get_vp("use device_class_set_props"):
@@ -1457,6 +1472,20 @@ def fill_realizefn_body(cputype, function):
             function.args[1]
         )
     )
+
+def fill_unrealizefn_body(cputype, function):
+    cc = Pointer(Type[cputype.struct_class_name])("cc")
+    function.body = BodyTree()(
+        Declare(OpDeclareAssign(
+            cc,
+            MCall(cputype.get_class_macro, function.args[0])
+        )),
+        Call(
+            OpSDeref(cc, "parent_unrealize"),
+            *function.args
+        ),
+    )
+
 
 def fill_reset_body(cputype, function):
     function.body = body = BodyTree()
