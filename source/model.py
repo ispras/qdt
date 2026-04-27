@@ -370,6 +370,8 @@ class Structure(Type):
     def get_field(self, name):
         return self._fields[name]
 
+    __getitem__ = get_field
+
     def __getattr__(self, name):
         "Tries to find undefined attributes among fields."
         try:
