@@ -831,7 +831,8 @@ class CPUType(QOMCPU):
 
         cpu_class_fields = [
             Type["CPUClass"]("parent_class"),
-            Type["DeviceRealize"]("parent_realize")
+            Type["DeviceRealize"]("parent_realize"),
+            Type["DeviceUnrealize"]("parent_unrealize"),
         ]
         if get_vp("device_class_set_parent_reset used for cpu"):
             cpu_class_fields.append(Type["DeviceReset"]("parent_reset"))
@@ -1033,6 +1034,13 @@ class CPUType(QOMCPU):
         )
         fill_realizefn_body(self, realizefn)
         c.add_type(realizefn)
+
+        unrealizefn = Type["DeviceUnrealize"].type.use_as_prototype(
+            fn_name("unrealizefn"),
+            static = True
+        )
+        fill_unrealizefn_body(self, unrealizefn)
+        c.add_type(unrealizefn)
 
         if get_vp("cpu_arch_init exists"):
             cpu_init_def = Type[self.cpu_init_name].gen_definition()
