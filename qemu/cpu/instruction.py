@@ -63,6 +63,8 @@ BUILD_INSTRUCTION_TREE_WARNINGS = ee("QDT_BUILD_INSTRUCTION_TREE_WARNINGS",
 
 NON_OPCODE_BIT = "x"
 
+DEFAULT_ENCODING_NAME = "default"
+
 
 class InstructionDescriptionError(RuntimeError):
     pass
@@ -351,7 +353,7 @@ class Instruction(object):
 
 :param encoding:
     A CPU may have several instruction encodings.
-    One is `"default"` other must have different `"string"` name.
+    One is `DEFAULT_ENCODING_NAME` other must have different `"string"` name.
     An instruction can present in multiple encodings given using
     `"space separated strings"`.
 
@@ -377,7 +379,7 @@ class Instruction(object):
         self.comment = kw_args.get("comment", self.disas_format)
         self.semantics = kw_args.get("semantics", no_semantics)
         self.priority = kw_args.get("priority", 0)
-        self.encoding = kw_args.get("encoding", "default")
+        self.encoding = kw_args.get("encoding", DEFAULT_ENCODING_NAME)
         self.variable_length = kw_args.get("variable_length", False)
         self.inject_disas = kw_args.get("inject_disas", no_inject_disas)
 
