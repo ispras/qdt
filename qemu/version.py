@@ -1412,6 +1412,58 @@ def define_only_qemu_2_6_0_types():
         )
     )
 
+    Header["sysemu/runstate.h"](
+        # RunState is actually in auto generated qapi-types-run-state.h
+        Enumeration(
+            filter(None, """
+            RUN_STATE_DEBUG
+            RUN_STATE_INMIGRATE
+            RUN_STATE_INTERNAL_ERROR
+            RUN_STATE_IO_ERROR
+            RUN_STATE_PAUSED
+            RUN_STATE_POSTMIGRATE
+            RUN_STATE_PRELAUNCH
+            RUN_STATE_FINISH_MIGRATE
+            RUN_STATE_RESTORE_VM
+            RUN_STATE_RUNNING
+            RUN_STATE_SAVE_VM
+            RUN_STATE_SHUTDOWN
+            RUN_STATE_SUSPENDED
+            RUN_STATE_WATCHDOG
+            RUN_STATE_GUEST_PANICKED
+            RUN_STATE_COLO
+            RUN_STATE_PRECONFIG
+            RUN_STATE__MAX
+            """.split()),
+            typedef_name = "RunState",
+        ),
+        Pointer(
+            Function(
+                args = [
+                    Pointer(Type["void"])("opaque"),
+                    Type["int"]("running"),
+                    Type["RunState"]("state"),
+                ]
+            ),
+            name = "VMChangeStateHandler",
+        ),
+        Type("VMChangeStateEntry"),
+        Function(
+            name = "qemu_add_vm_change_state_handler",
+            ret_type = Pointer(Type["VMChangeStateEntry"]),
+            args = [
+                Type["VMChangeStateHandler"]("cb"),
+                Pointer(Type["void"])("opaque")
+            ],
+        ),
+        Function(
+            name = "qemu_del_vm_change_state_handler",
+            args = [
+                Pointer(Type["VMChangeStateEntry"])("e")
+            ],
+        ),
+    )
+
 
 def define_qemu_2_6_5_types():
     add_base_types()
