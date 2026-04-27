@@ -732,7 +732,8 @@ def define_only_qemu_2_6_0_types():
     if get_vp("device_class_set_parent_reset|realize exists"):
         qdev_core_header.add_types([
             Function(name = "device_class_set_parent_reset"),
-            Function(name = "device_class_set_parent_realize")
+            Function(name = "device_class_set_parent_realize"),
+            Function(name = "device_class_set_parent_unrealize"),
         ])
     if get_vp("use device_class_set_props"):
         qdev_core_header.add_type(
@@ -1989,7 +1990,7 @@ qemu_heuristic_db = {
     ],
     u'46795cf2e2f643ace9454822022ba8b1e9c0cf61':
     [
-        # `device_class_set_parent_reset|realize` function was added
+        # `device_class_set_parent_reset|(un)realize` function was added
         QEMUVersionParameterDescription(
             "device_class_set_parent_reset|realize exists",
             old_value = False,
