@@ -12,6 +12,7 @@ from .constants import (
 )
 from .instruction import (
     build_instruction_tree,
+    DEFAULT_ENCODING_NAME,
     InstructionTreeNode,
 )
 from .stats import (
@@ -78,7 +79,7 @@ class InstructionEncoding(object):
 
     def __lt__(self, enc):
         # Default encoding is to be placed first in generated code.
-        if self.name == "default":
+        if self.name == DEFAULT_ENCODING_NAME:
             return True
         return self.name < enc.name
 
