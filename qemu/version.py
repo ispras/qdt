@@ -167,6 +167,11 @@ def define_only_qemu_2_6_0_types():
 
     tcg_op_h_path = get_vp("tcg headers prefix") + "tcg-op.h"
     Header[tcg_op_h_path].add_types([
+        Function(name = "tcg_temp_local_new_i32"),
+        Function(name = "tcg_temp_free_i32"),
+        Function(name = "tcg_gen_ld_i32"),
+        Function(name = "tcg_gen_st_i32"),
+        Function(name = "tcg_gen_addi_i32"),
         Function(name = "tcg_gen_insn_start"),
         Function(name = "tcg_gen_goto_tb"),
         Function(name = "tcg_gen_exit_tb"),
