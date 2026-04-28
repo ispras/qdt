@@ -175,7 +175,8 @@ def add_base_types():
 
     h.add_types([
         Function(name = "memset"),
-        Function(name = "memcpy")
+        Function(name = "memcpy"),
+        Function(name = "strlen"),
     ])
 
     # If "bswap_64", "bswap_32" and "bswap_16" are not macros or do not exists
