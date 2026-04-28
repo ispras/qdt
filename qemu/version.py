@@ -1464,6 +1464,26 @@ def define_only_qemu_2_6_0_types():
         ),
     )
 
+    Header["qapi/qmp/qdict.h"](
+        Type("QDict"),
+        Function(name = "qdict_new"),
+        Function(name = "qdict_get"),
+        Function(name = "qdict_get_qdict"),
+    )
+    Header["qapi/qmp/qjson.h"](
+        Function(name = "qobject_from_json"),
+        Function(name = "qobject_to_json_pretty"),
+    )
+    Header["qapi/qmp/qstring.h"](
+        Type("QString"),
+        Function(name = "qstring_get_str"),
+    )
+    Header["qapi/qmp/qnum.h"](
+        Type("QNum"),
+        Function(name = "qnum_get_int"),
+        Function(name = "qnum_from_int"),
+    )
+
 
 def define_qemu_2_6_5_types():
     add_base_types()
