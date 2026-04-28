@@ -158,6 +158,9 @@ type2prop = {
         _type = Type["TYPE_MEMORY_REGION"],
         _ptr_type = Type["MemoryRegion*"]
     ),
+    "char*" : lambda field, state_struct: gen_prop_declaration(
+        field, "DEFINE_PROP_STRING", state_struct
+    ),
 }
 
 for U in ["", "U"]:
