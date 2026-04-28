@@ -678,6 +678,26 @@ class CPUType(QOMCPU):
         for f in self.env_extra_fields:
             env_state_desc.add_field(f)
 
+        encodings = self.encodings
+
+        eicnts = StateStruct("InsnCounters")
+
+        for enc in encodings.values():
+            eicnt = StateStruct("InsnCounters" + enc.name.title())
+            for i in enc.instructions:
+                eicnt.add_field(QOMTypeStateField("uint32_t", i.name))
+            eicnt.gen_c_type()
+            eicnts.add_field(QOMTypeStateField(eicnt.c_type_name, enc.name))
+        eicnts.gen_c_type()
+
+        env_state_desc.add_field(QOMTypeStateField(
+            eicnts.c_type_name, "insn_counters",
+        ))
+        self.add_state_field(QOMTypeStateField(
+            "char*", "ic_file_name",
+            is_property = True,
+        ))
+
         cpu_arch_state = env_state_desc.gen_c_type()
 
         if get_vp("move tlb_flush to cpu_common_reset"):
@@ -721,7 +741,6 @@ class CPUType(QOMCPU):
         ])
         Header["exec/exec-all.h"].add_reference(arch_state)
 
-        encodings = self.encodings
         if len(encodings) > 1:
             for enc in encodings.values():
                 enc.enum_name = self.encoding_fmt % enc.name.upper()
