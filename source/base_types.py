@@ -159,7 +159,13 @@ def add_base_types():
         Type("ssize_t", incomplete = False, base = False),
         Function(name = "printf"),
         Function(name = "fprintf"),
-        Type("FILE")
+        Type("FILE"),
+        Function(name = "fopen"),
+        Function(name = "fclose"),
+        Function(name = "fread"),
+        Function(name = "fwrite"),
+        Function(name = "fseek"),
+        Function(name = "ftell"),
     ])
 
     try:
