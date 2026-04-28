@@ -217,5 +217,7 @@ def add_base_types():
         h = Header("glib.h", is_global = True)
 
     h.add_types([
-        Type(name = "GByteArray", incomplete = False, base = False)
+        Type(name = "GByteArray", incomplete = False, base = False),
+        Function("g_malloc"),
+        Function("g_free"),
     ])
