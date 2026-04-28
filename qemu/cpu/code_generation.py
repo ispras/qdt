@@ -60,6 +60,7 @@ from source import (
     BranchSwitch,
     Break,
     CINT,
+    CSTR,
     Call,
     CaseRange,
     CId,
@@ -73,6 +74,7 @@ from source import (
     Ifdef,
     Initializer,
     Label,
+    Late,
     LoopDoWhile,
     LoopFor,
     MCall,
@@ -479,6 +481,8 @@ def fill_decode_opc_encoding_body(cputype, function, encoding,
     ctx_pc = OpSDeref(ctx, "pc")
     set_pc_ref = {Type["set_pc"]}
 
+    count = Type["TCGv_i32"]("count")
+
     h = cputype.gen_files["translate.inc.c"]
 
     def gen_field_read(node, val, bitoffset, bitsize,
@@ -504,6 +508,30 @@ def fill_decode_opc_encoding_body(cputype, function, encoding,
     def decode_opc_epilogue(node, instruction, operands, total_read, comment):
         operands_to_args = [copy(o) for o in operands]
         cputype.name_shortener(operands_to_args, comment)
+
+        env_t = Type[cputype.env_state_name]
+        cnt_field_name = CId(".".join((
+            "insn_counters",
+            encoding,
+            instruction.name
+        )))
+        node(
+            OpAssign(count, Call("tcg_temp_local_new_i32")),
+            Call(
+                "tcg_gen_ld_i32",
+                count,
+                Late("cpu_env"),
+                Call("offsetof", env_t, cnt_field_name)
+            ),
+            Call("tcg_gen_addi_i32", count, count, CINT("1")),
+            Call(
+                "tcg_gen_st_i32",
+                count,
+                Late("cpu_env"),
+                Call("offsetof", env_t, cnt_field_name)
+            ),
+            Call("tcg_temp_free_i32", count),
+        )
 
         try:
             func = Type[instruction.name]
@@ -1433,11 +1461,170 @@ def fill_raise_exception_body(cputype, function):
         Call("cpu_loop_exit", cs)
     )
 
+def fill_update_icount_body(cputype, function):
+    enc_ic_dict, enc_name, ic_ptr = function.args
+
+    QNum = Type["QNum"]
+    NULL = Type["NULL"]
+
+    cnt_q = Type["QNum*"]("cnt_q")
+    cnt = Type["int64_t"]("cnt")
+
+    function.body = body = BodyTree()
+
+    body(
+        OpAssign(cnt_q,
+            Call("qobject_to", QNum,
+                Call("qdict_get", enc_ic_dict, enc_name)
+            )
+        ),
+        BranchIf(OpNEq(cnt_q, NULL))(
+            OpAssign(cnt, Call("qnum_get_int", cnt_q)),
+            BranchElse()(
+                OpAssign(cnt, 0),
+            ),
+        ),
+        OpCombAssign(cnt, OpDeref(ic_ptr), "+"),
+        OpAssign(cnt_q, Call("qnum_from_int", cnt)),
+        Call("qdict_put", enc_ic_dict, enc_name, cnt_q),
+    )
+
+def fill_update_icounts_body(cputype, function):
+    cpu, = function.args
+    ic_file_name = OpSDeref(cpu, "ic_file_name")
+    fp = Type["FILE*"]("fp")
+    sz = Type["size_t"]("sz")
+    buf = Type["char*"]("buf")
+    ic_dict = Type["QDict*"]("ic_dict")
+    enc_ic_dict = ic_dict.type("enc_ic_dict")
+
+    NULL = Type["NULL"]
+    QDict = Type["QDict"]
+
+    update_icount = Function("update_icount",
+        args = [
+            enc_ic_dict,
+            Type["const char*"]("enc_name"),
+            Type["uint32_t*"]("ic_ptr"),
+        ],
+        static = True,
+    )
+    fill_update_icount_body(cputype, update_icount)
+
+    function.body = body = BodyTree()(
+        Declare(OpDeclareAssign(ic_dict, NULL)),
+        BranchIf(OpLogNot(ic_file_name))(Return()),
+        OpAssign(fp, Call("fopen", ic_file_name, CSTR("rb"))),
+        BranchIf(OpNEq(fp, NULL))(
+            Call("fseek", fp, 0, Type["SEEK_END"]),
+            OpAssign(sz, Call("ftell", fp)),
+            BranchIf(OpGreater(sz, 0))(
+                OpAssign(buf, Call("g_malloc", sz + 1)),
+                Call("fseek", fp, 0, Type["SEEK_SET"]),
+                Call("fread", buf, 1, sz, fp),
+                OpAssign(OpIndex(buf, sz), 0),
+
+                OpAssign(ic_dict,
+                    Call("qobject_to", QDict,
+                        Call("qobject_from_json", buf, NULL),
+                    )
+                ),
+
+                Call("g_free", buf),
+            ),
+            Call("fclose", fp),
+        ),
+        BranchIf(OpEq(ic_dict, NULL))(
+            OpAssign(ic_dict, Call("qdict_new")),
+        ),
+    )
+
+    env_t = Type[cputype.env_state_name]
+    insn_counters = env_t["insn_counters"]
+
+    for f in insn_counters.type.fields.values():
+        body(
+            OpAssign(enc_ic_dict,
+                Call("qdict_get_qdict", ic_dict, CSTR(f.name))
+            ),
+            BranchIf(OpEq(enc_ic_dict, NULL))(
+                OpAssign(enc_ic_dict, Call("qdict_new")),
+                Call("qdict_put", ic_dict, CSTR(f.name), enc_ic_dict),
+            ),
+        )
+        enc_cnts_path = OpSDeref.join(cpu, "env", "insn_counters", f.name)
+        enc_cnts = Pointer(enc_cnts_path.type)(f.name)
+        body(
+            OpAssign(enc_cnts, OpAddr(enc_cnts_path)),
+        )
+        for f_ic in f.type.fields.values():
+            body(
+                Call(update_icount,
+                    enc_ic_dict,
+                    CSTR(f_ic.name),
+                    OpAddr(OpSDeref.join(enc_cnts, f_ic.name)),
+                ),
+            )
+
+    buf_q = Type["QString*"]("buf_q")
+    json = Type["const char*"]("json")
+
+    body(
+        OpAssign(buf_q,
+            Call("qobject_to_json_pretty", Call("QOBJECT", ic_dict))
+        ),
+        Call("qobject_unref", ic_dict),
+        OpAssign(json, Call("qstring_get_str", buf_q)),
+
+        OpAssign(fp, Call("fopen", ic_file_name, CSTR("wb"))),
+        BranchIf(OpNEq(fp, NULL))(
+            Call("fwrite", json, 1, Call("strlen", json), fp),
+            Call("fclose", fp),
+        ),
+
+        Call("qobject_unref", buf_q),
+    )
+
+def fill_vm_change_state_handler_body(cputype, function):
+    CPUArchP = Pointer(Type[cputype.struct_name])
+
+    update_icounts = Function(
+        name = "update_icounts",
+        static = True,
+        args = [
+            CPUArchP("cpu"),
+        ],
+    )
+
+    fill_update_icounts_body(cputype, update_icounts)
+
+    cpu = CPUArchP("cpu")
+    function.body = BodyTree()(
+        Declare(
+            OpDeclareAssign(
+                cpu,
+                MCall(cputype.qtn.for_macros, function.args[0])
+            )
+        ),
+        BranchSwitch(function.args[2])(
+            SwitchCase(Type["RUN_STATE_SHUTDOWN"])(
+                Call(update_icounts, cpu),
+            ),
+        ),
+    )
+
 def fill_realizefn_body(cputype, function):
     cs = Pointer(Type["CPUState"])("cs")
     cc = Pointer(Type[cputype.struct_class_name])("cc")
     err = Pointer(Type["Error"])("local_err")
     null = MCall("NULL")
+
+    vm_change_state_handler \
+        = Type["VMChangeStateHandler"].type.use_as_prototype(
+            cputype.gen_func_name("vm_change_state_handler"),
+            static = True,
+        )
+    fill_vm_change_state_handler_body(cputype, vm_change_state_handler)
 
     function.body = BodyTree()(
         Declare(
@@ -1466,6 +1653,9 @@ def fill_realizefn_body(cputype, function):
         ),
         Call("qemu_init_vcpu", cs),
         Call("cpu_reset", cs),
+        Call("qemu_add_vm_change_state_handler",
+            vm_change_state_handler, cs
+        ),
         Call(
             OpSDeref(cc, "parent_realize"),
             function.args[0],
