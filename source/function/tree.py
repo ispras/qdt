@@ -337,6 +337,12 @@ class CCondBlock(CBlock):
         super(CCondBlock, self).__init__()
         self.cond = cond
 
+    def __c__(self, writer):
+        self.cond.__c__(writer)
+        writer.line("@b{")
+        self.out_children(writer)
+        writer.write("}")
+
 
 class LoopWhile(CCondBlock):
 
