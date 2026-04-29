@@ -680,23 +680,26 @@ class CPUType(QOMCPU):
 
         encodings = self.encodings
 
-        eicnts = StateStruct("InsnCounters")
+        if IC_FORMAT is not None:
+            eicnts = StateStruct("InsnCounters")
 
-        for enc in encodings.values():
-            eicnt = StateStruct("InsnCounters" + enc.name.title())
-            for i in enc.instructions:
-                eicnt.add_field(QOMTypeStateField("uint32_t", i.name))
-            eicnt.gen_c_type()
-            eicnts.add_field(QOMTypeStateField(eicnt.c_type_name, enc.name))
-        eicnts.gen_c_type()
+            for enc in encodings.values():
+                eicnt = StateStruct("InsnCounters" + enc.name.title())
+                for i in enc.instructions:
+                    eicnt.add_field(QOMTypeStateField("uint32_t", i.name))
+                eicnt.gen_c_type()
+                eicnts.add_field(
+                    QOMTypeStateField(eicnt.c_type_name, enc.name)
+                )
+            eicnts.gen_c_type()
 
-        env_state_desc.add_field(QOMTypeStateField(
-            eicnts.c_type_name, "insn_counters",
-        ))
-        self.add_state_field(QOMTypeStateField(
-            "char*", "ic_file_name",
-            is_property = True,
-        ))
+            env_state_desc.add_field(QOMTypeStateField(
+                eicnts.c_type_name, "insn_counters",
+            ))
+            self.add_state_field(QOMTypeStateField(
+                "char*", "ic_file_name",
+                is_property = True,
+            ))
 
         cpu_arch_state = env_state_desc.gen_c_type()
 

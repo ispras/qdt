@@ -32,6 +32,7 @@ __all__ = [
   , "fill_tcg_init_body"
   , "fill_tlb_fill_body"
   , "fill_unrealizefn_body"
+  , "IC_FORMAT"
 ]
 
 from ..version import (
@@ -131,7 +132,7 @@ class IC_FORMAT_LISTS:
 Order is preserved. It's diff-friendly.
     """
 
-IC_FORMAT = ee("QDT_CPU_IC_FORMAT", "IC_FORMAT_LISTS")
+IC_FORMAT = ee("QDT_CPU_IC_FORMAT", "None")
 
 
 DEBUG_DECODER = ee("QDT_DEBUG_DECODER")
@@ -525,29 +526,30 @@ def fill_decode_opc_encoding_body(cputype, function, encoding,
         operands_to_args = [copy(o) for o in operands]
         cputype.name_shortener(operands_to_args, comment)
 
-        env_t = Type[cputype.env_state_name]
-        cnt_field_name = CId(".".join((
-            "insn_counters",
-            encoding,
-            instruction.name
-        )))
-        node(
-            OpAssign(count, Call("tcg_temp_local_new_i32")),
-            Call(
-                "tcg_gen_ld_i32",
-                count,
-                Late("cpu_env"),
-                Call("offsetof", env_t, cnt_field_name)
-            ),
-            Call("tcg_gen_addi_i32", count, count, CINT("1")),
-            Call(
-                "tcg_gen_st_i32",
-                count,
-                Late("cpu_env"),
-                Call("offsetof", env_t, cnt_field_name)
-            ),
-            Call("tcg_temp_free_i32", count),
-        )
+        if IC_FORMAT is not None:
+            env_t = Type[cputype.env_state_name]
+            cnt_field_name = CId(".".join((
+                "insn_counters",
+                encoding,
+                instruction.name
+            )))
+            node(
+                OpAssign(count, Call("tcg_temp_local_new_i32")),
+                Call(
+                    "tcg_gen_ld_i32",
+                    count,
+                    Late("cpu_env"),
+                    Call("offsetof", env_t, cnt_field_name)
+                ),
+                Call("tcg_gen_addi_i32", count, count, CINT("1")),
+                Call(
+                    "tcg_gen_st_i32",
+                    count,
+                    Late("cpu_env"),
+                    Call("offsetof", env_t, cnt_field_name)
+                ),
+                Call("tcg_temp_free_i32", count),
+            )
 
         try:
             func = Type[instruction.name]
@@ -1765,14 +1767,16 @@ def fill_realizefn_body(cputype, function):
     err = Pointer(Type["Error"])("local_err")
     null = MCall("NULL")
 
-    vm_change_state_handler \
-        = Type["VMChangeStateHandler"].type.use_as_prototype(
-            cputype.gen_func_name("vm_change_state_handler"),
-            static = True,
-        )
-    fill_vm_change_state_handler_body(cputype, vm_change_state_handler)
+    if IC_FORMAT is not None:
+        vm_change_state_handler \
+            = Type["VMChangeStateHandler"].type.use_as_prototype(
+                cputype.gen_func_name("vm_change_state_handler"),
+                static = True,
+            )
+        fill_vm_change_state_handler_body(cputype, vm_change_state_handler)
 
-    function.body = BodyTree()(
+    function.body = body = BodyTree()
+    body(
         Declare(
             OpDeclareAssign(
                 cs,
@@ -1799,9 +1803,14 @@ def fill_realizefn_body(cputype, function):
         ),
         Call("qemu_init_vcpu", cs),
         Call("cpu_reset", cs),
-        Call("qemu_add_vm_change_state_handler",
-            vm_change_state_handler, cs
-        ),
+    )
+    if IC_FORMAT is not None:
+        body(
+            Call("qemu_add_vm_change_state_handler",
+                vm_change_state_handler, cs
+            ),
+        )
+    body(
         Call(
             OpSDeref(cc, "parent_realize"),
             function.args[0],
