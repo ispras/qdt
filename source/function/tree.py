@@ -18,6 +18,7 @@ __all__ = [
           , "StrConcat"
           # SemicolonPresence
               , "Break"
+              , "Continue"
               , "Call"
               , "Goto"
               , "Declare"
@@ -558,6 +559,11 @@ class SemicolonPresence(CNode):
 class Break(SemicolonPresence):
 
     val = "break"
+
+
+class Continue(SemicolonPresence):
+
+    val = "continue"
 
 
 class Call(SemicolonPresence):
