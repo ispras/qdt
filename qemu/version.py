@@ -1483,6 +1483,20 @@ def define_only_qemu_2_6_0_types():
         Function(name = "qnum_get_int"),
         Function(name = "qnum_from_int"),
     )
+    Header["qapi/qmp/qobject.h"](
+        Type("QObject"),
+    )
+    Header["qapi/qmp/qlist.h"](
+        Type("QList"),
+        Type("QListEntry"),
+        Function(name = "qlist_new"),
+        Function(name = "qlist_entry_obj"),
+        Function(name = "qlist_first"),
+        Function(name = "qlist_next"),
+        Function(name = "qlist_pop"),
+        Function(name = "qlist_append_int"),
+        Function(name = "qlist_append_str"),
+    )
 
 
 def define_qemu_2_6_5_types():
