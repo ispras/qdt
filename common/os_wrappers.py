@@ -52,6 +52,9 @@ from subprocess import (
 from os import (
     makedirs
 )
+from inspect import (
+    stack,
+)
 if PY2:
     from os.path import (
         split,
@@ -182,7 +185,7 @@ def ee(env_var, default = "False"):
 
 It's not secure but that library is not about it.
     """
-    return eval(environ.get(env_var, default), {})
+    return eval(environ.get(env_var, default), stack()[1].frame.f_globals)
 
 def cli_repr(obj):
     """ Variant of standard `repr` that returns string suitable for using with
