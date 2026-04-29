@@ -63,8 +63,10 @@ from source import (
     CSTR,
     Call,
     CaseRange,
+    CCondBlock,
     CId,
     Comment,
+    Continue,
     Declare,
     Enumeration,
     Function,
@@ -116,6 +118,20 @@ from source import (
 from types import (
     FunctionType,
 )
+
+
+class IC_FORMAT_DICT_TREE:
+    """ Hierarchy of dictionaries...
+{ "encoding name" : { "instruction name" : counter }}
+Qemu's JSON generator randomizes key-value pairs oreder.
+    """
+class IC_FORMAT_LISTS:
+    """ List of lists...
+[ [ "encoding name", "instruction name" , counter ] ]
+Order is preserved. It's diff-friendly.
+    """
+
+IC_FORMAT = ee("QDT_CPU_IC_FORMAT", "IC_FORMAT_LISTS")
 
 
 DEBUG_DECODER = ee("QDT_DEBUG_DECODER")
@@ -1462,7 +1478,12 @@ def fill_raise_exception_body(cputype, function):
     )
 
 def fill_update_icount_body(cputype, function):
-    enc_ic_dict, enc_name, ic_ptr = function.args
+    if IC_FORMAT is IC_FORMAT_DICT_TREE:
+        enc_ic_dict, i_name, ic_ptr = function.args
+    elif IC_FORMAT is IC_FORMAT_LISTS:
+        ic_list, enc_ic_dict, enc_name, i_name, ic_ptr = function.args
+        QList = Type["QList"]
+        irec = ic_list.type("irec")
 
     QNum = Type["QNum"]
     NULL = Type["NULL"]
@@ -1472,22 +1493,58 @@ def fill_update_icount_body(cputype, function):
 
     function.body = body = BodyTree()
 
-    body(
-        OpAssign(cnt_q,
-            Call("qobject_to", QNum,
-                Call("qdict_get", enc_ic_dict, enc_name)
-            )
-        ),
-        BranchIf(OpNEq(cnt_q, NULL))(
-            OpAssign(cnt, Call("qnum_get_int", cnt_q)),
-            BranchElse()(
-                OpAssign(cnt, 0),
+    if IC_FORMAT is IC_FORMAT_DICT_TREE:
+        body(
+            OpAssign(cnt_q,
+                Call("qobject_to", QNum,
+                    Call("qdict_get", enc_ic_dict, i_name)
+                )
             ),
-        ),
-        OpCombAssign(cnt, OpDeref(ic_ptr), "+"),
-        OpAssign(cnt_q, Call("qnum_from_int", cnt)),
-        Call("qdict_put", enc_ic_dict, enc_name, cnt_q),
-    )
+            BranchIf(OpNEq(cnt_q, NULL))(
+                OpAssign(cnt, Call("qnum_get_int", cnt_q)),
+                BranchElse()(
+                    OpAssign(cnt, 0),
+                ),
+            ),
+            OpCombAssign(cnt, OpDeref(ic_ptr), "+"),
+            OpAssign(cnt_q, Call("qnum_from_int", cnt)),
+            Call("qdict_put", enc_ic_dict, i_name, cnt_q),
+        )
+    elif IC_FORMAT is IC_FORMAT_LISTS:
+        enc_name_q = Type["QObject*"]("enc_name_q")
+        i_name_q = enc_name_q.type("i_name_q")
+        body(
+            OpAssign(irec,
+                Call("qobject_to", QList,
+                    Call("qdict_get", enc_ic_dict, i_name)
+                )
+            ),
+            BranchIf(OpEq(irec, NULL))(
+                OpAssign(irec, Call("qlist_new")),
+                Call("qlist_append_str", irec, enc_name),
+                Call("qlist_append_str", irec, i_name),
+                Call("qlist_append", ic_list, irec),
+                Call("qobject_ref", irec),
+                Call("qdict_put", enc_ic_dict, i_name, irec),
+                OpAssign(cnt, OpDeref(ic_ptr)),
+                BranchElse()(
+                    Comment("QAPI can't remove last element"),
+                    OpAssign(enc_name_q, Call("qlist_pop", irec)),
+                    OpAssign(i_name_q, Call("qlist_pop", irec)),
+                    OpAssign(cnt_q,
+                        Call("qobject_to", QNum,
+                            Call("qlist_pop", irec)
+                        )
+                    ),
+                    Call("qlist_append", irec, enc_name_q),
+                    Call("qlist_append", irec, i_name_q),
+                    OpAssign(cnt, Call("qnum_get_int", cnt_q)),
+                    Call("qobject_unref", cnt_q),
+                    OpCombAssign(cnt, OpDeref(ic_ptr), "+"),
+                ),
+            ),
+            Call("qlist_append_int", irec, cnt),
+        )
 
 def fill_update_icounts_body(cputype, function):
     cpu, = function.args
@@ -1497,22 +1554,48 @@ def fill_update_icounts_body(cputype, function):
     buf = Type["char*"]("buf")
     ic_dict = Type["QDict*"]("ic_dict")
     enc_ic_dict = ic_dict.type("enc_ic_dict")
+    if IC_FORMAT is IC_FORMAT_LISTS:
+        ic_list = Type["QList*"]("ic_list")
+    loaded = Type["QObject*"]("loaded")
 
     NULL = Type["NULL"]
     QDict = Type["QDict"]
 
     update_icount = Function("update_icount",
-        args = [
-            enc_ic_dict,
-            Type["const char*"]("enc_name"),
-            Type["uint32_t*"]("ic_ptr"),
-        ],
+        args = (
+            ([ic_list] if IC_FORMAT is IC_FORMAT_LISTS else [])
+          + [
+                enc_ic_dict,
+                Type["const char*"]("enc_name"),
+            ]
+          + ([
+                Type["const char*"]("i_name")
+            ] if IC_FORMAT is IC_FORMAT_LISTS else [])
+          + [
+                Type["uint32_t*"]("ic_ptr"),
+            ]
+        ),
         static = True,
     )
     fill_update_icount_body(cputype, update_icount)
 
-    function.body = body = BodyTree()(
-        Declare(OpDeclareAssign(ic_dict, NULL)),
+    function.body = body = BodyTree()
+    body(
+        Declare(OpDeclareAssign(loaded, NULL)),
+    )
+    if IC_FORMAT is IC_FORMAT_LISTS:
+        QList = Type["QList"]
+        QString = Type["QString"]
+        e = Type["QListEntry*"]("e", const = True)
+        ee = e.type("ee", const = True)
+        irec = Pointer(QList)("irec")
+        # ic_dict is used as an index. optimisation
+        body(
+            Declare(OpDeclareAssign(ic_dict,
+                OpAssign(ic_dict, Call("qdict_new"))
+            )),
+        )
+    body(
         BranchIf(OpLogNot(ic_file_name))(Return()),
         OpAssign(fp, Call("fopen", ic_file_name, CSTR("rb"))),
         BranchIf(OpNEq(fp, NULL))(
@@ -1523,21 +1606,62 @@ def fill_update_icounts_body(cputype, function):
                 Call("fseek", fp, 0, Type["SEEK_SET"]),
                 Call("fread", buf, 1, sz, fp),
                 OpAssign(OpIndex(buf, sz), 0),
-
-                OpAssign(ic_dict,
-                    Call("qobject_to", QDict,
-                        Call("qobject_from_json", buf, NULL),
-                    )
-                ),
-
+                OpAssign(loaded, Call("qobject_from_json", buf, NULL)),
                 Call("g_free", buf),
             ),
             Call("fclose", fp),
         ),
-        BranchIf(OpEq(ic_dict, NULL))(
-            OpAssign(ic_dict, Call("qdict_new")),
-        ),
     )
+
+    if IC_FORMAT is IC_FORMAT_DICT_TREE:
+        body(
+            OpAssign(ic_dict, Call("qobject_to", QDict, loaded)),
+            BranchIf(OpEq(ic_dict, NULL))(
+                OpAssign(ic_dict, Call("qdict_new")),
+            ),
+        )
+    elif IC_FORMAT is IC_FORMAT_LISTS:
+        enc_name = Type["const char *"]("enc_name")
+        i_name = enc_name.type("i_name")
+        body(
+            OpAssign(ic_list, Call("qobject_to", QList, loaded)),
+            BranchIf(OpEq(ic_list, NULL))(
+                OpAssign(ic_list, Call("qlist_new")),
+            ),
+            CCondBlock(MCall("QLIST_FOREACH_ENTRY", ic_list, e))(
+                OpAssign(irec, Call("qobject_to", QList, Call(
+                    "qlist_entry_obj", e
+                ))),
+                BranchIf(OpEq(irec, NULL))(
+                    Continue(),
+                ),
+                OpAssign(ee, Call("qlist_first", irec)),
+                OpAssign(enc_name, Call("qstring_get_str",
+                    Call("qobject_to", QString,
+                        Call("qlist_entry_obj", ee)
+                    )
+                )),
+                OpAssign(enc_ic_dict,
+                    Call("qobject_to", QDict,
+                        Call("qdict_get", ic_dict,
+                            enc_name
+                        )
+                    )
+                ),
+                BranchIf(OpEq(enc_ic_dict, NULL))(
+                    OpAssign(enc_ic_dict, Call("qdict_new")),
+                    Call("qdict_put", ic_dict, enc_name, enc_ic_dict),
+                ),
+                OpAssign(ee, Call("qlist_next", ee)),
+                Call("qobject_ref", irec),
+                OpAssign(i_name, Call("qstring_get_str",
+                    Call("qobject_to", QString,
+                        Call("qlist_entry_obj", ee)
+                    )
+                )),
+                Call("qdict_put", enc_ic_dict, i_name, irec),
+            ),
+        )
 
     env_t = Type[cputype.env_state_name]
     insn_counters = env_t["insn_counters"]
@@ -1558,21 +1682,43 @@ def fill_update_icounts_body(cputype, function):
             OpAssign(enc_cnts, OpAddr(enc_cnts_path)),
         )
         for f_ic in f.type.fields.values():
-            body(
-                Call(update_icount,
-                    enc_ic_dict,
-                    CSTR(f_ic.name),
-                    OpAddr(OpSDeref.join(enc_cnts, f_ic.name)),
-                ),
-            )
+            if IC_FORMAT is IC_FORMAT_DICT_TREE:
+                body(
+                    Call(update_icount,
+                        enc_ic_dict,
+                        CSTR(f_ic.name),
+                        OpAddr(OpSDeref.join(enc_cnts, f_ic.name)),
+                    ),
+                )
+            elif IC_FORMAT is IC_FORMAT_LISTS:
+                body(
+                    Call(update_icount,
+                        ic_list,
+                        enc_ic_dict,
+                        CSTR(f.name),
+                        CSTR(f_ic.name),
+                        OpAddr(OpSDeref.join(enc_cnts, f_ic.name)),
+                    ),
+                )
 
     buf_q = Type["QString*"]("buf_q")
     json = Type["const char*"]("json")
 
+    if IC_FORMAT is IC_FORMAT_DICT_TREE:
+        body(
+            OpAssign(buf_q,
+                Call("qobject_to_json_pretty", Call("QOBJECT", ic_dict))
+            ),
+        )
+    elif IC_FORMAT is IC_FORMAT_LISTS:
+        body(
+            OpAssign(buf_q,
+                Call("qobject_to_json_pretty", Call("QOBJECT", ic_list))
+            ),
+            Call("qobject_unref", ic_list),
+        )
+
     body(
-        OpAssign(buf_q,
-            Call("qobject_to_json_pretty", Call("QOBJECT", ic_dict))
-        ),
         Call("qobject_unref", ic_dict),
         OpAssign(json, Call("qstring_get_str", buf_q)),
 
