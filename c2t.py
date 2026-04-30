@@ -510,17 +510,14 @@ def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
                 session.reset(test_src, test_elf)
             else:
                 qemu_port = port_queue.get(block = True)
-                if (not c2t_cfg.rsp_target.user
-                    and (reuse or c2t_cfg.rsp_target.qemu_reset)
-                ):
-                    qmp_port = port_queue.get(block = True)
+                qmp_port = port_queue.get(block = True)
 
                 qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
 
                 if not wait_for_tcp_port(qemu_port):
                     c2t_exit("qemu (gdbstub) tcp:%d malfunction" % qemu_port)
 
-                if qmp_port and wait_for_tcp_port(qmp_port):
+                if wait_for_tcp_port(qmp_port):
                     qmp = QMP(qmp_port)
 
                 session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
@@ -544,7 +541,18 @@ def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
                 qmp = None
             else:
                 if not reuse:
-                    session.kill()
+                    # Sometimes, it's required that VMChangeStateHandler is
+                    # to be called for RUN_STATE_SHUTDOWN.
+                    # E.g. for instruction count (coverage) file update.
+                    # `session.kill()` or just `qmp("quit")` is not enough
+                    # because of Qemu implementation.
+                    # See `gdbstub.c:gdb_handle_packet` for 'k' packet handling
+                    # and `softmmu/cpus.c:do_vm_stop`.
+                    # The second requires `runstate_is_running()` to
+                    # `vm_state_notify`.
+                    # So, Qemu is first to be "cont"inued before "quit".
+                    qmp("cont")
+                    qmp("quit")
                     qemu.join()
                     session.port_close()
 
