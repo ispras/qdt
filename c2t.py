@@ -514,6 +514,10 @@ def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
 
                 qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
 
+                # Hint.
+                # To get permissions to debug `qemu` process:
+                # sudo sysctl -w kernel.yama.ptrace_scope=0
+
                 if not wait_for_tcp_port(qemu_port):
                     c2t_exit("qemu (gdbstub) tcp:%d malfunction" % qemu_port)
 
