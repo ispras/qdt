@@ -103,7 +103,7 @@ class ICViewer(GUITk, object):
                 ic = loads(ic_json)
                 if not isinstance(ic, list):
                     raise NotImplementedError(
-                        "IC_FORMAT_LISTS is only implemented"
+                        "%r: IC_FORMAT_LISTS is only implemented" % jfname
                     )
 
                 for enc_name, i_name, cnt in ic:
