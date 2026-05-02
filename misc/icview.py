@@ -3,6 +3,7 @@ from common import (
 )
 from widgets import (
     add_scrollbars_native,
+    ErrorDialog,
     GUIFrame,
     GUITk,
     tk_delayed,
@@ -24,7 +25,7 @@ from six.moves.tkinter import (
     END,
 )
 from traceback import (
-    print_exc,
+    format_exc,
 )
 
 
@@ -42,6 +43,7 @@ class ICViewer(GUITk, object):
 
         self._title_base = _("Instruction Counters Viewer")
         self._json_file_names = []
+        self._errors = []
 
         # widgets
         f = GUIFrame(self)
@@ -66,6 +68,13 @@ class ICViewer(GUITk, object):
         self._update = 1
 
     @tk_delayed
+    def _show_errors(self):
+        ErrorDialog(
+            summary = _("Errors during JSON files processing"),
+            message = "\n\n\n".join(self._errors)
+        ).wait()
+
+    @tk_delayed
     def _update(self):
         self._cleanup()
         self._fill()
@@ -85,6 +94,7 @@ class ICViewer(GUITk, object):
         encodings = set()
 
         consumed_jfnames = []
+        errors = []
 
         for jfname in self._json_file_names:
             try:
@@ -101,9 +111,13 @@ class ICViewer(GUITk, object):
                     instructions[i_name][enc_name] += cnt
                     instructions[i_name][".total"] += cnt
             except:
-                print_exc()
+                errors.append(format_exc())
             else:
                 consumed_jfnames.append(jfname)
+
+        if errors:
+            self._errors[:1] = reversed(errors)
+            self._show_errors = 1
 
         if not consumed_jfnames:
             return
