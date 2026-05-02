@@ -23,6 +23,9 @@ from six.moves.tkinter import (
     BOTH,
     END,
 )
+from traceback import (
+    print_exc,
+)
 
 
 def case_insens(v):
@@ -35,10 +38,10 @@ def case_insens_item(v):
 class ICViewer(GUITk, object):
 
     def __init__(self, *a, **kw):
-        ic_json_file = kw.pop("ic_json_file", None)
         GUITk.__init__(self, *a, **kw)
 
         self._title_base = _("Instruction Counters Viewer")
+        self._json_file_names = []
 
         # widgets
         f = GUIFrame(self)
@@ -56,33 +59,16 @@ class ICViewer(GUITk, object):
         tv.tag_configure("zero", background = "#FFFFAA")
 
         # startup
-        if ic_json_file is not None:
-            self.ic_json_file = ic_json_file
         self._update = 1
 
-    _ic_json_file = None
-
-    @property
-    def ic_json_file(self):
-        return self._ic_json_file
-
-    @ic_json_file.setter
-    def ic_json_file(self, ic_json_file):
-        if self._ic_json_file == ic_json_file:
-            return
-        if ic_json_file is None:
-            del self._ic_json_file
-        else:
-            self._ic_json_file = ic_json_file
+    def account_json(self, *json_file_names):
+        self._json_file_names.extend(json_file_names)
         self._update = 1
 
     @tk_delayed
     def _update(self):
-        ic_json_file = self._ic_json_file
-        if ic_json_file is None:
-            self._cleanup()
-        else:
-            self._fill()
+        self._cleanup()
+        self._fill()
 
     def _cleanup(self):
         tv = self._tv
@@ -93,23 +79,34 @@ class ICViewer(GUITk, object):
         self.title(self._title_base.get())
 
     def _fill(self):
-        ic_json_file = self._ic_json_file
         tv = self._tv
-
-        with open(ic_json_file, "r") as f:
-            ic_json = f.read()
-
-        ic = loads(ic_json)
-        if not isinstance(ic, list):
-            raise NotImplementedError("IC_FORMAT_LISTS is only implemented")
 
         instructions = defaultdict(lambda : defaultdict(int))
         encodings = set()
 
-        for enc_name, i_name, cnt in ic:
-            encodings.add(enc_name)
-            instructions[i_name][enc_name] += cnt
-            instructions[i_name][".total"] += cnt
+        consumed_jfnames = []
+
+        for jfname in self._json_file_names:
+            try:
+                with open(jfname, "r") as f:
+                    ic_json = f.read()
+                ic = loads(ic_json)
+                if not isinstance(ic, list):
+                    raise NotImplementedError(
+                        "IC_FORMAT_LISTS is only implemented"
+                    )
+
+                for enc_name, i_name, cnt in ic:
+                    encodings.add(enc_name)
+                    instructions[i_name][enc_name] += cnt
+                    instructions[i_name][".total"] += cnt
+            except:
+                print_exc()
+            else:
+                consumed_jfnames.append(jfname)
+
+        if not consumed_jfnames:
+            return
 
         encodings = list(sorted(encodings, key = case_insens))
         instructions = list(sorted(instructions.items(),
@@ -145,7 +142,11 @@ class ICViewer(GUITk, object):
         self.title(
             self._title_base.get()
           + " %u/%u " % (covered, total)
-          + " " + repr(ic_json_file)
+          + repr(consumed_jfnames[0])
+          + (" + %u" % (len(consumed_jfnames) - 1)
+                if len(consumed_jfnames) > 1
+                else ""
+            )
         )
 
 
@@ -154,15 +155,13 @@ def main():
     arg = ap.add_argument
 
     arg("ic_json_file",
-        nargs = "?",
-        default = None,
+        nargs = "*",
     )
 
     args = ap.parse_args()
 
     tk = ICViewer()
-    if args.ic_json_file is not None:
-        tk.ic_json_file = args.ic_json_file
+    tk.account_json(*args.ic_json_file)
     tk.mainloop()
 
 
