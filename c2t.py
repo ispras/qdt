@@ -245,7 +245,7 @@ class DebugSession(object):
 
     @property
     def _var_size(self):
-        re_size = compile("^.+_(?:u?(\\d+))_.+$")
+        re_size = compile("^.+_(?:[uf]?(\\d+))_.+$")
         size_str = re_size.match(basename(self.srcfile)).group(1)
         return int(size_str) // 8
 
