@@ -20,6 +20,9 @@ from collections import (
 from json import (
     loads,
 )
+from re import (
+    compile,
+)
 from six.moves.tkinter import (
     BOTH,
     END,
@@ -35,6 +38,9 @@ def case_insens(v):
 def case_insens_item(v):
     return case_insens(v[0])
 
+
+re_i_name = compile(r"(?P<name>(?P<cls>.*?)_(?P<n>\d+))")
+i_name_match = re_i_name.match
 
 class ICViewer(GUITk, object):
 
@@ -58,7 +64,8 @@ class ICViewer(GUITk, object):
 
         tv.heading("#0", text = _("Instruction"))
 
-        tv.tag_configure("zero", background = "#FFFFAA")
+        tv.tag_configure("have_zero", background = "#FFFFAA")
+        tv.tag_configure("all_zero", background = "#FFDDAA")
 
         # startup
         self._update = 1
@@ -90,7 +97,13 @@ class ICViewer(GUITk, object):
     def _fill(self):
         tv = self._tv
 
-        instructions = defaultdict(lambda : defaultdict(int))
+        def cls_stats():
+            ret = defaultdict(  # i_name -> enc_stats
+                lambda : defaultdict(int)  # enc_name -> counter
+            )
+            return ret
+
+        instructions = defaultdict(cls_stats)
         encodings = set()
 
         consumed_jfnames = []
@@ -108,8 +121,11 @@ class ICViewer(GUITk, object):
 
                 for enc_name, i_name, cnt in ic:
                     encodings.add(enc_name)
-                    instructions[i_name][enc_name] += cnt
-                    instructions[i_name][".total"] += cnt
+                    i_cls = i_name_match(i_name).group("cls")
+                    instructions[i_cls][i_name][enc_name] += cnt
+                    instructions[i_cls][i_name][".total"] += cnt
+                    instructions[i_cls][".cls"][enc_name] += cnt
+                    instructions[i_cls][".cls"][".total"] += cnt
             except:
                 errors.append(format_exc())
             else:
@@ -135,33 +151,70 @@ class ICViewer(GUITk, object):
             tv.heading(enc_name, text = enc_name)
 
         zeros = set()
+        zeros_cls = set()
+        total_i = 0
 
-        for i, stats in instructions:
-            tags = []
-            total = stats[".total"]
-            if not total:
-                tags.append("zero")
-                zeros.add(i)
-            tv.insert("", END,
-                text = i,
+        for i_cls, cls_stats in instructions:
+            cls_stats_cls = cls_stats[".cls"]
+
+            cls_iid = tv.insert("", END,
+                text = i_cls,
                 values = list(
-                    stats[enc_name] for enc_name in tv.cget("columns")
+                    cls_stats_cls[enc_name] for enc_name in tv.cget("columns")
                 ),
-                tags = tags,
+                open = True,
             )
 
-        total = len(instructions)
-        covered = total - len(zeros)
+            cls_have_zero = False
 
-        self.title(
-            self._title_base.get()
-          + " %u/%u " % (covered, total)
-          + repr(consumed_jfnames[0])
-          + (" + %u" % (len(consumed_jfnames) - 1)
-                if len(consumed_jfnames) > 1
-                else ""
+            for i_name, enc_stats in list(sorted(
+                cls_stats.items(),
+                key = case_insens_item
+            )):
+                if i_name.startswith('.'):
+                    continue
+                total_i += 1
+                tags = []
+                total = enc_stats[".total"]
+                if not total:
+                    cls_have_zero = True
+                    tags.append("all_zero")
+                    zeros.add(i_name)
+                tv.insert(cls_iid, END,
+                    text = i_name,
+                    values = list(
+                        enc_stats[enc_name] for enc_name in tv.cget("columns")
+                    ),
+                    tags = tags,
+                )
+
+            cls_tags = []
+            if not cls_stats_cls[".total"]:
+                cls_tags.append("all_zero")
+                zeros_cls.add(i_cls)
+            elif cls_have_zero:
+                cls_tags.append("have_zero")
+
+            if cls_tags:
+                tv.item(cls_iid, tags = cls_tags)
+
+        total_cls = len(instructions)
+        covered_cls = total_cls - len(zeros_cls)
+        covered_i = total_i - len(zeros)
+
+        self.title(" ".join(
+            [
+                self._title_base.get(),
+                "%u/%u" % (covered_i, total_i),
+                "%u/%u" % (covered_cls, total_cls),
+                repr(consumed_jfnames[0]),
+            ]
+          + (
+                ["+ %u" % (len(consumed_jfnames) - 1)]
+                    if len(consumed_jfnames) > 1 else
+                []
             )
-        )
+        ))
 
 
 def main():
