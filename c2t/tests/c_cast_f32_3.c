@@ -4,8 +4,8 @@
 
 void main(void)
 {
-    volatile float a = 20363956191232.0;
-    volatile int64_t b;
+    volatile double a = 1370898521487.079;
+    volatile int32_t b;
 
     b = a;
     FLUSH_PIPELINE;
