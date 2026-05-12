@@ -256,6 +256,7 @@ class DebugSession(object):
             addr = addr,
             lineno = lineno,
             vars = dict(
+                # TODO: `debug.value.Value.fetch` can get fetch size by self
                 map(lambda x: (x, self.rt[x].fetch(self._var_size)),
                     var_names if var_names else self.rt
                 )
