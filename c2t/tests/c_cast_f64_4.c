@@ -4,7 +4,7 @@
 
 void main(void)
 {
-    volatile double a = 1370898521487.079;
+    volatile double a = 1370898521.079;
     volatile uint32_t b;
 
     b = a;
