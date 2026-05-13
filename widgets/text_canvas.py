@@ -406,8 +406,8 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
                 if lineidx < end_line:
                     if cur_line < lineidx:
                         lines = lines[lineidx - cur_line:]
-                    yield lines
                     picked_lines.extend(lines)
+                    yield lines
 
                 cur_line = end_line
 
