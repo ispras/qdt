@@ -734,6 +734,8 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
     def _on_ctrl_key(self, e):
         if e.keycode == self.COPY_KEYCODE: # copy selected
             blob = self.selected_blob
+            if blob is None:
+                return "break"
             text = blob.decode(self._encoding, errors = self._encoding_errors)
             self.clipboard_clear()
             self.clipboard_append(text)
