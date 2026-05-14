@@ -71,5 +71,7 @@ void main(void)
     PRINTLN_DOP(U64_D(0xbfee54fb99ed034c), *, U32_F(0xbf870a00));
     PRINTLN_DOP(U64_D(0x4000000000000000), -, U64_D(0x3feffffffffffffe));
     PRINTLN_DOP(U64_D(0xbfee54fb99ed034c), *, U64_D(0x3ff0000000000001));
+    PRINTLN_DOP(4.069039057465399e-188, /, 3.4285662889134074e-298);
+    print_double(U64_D(0x56d0000000000000)); NL;
 }
 
