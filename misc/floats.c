@@ -5,7 +5,7 @@ void print_float(float f)
 {
     float _f = f;
     uint32_t u = *(uint32_t*)&_f;
-    printf("%e %u 0x%x", f, u, u);
+    printf("%.8e %u 0x%x", f, u, u);
 }
 
 #define U32_F(U) ({ \
@@ -36,7 +36,7 @@ void print_double(double f)
 {
     double _f = f;
     uint64_t u = *(uint64_t*)&_f;
-    printf("%le %lu 0x%lx", f, u, u);
+    printf("%.16le %lu 0x%lx", f, u, u);
 }
 
 #define PRINT_DOP(A, OP, B) do { \
