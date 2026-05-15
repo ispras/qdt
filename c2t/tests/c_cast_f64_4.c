@@ -4,7 +4,8 @@
 
 void main(void)
 {
-    volatile float a = 20363956191232.0;
+    // must fit uint64_t
+    volatile float a = 2036e15;
     volatile uint64_t b;
 
     b = a;
