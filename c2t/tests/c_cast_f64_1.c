@@ -4,7 +4,8 @@
 
 void main(void)
 {
-    volatile double a = 1370898521487.079;
+    // must fit int64_t
+    volatile double a = 137089852e7;
     volatile int64_t b;
 
     b = a;

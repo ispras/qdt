@@ -5,6 +5,7 @@
 void main(void)
 {
     volatile double a;
+    // must fit mantissa
     volatile int64_t b = -98469723469582;
 
     a = b;

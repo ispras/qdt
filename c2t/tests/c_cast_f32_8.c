@@ -5,7 +5,8 @@
 void main(void)
 {
     volatile float a;
-    volatile uint64_t b = 0x8abbccddee0011ff;
+    // must fit mantissa
+    volatile uint64_t b = 0x3811ff00000000;
 
     a = b;
     FLUSH_PIPELINE;
