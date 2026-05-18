@@ -4,7 +4,7 @@
 
 void main(void)
 {
-    volatile double a = 4.069039057465399e-188, b = 3.4285662889134074e-298, c;
+    volatile double a = 4.0690390574653988e-188, b = 3.4285662889134074e-298, c;
 
     c = a / b;
     FLUSH_PIPELINE;
