@@ -88,6 +88,7 @@ class ICViewer(GUITk, object):
 
         self._title_base = _("Instruction Counters Viewer")
         self._json_file_names = []
+        self._masks_file_names = []
         self._errors = []
 
         # widgets
@@ -113,6 +114,10 @@ class ICViewer(GUITk, object):
         self._json_file_names.extend(json_file_names)
         self._update = 1
 
+    def account_masks(self, *json_file_names):
+        self._masks_file_names.extend(json_file_names)
+        self._update = 1
+
     @tk_delayed
     def _show_errors(self):
         ErrorDialog(
@@ -136,9 +141,15 @@ class ICViewer(GUITk, object):
     def _fill(self):
         tv = self._tv
 
+        m_instructions, __, __, m_errors = read_json_files(
+            *self._masks_file_names
+        )
+
         instructions, encodings, consumed_jfnames, errors = read_json_files(
             *self._json_file_names
         )
+
+        errors += m_errors
 
         if errors:
             self._errors[:1] = reversed(errors)
@@ -146,6 +157,25 @@ class ICViewer(GUITk, object):
 
         if not consumed_jfnames:
             return
+
+        # masking
+        for m_i_cls, m_cls_stats in m_instructions.items():
+            for m_i_name, m_enc_stats in m_cls_stats.items():
+                if m_i_name.startswith("."):
+                    continue
+                for m_enc_name, m_cnt in m_enc_stats.items():
+                    if m_enc_name.startswith("."):
+                        continue
+                    if not m_cnt:
+                        continue
+                    cls_stats = instructions[m_i_cls]
+                    cnt = cls_stats[m_i_name][m_enc_name]
+                    if not cnt:
+                        continue
+                    cls_stats[m_i_name][m_enc_name] = 0
+                    cls_stats[m_i_name][".total"] -= cnt
+                    cls_stats[".cls"][m_enc_name] -= cnt
+                    cls_stats[".cls"][".total"] -= cnt
 
         encodings = list(sorted(encodings, key = case_insens))
         instructions = list(sorted(instructions.items(),
@@ -233,11 +263,22 @@ def main():
     arg("ic_json_file",
         nargs = "*",
     )
+    arg("-m", "--mask",
+        metavar = "ic_json_file",
+        help = """
+Non-zero entries in mask file(s) zeroises corresponding entries in final table.
+This helps highlight test (set) unique instructions.
+"""     ,
+        nargs = "*",
+    )
 
     args = ap.parse_args()
 
     tk = ICViewer()
     tk.account_json(*args.ic_json_file)
+    masks = args.mask
+    if masks:
+        tk.account_masks(*masks)
     tk.mainloop()
 
 
