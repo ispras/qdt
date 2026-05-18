@@ -39,6 +39,45 @@ def case_insens_item(v):
     return case_insens(v[0])
 
 
+def cls_stats():
+    ret = defaultdict(  # i_name -> enc_stats
+        lambda : defaultdict(int)  # enc_name -> counter
+    )
+    return ret
+
+
+def read_json_files(*json_file_names):
+    instructions = defaultdict(cls_stats)
+    encodings = set()
+
+    consumed_jfnames = []
+    errors = []
+
+    for jfname in json_file_names:
+        try:
+            with open(jfname, "r") as f:
+                ic_json = f.read()
+            ic = loads(ic_json)
+            if not isinstance(ic, list):
+                raise NotImplementedError(
+                    "%r: IC_FORMAT_LISTS is only implemented" % jfname
+                )
+
+            for enc_name, i_name, cnt in ic:
+                encodings.add(enc_name)
+                i_cls = i_name_match(i_name).group("cls")
+                instructions[i_cls][i_name][enc_name] += cnt
+                instructions[i_cls][i_name][".total"] += cnt
+                instructions[i_cls][".cls"][enc_name] += cnt
+                instructions[i_cls][".cls"][".total"] += cnt
+        except:
+            errors.append(format_exc())
+        else:
+            consumed_jfnames.append(jfname)
+
+    return instructions, encodings, consumed_jfnames, errors
+
+
 re_i_name = compile(r"(?P<name>(?P<cls>.*?)_(?P<n>\d+))")
 i_name_match = re_i_name.match
 
@@ -97,39 +136,9 @@ class ICViewer(GUITk, object):
     def _fill(self):
         tv = self._tv
 
-        def cls_stats():
-            ret = defaultdict(  # i_name -> enc_stats
-                lambda : defaultdict(int)  # enc_name -> counter
-            )
-            return ret
-
-        instructions = defaultdict(cls_stats)
-        encodings = set()
-
-        consumed_jfnames = []
-        errors = []
-
-        for jfname in self._json_file_names:
-            try:
-                with open(jfname, "r") as f:
-                    ic_json = f.read()
-                ic = loads(ic_json)
-                if not isinstance(ic, list):
-                    raise NotImplementedError(
-                        "%r: IC_FORMAT_LISTS is only implemented" % jfname
-                    )
-
-                for enc_name, i_name, cnt in ic:
-                    encodings.add(enc_name)
-                    i_cls = i_name_match(i_name).group("cls")
-                    instructions[i_cls][i_name][enc_name] += cnt
-                    instructions[i_cls][i_name][".total"] += cnt
-                    instructions[i_cls][".cls"][enc_name] += cnt
-                    instructions[i_cls][".cls"][".total"] += cnt
-            except:
-                errors.append(format_exc())
-            else:
-                consumed_jfnames.append(jfname)
+        instructions, encodings, consumed_jfnames, errors = read_json_files(
+            *self._json_file_names
+        )
 
         if errors:
             self._errors[:1] = reversed(errors)
