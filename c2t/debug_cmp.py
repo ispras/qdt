@@ -114,6 +114,8 @@ comparison report
         """ Start debug comparison """
         oracle_dump_cache = defaultdict(deque)
         target_dump_cache = defaultdict(deque)
+        failed_tests = set()
+        fail = failed_tests.add
 
         while self.end:
             try:
@@ -154,17 +156,22 @@ comparison report
             elif dump == "TEST_RUN" and cmp_dump == "TEST_RUN":
                 print("%s: RUN" % test)
             elif dump == "TEST_END":
-                if dump == cmp_dump:
-                    print("%s: OK" % test)
-                else:
+                if dump != cmp_dump:
+                    fail(test)
                     yield TestMismatch(test, sender + " ended earlier")
+                print("%s: %s" % (
+                    test,
+                    "FAILED" if test in failed_tests else "PASSED"
+                ))
             elif cmp_dump == "TEST_END":
                 # dump != "TEST_END"
+                fail(test)
                 yield TestMismatch(test, cmp_sender + " ended earlier")
             else:
                 for res in self.compare(test, sender, dump, cmp_sender,
                     cmp_dump
                 ):
+                    fail(test)
                     yield res
 
 
