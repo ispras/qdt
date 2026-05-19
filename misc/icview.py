@@ -191,6 +191,7 @@ class ICViewer(GUITk, object):
 
         zeros = set()
         zeros_cls = set()
+        partial_cls = set()
         total_i = 0
 
         for i_cls, cls_stats in instructions:
@@ -233,19 +234,25 @@ class ICViewer(GUITk, object):
                 zeros_cls.add(i_cls)
             elif cls_have_zero:
                 cls_tags.append("have_zero")
+                partial_cls.add(i_cls)
 
             if cls_tags:
                 tv.item(cls_iid, tags = cls_tags)
 
         total_cls = len(instructions)
         covered_cls = total_cls - len(zeros_cls)
+        full_cls = covered_cls - len(partial_cls)
         covered_i = total_i - len(zeros)
 
         self.title(" ".join(
             [
                 self._title_base.get(),
                 "%u/%u" % (covered_i, total_i),
-                "%u/%u" % (covered_cls, total_cls),
+                "%u/%u/%u" % (
+                    full_cls,
+                    covered_cls,
+                    total_cls
+                ),
                 repr(consumed_jfnames[0]),
             ]
           + (
