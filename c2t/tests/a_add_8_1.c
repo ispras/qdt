@@ -7,8 +7,12 @@ void main(void)
     volatile int8_t a = 0x4e, b = 0x8d, c;
 
     c = a + b;
+
     FLUSH_PIPELINE;
+
     c = 0;     //$ch.c
+
+    FLUSH_PIPELINE;
 
     return;    //$bre
 }

@@ -9,9 +9,15 @@ void main(void)
 
     do {
         c = i;
+
         FLUSH_PIPELINE;
+
         c = 0; //$ch.c, chc.c
+
+        FLUSH_PIPELINE;
     } while (--i >= 0);
+
+    FLUSH_PIPELINE;
 
     return;    //$bre
 }

@@ -31,7 +31,10 @@ void main(void)
     c = bcd_add_knuth(a, b);
 #endif
     FLUSH_PIPELINE;
+
     c = 0;     //$ch.c
+
+    FLUSH_PIPELINE;
 
     return;    //$bre
 }

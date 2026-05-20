@@ -7,7 +7,13 @@ void main(void)
     c = 10;
     while (c--) {
         FLUSH_PIPELINE;
+
         i++; //$ch.i
+
+        FLUSH_PIPELINE;
     }
+
+    FLUSH_PIPELINE;
+
     return; //$bre
 }
