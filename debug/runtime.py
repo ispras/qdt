@@ -96,11 +96,15 @@ class Runtime(object):
         self.target = target
         self.dic = dic
 
-        self.pc_idx = target.registers.index(target.pc_reg)
+        self.reg_idx = reg_idx = dict(
+            (n, i) for (i, n) in enumerate(target.registers)
+        )
+
+        self.pc_idx = reg_idx[target.pc_reg]
         self.base_address = base_address
 
         # cache of register values converted to integer
-        self.regs = [None] * len(target.registers)
+        self.regs = [None] * len(reg_idx)
 
         # support for `cached` decorator
         self.__lazy__ = []
@@ -111,7 +115,7 @@ class Runtime(object):
             # TODO: account targets's calling convention
             self.return_reg = 0
         else:
-            self.return_reg = target.registers.index(return_reg_name)
+            self.return_reg = reg_idx[return_reg_name]
 
         # TODO: this must be done using DWARF because "bitsize" and address
         # size are not same values semantically (but same by implementation).
