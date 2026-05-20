@@ -286,6 +286,12 @@ pyelftools's `DWARFInfo`.
     def account_line_program_CU(self, cu):
         lp = self.di.line_program_for_CU(cu)
 
+        files = []
+        self.cu_off2files[cu.cu_offset] = files
+
+        if lp is None:
+            return
+
         entries = lp.get_entries()
 
         # Note that program entries must be parsed before header file list
@@ -297,7 +303,6 @@ pyelftools's `DWARFInfo`.
         dnames = hdr["include_directory"] # include_directories
 
         # first reconstruct contributing file paths
-        files = []
         for f in fentries:
             dir_index = f["dir_index"]
             if dir_index == 0:
@@ -309,8 +314,6 @@ pyelftools's `DWARFInfo`.
             name = f["name"].split(bsep)
             _path = _dir + name
             files.append(_path)
-
-        self.cu_off2files[cu.cu_offset] = files
 
         srcmap = self.srcmap
 
