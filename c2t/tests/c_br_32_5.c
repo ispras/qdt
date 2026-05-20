@@ -7,10 +7,20 @@ void main(void)
     volatile int32_t a = 0xc907830f, b = 0xc27c9d8b, c = 0;
 
     if (a >= b) {
+        FLUSH_PIPELINE;
+
         c = 1;  //$br
+
+        FLUSH_PIPELINE;
     } else {
+        FLUSH_PIPELINE;
+
         c = -1; //$br
+
+        FLUSH_PIPELINE;
     }
+
+    FLUSH_PIPELINE;
 
     return;     //$bre
 }

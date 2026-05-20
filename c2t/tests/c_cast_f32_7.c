@@ -9,8 +9,12 @@ void main(void)
     volatile int64_t b = -0x46e1df00000000;
 
     a = b;
+
     FLUSH_PIPELINE;
+
     a = 0;     //$ch.a
+
+    FLUSH_PIPELINE;
 
     return;    //$bre
 }

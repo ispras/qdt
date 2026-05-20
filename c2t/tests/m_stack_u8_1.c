@@ -36,8 +36,12 @@ void main(void)
         a29, a30, a31, a32, a33, a34, a35, a36, a37, a38, a39, a40, a41, a42,
         a43, a44, a45, a46, a47, a48, a49
     );
+
     FLUSH_PIPELINE;
+
     c = 0;     //$ch.c
+
+    FLUSH_PIPELINE;
 
     return;    //$bre
 }

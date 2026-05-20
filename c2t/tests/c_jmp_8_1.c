@@ -18,9 +18,20 @@ int main(void)
         goto label;
     }
 #endif
+
+    FLUSH_PIPELINE;
+
     c = a;  //$br
+
+    FLUSH_PIPELINE;
+
 label:
+
+    FLUSH_PIPELINE;
+
     c = b;  //$br
+
+    FLUSH_PIPELINE;
 
     return 0;   //$bre
 }
