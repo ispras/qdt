@@ -7,10 +7,18 @@
 A `C2TConfig` may use `-D` option in `target_compiler` `args` to define
 the settings. */
 
-/* A CPU with a software pipeline may run several instructions simultaneously.
+/*
+A CPU with a software pipeline may run several instructions simultaneously.
 As a result several C statements run simultaneously too.
 So, to check result of a statement it is not enough to set a breakpoint at
-next statement, the pipeline must pass some stages before the breakpoint. */
+next statement, the pipeline must pass some stages before the breakpoint.
+
+A `NOP N` (or similar) instruction is likely enough.
+
+`FLUSH_PIPELINE` can help prevent a compiler to confuse c2t about breakpoint
+address.
+Especially when `-On` (optimization level, n > 0) is used.
+*/
 #ifndef FLUSH_PIPELINE
 #define FLUSH_PIPELINE
 #endif /* FLUSH_PIPELINE */
