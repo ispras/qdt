@@ -350,17 +350,21 @@ TODO: target registers
         """
 
         prog = self.subprogram
-        _locals = prog.data
-        bname = bstr(name)
 
-        try:
-            datum = _locals[bname]
-        except KeyError:
-            cu = prog.die.cu
-            _globals = self.dic.get_CU_global_variables(cu)
-            try:
-                datum = _globals[bname]
-            except KeyError:
-                raise KeyError("No name '%s' found in runtime" % name)
+        while True:  # not a loop
+            if prog is not None:
+                _locals = prog.data
+                bname = bstr(name)
+                try:
+                    datum = _locals[bname]
+                except KeyError:
+                    cu = prog.die.cu
+                    _globals = self.dic.get_CU_global_variables(cu)
+                    try:
+                        datum = _globals[bname]
+                    except KeyError:
+                        break
+                return Value(datum, runtime = self, version = self.version)
+            break
 
-        return Value(datum, runtime = self, version = self.version)
+        raise KeyError("No name '%s' found in runtime" % name)
