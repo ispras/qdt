@@ -20,7 +20,11 @@ address.
 Especially when `-On` (optimization level, n > 0) is used.
 */
 #ifndef FLUSH_PIPELINE
+#if defined(__x86_64__) || defined(__i386__)
+#define FLUSH_PIPELINE asm volatile ("nop")
+#else
 #define FLUSH_PIPELINE
+#endif
 #endif /* FLUSH_PIPELINE */
 
 #endif /* C2T_TESTS_COMMON_H */
