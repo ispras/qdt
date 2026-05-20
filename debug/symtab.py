@@ -31,6 +31,9 @@ class SymTab(object):
     def __getitem__(self, name):
         return self.symbols[name]
 
+    def __iter__(self):
+        return iter(self.symbols)
+
     @lazy
     def address_map(self):
         ret = {}
