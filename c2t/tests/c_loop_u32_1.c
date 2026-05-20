@@ -8,9 +8,15 @@ void main(void)
 
     for(i = 0; i < 0xa; i++) {
         c = i;
+
         FLUSH_PIPELINE;
+
         c = 0; //$ch.c, ch.i, chc.c, chc.i
+
+        FLUSH_PIPELINE;
     }
+
+    FLUSH_PIPELINE;
 
     return;    //$bre
 }

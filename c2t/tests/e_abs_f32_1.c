@@ -9,8 +9,12 @@ void main(void)
     volatile float a = -1.2345e23, b;
 
     b = fabsf(a);
+
     FLUSH_PIPELINE;
+
     b = 0;     //$ch.b
+
+    FLUSH_PIPELINE;
 
     return;    //$bre
 }
