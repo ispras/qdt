@@ -135,6 +135,7 @@ class Runtime(object):
         # If the target has been paused on a breakpoint, this attribute refers
         # to the breakpoint.
         self._breakpoint = None
+        self._exiting = False
 
     def pause(self):
         """ Ask to pause after current or soonest breakpoint handling. Method
