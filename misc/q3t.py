@@ -4,6 +4,7 @@
 """
 
 from common import (
+    CLICoDispatcher,
     intervalmap,
     iter_trie_items,
     PortPool,
@@ -12,7 +13,6 @@ from common import (
 from debug import (
     DWARFInfoCache,
     InMemoryELFFile,
-    RSPWatcher,
     Runtime,
     SymTab,
 )
@@ -31,11 +31,15 @@ from subprocess import (
     PIPE,
     Popen,
 )
+from time import (
+    time,
+)
 
 # use ours pyrsp
 with pypath("..pyrsp"):
     from pyrsp.utils import (
-        wait_for_tcp_port
+        QMP,
+        wait_for_tcp_port,
     )
 
 # for config
@@ -57,6 +61,8 @@ class Q3T(object):
     An iterable of binary files to process.
 @qargs args:
     An iterable of arguments for `Popen` to run the emulator.
+    It must define an option to load a target code from file {bin}.
+    E.g., `"-kernel", "{bin}"`.
         """
         type(self).configs.append(self)
         self.rsp = rsp
@@ -89,35 +95,120 @@ class FileLinesCache(dict):
 file_lines_cache = FileLinesCache()
 
 
+def print_val(name, val):
+    if isinstance(val, int):
+        val_str = "%d %u 0x%x" % (val, val, val)
+    else:
+        val_str = repr(val)
+    print("\t%s: %s" % (name, val_str))
+
+
 class ExpressionLocals(dict):
 
-    def __init__(self, rt):
-        self.rt = rt
+    def __init__(self, br, verbose = False):
+        self.br = br
+        self.verbose = verbose
 
     def __missing__(self, name):
-        rt = self.rt
+        ts = self.br.ts
+        rt = ts.rt
         try:
             val_desc = rt["name"]
         except KeyError:
-            reg_idx = rt.reg_idx[name]
-            val = rt.get_reg(reg_idx)
+            try:
+                reg_idx = rt.reg_idx[name]
+            except KeyError:
+                val = getattr(ts, name)
+            else:
+                val = rt.get_reg(reg_idx)
         else:
             val = val_desc.fetch()
 
-        print("\t%s = %r" % (name, val))
+        if self.verbose:
+            print_val(name, val)
 
         self[name] = val
         return val
 
 
-def break_cb(rt, br):
-    name, exprs = br
-    print("hit: " + name)
-    locs = ExpressionLocals(rt)
-    for expr in exprs:
-        print("`eval`uating %r..." % expr)
-        res = eval(expr, {}, locs)
-        print("\tres = %r" % res)
+class Q3TBreakpoint(object):
+
+    def __init__(self, ts, name, addr):
+        self.ts = ts
+        self.addr = addr
+        self.name = name
+        self.exprs = []
+
+    def __call__(self):
+        ts = self.ts
+        ts.t_last_br = time()
+        verbose = ts.verbose
+        if verbose:
+            print("hit: " + self.name)
+        locs = ExpressionLocals(self, verbose = verbose)
+        for expr in self.exprs:
+            if verbose:
+                print("`eval`uating %r..." % expr)
+            res = eval(expr, {}, locs)
+            # If `verbose`, values are already printed by `ExpressionLocals`.
+            if not res:
+                ts.fail(locs)
+                if not verbose:
+                    for name, val in sorted(locs.items()):
+                        print_val(name, val)
+            if verbose or not res:
+                print("\tres = %r" % res)
+
+class Q3TTestState(object):
+
+    rt = None
+    qmp = None
+
+    def __init__(self, timeout = 5.0, verbose = False):
+        self.working = True
+        self.verbose = verbose
+        self.failures = []
+        self.timed_out = False
+        self.t_last_br = None
+        self.timeout = timeout
+
+    @property
+    def result(self):
+        if self.failures:
+            return "FAILED"
+        if self.timed_out:
+            return "TIMEOUT"
+        return "PASSED"
+
+    def q3t_quit(self):
+        self.working = False
+        self.rt.exit()
+        return True
+
+    def fail(self, locs):
+        # locs (`ExpressionLocals`) has reference to `Q3TBreakpoint`
+        self.working = False
+        self.rt.exit()
+        self.failures.append(locs)
+
+    def co_main(self):
+        if self.t_last_br is None:
+            self.t_last_br = time()
+        while self.working:
+            t = time()
+            dt = t - self.t_last_br
+            if dt > self.timeout:
+                self.rt.exit()
+                self.qmp("stop")
+                self.timed_out = True
+
+            if self.result != "PASSED":
+                break
+
+            yield False
+
+        print("result: " + self.result)
+
 
 def main():
     ap = ArgumentParser(
@@ -125,27 +216,42 @@ def main():
     )
     arg = ap.add_argument
 
-    arg("config")
+    arg("config",
+        help = "Python script instantiating `Q3T`"
+    )
     arg("--ack",
         help = "set RSP `noack` to `False`",
         action = "store_true",
     )
     arg("-v", "--verbose",
-        action = "store_true",
+        action = "count",
+        default = 1,
+        help = "+1 to verbocity; 1: more q3t messages, 2: + rsp messages"
+    )
+    arg("-q", "--quiet",
+        action = "count",
+        default = 0,
+        help = "-1 to verbocity"
     )
     arg("-p", "--prefix",
         help = "test expression prefix",
         default = ">>>",
     )
+    arg("-t", "--timeout",
+        default = 5.0,
+        type = float,
+        help = "stop the emulator if no breakpoints hit during timeout",
+    )
 
     args = ap.parse_args()
 
     prefix = args.prefix
-    verbose = args.verbose
-    quiet = not verbose
+    verbose = args.verbose - args.quiet
+    quiet = verbose < 2
     no_ack = not args.ack
+    timeout = args.timeout
 
-    config_file_name = args.config
+    config_file_name = abspath(args.config)
     config_dir_name = dirname(config_file_name)
 
     with open(config_file_name, "r") as f:
@@ -162,10 +268,19 @@ def main():
     assert len(Q3T.configs) == 1
     config = Q3T.configs[0]
 
+    exit_code = 0
+
     for bin_file_name in config.bins:
         bin_file_path = bin_file_name
         if not isfile(bin_file_path):
             bin_file_path = join(config_dir_name, bin_file_name)
+        if not isfile(bin_file_path):
+            print("no such file %r" % bin_file_path)
+            continue
+
+        bin_file_path = abspath(bin_file_path)
+
+        ts = Q3TTestState(verbose = verbose, timeout = timeout)
 
         print("loading %r" % bin_file_path)
 
@@ -178,11 +293,15 @@ def main():
         for name, addr in address_map.items():
             if "q3t" not in name:
                 continue
-            breakpoints[addr] = (name, [])
+            breakpoints[addr] = Q3TBreakpoint(ts, name, addr)
 
-        if not breakpoints:
-            print("No q3t breakpoints found")
+        if breakpoints:
+            print("q3t breakpoint(s) found: " + str(len(breakpoints)))
+        else:
+            print("No q3t breakpoint(s) found")
             continue
+
+        disp = CLICoDispatcher()
 
         dic = DWARFInfoCache(di,
             symtab = symtab_sect,
@@ -196,69 +315,104 @@ def main():
 
         bin_file_dir, bin_file_name_only = split(bin_file_path)
 
-        for addr, (name, exprs) in breakpoints.items():
+        for addr, br in breakpoints.items():
             rpath, begin_line, end_line = addrmap[addr]
             rpath = tuple(
                 (p if isinstance(p, str) else p.decode()) for p in rpath
             )
             src_path = abspath(join(bin_file_dir, *reversed(rpath)))
-            print(src_path, rpath, begin_line, end_line)
+            if verbose:
+                print("%s at %r %u:%u" % (
+                    br.name,
+                    src_path,
+                    begin_line,
+                    end_line,
+                ))
 
             for line in file_lines_cache[src_path][begin_line:end_line]:
                 i = line.find(prefix)
                 if i < 0:
                     continue
                 expr = line[i+3:].strip()
-                exprs.append(expr)
-                print(expr)
+                br.exprs.append(expr)
+                if verbose:
+                    print("\t%r" % expr)
 
-        port = port_pool.alloc_port()
+        gdb_port = port_pool.alloc_port()
+        if verbose:
+            print("gdb_port: " + str(gdb_port))
+        qmp_port = port_pool.alloc_port()
+        if verbose:
+            print("qmp_port: " + str(qmp_port))
 
-        args = list(config.args)
+        emu_args = list(config.args)
 
         args_ns = dict(
             bin = bin_file_name_only,
-            gdb_port = str(port),
+            gdb_port = str(gdb_port),
             cwd = bin_file_dir,
+            qmp_port = str(qmp_port),
         )
 
-        args.extend(("-gdb", "tcp:localhost:{gdb_port}"))
+        emu_args.extend(("-gdb", "tcp:localhost:{gdb_port},nowait"))
+        emu_args.extend(("-qmp", "tcp:localhost:{qmp_port},server,nowait"))
 
-        processed_args = []
+        final_emu_args = []
 
-        for arg in args:
+        for arg in emu_args:
             arg = arg.format_map(args_ns)
-            processed_args.append(arg)
+            final_emu_args.append(arg)
 
-        if "-S" not in processed_args:
-            processed_args.append("-S")
+        if "-S" not in final_emu_args:
+            final_emu_args.append("-S")
 
-        qemu_p = Popen(processed_args,
+        print("starting emulator...")
+        if verbose:
+            print("\n\t".join(repr(a) for a in final_emu_args))
+
+        emu_p = Popen(final_emu_args,
             stdin = PIPE,
             cwd = args_ns["cwd"],
         )
 
-        try:
-            wait_for_tcp_port(port)
+        if verbose:
+            print("pid: " + str(emu_p.pid))
 
-            rsp = config.rsp(port,
+        try:
+            wait_for_tcp_port(qmp_port)
+
+            qmp = QMP(qmp_port)
+            ts.qmp = qmp
+
+            wait_for_tcp_port(gdb_port)
+
+            rsp = config.rsp(gdb_port,
                 noack = no_ack,
-                verbose = verbose,
+                verbose = verbose > 1,
             )
 
             rt = Runtime(rsp, dic)
+            ts.rt = rt
 
             for addr, br in breakpoints.items():
-                rt.br(
-                    addr,
-                    lambda rt = rt, br = br: break_cb(rt, br),
-                    quiet = quiet
-                )
+                rt.br(addr, br, quiet = quiet)
 
-            rt.run()
+            disp.enqueue(rt.co_run_target(kill = False))
+            disp.enqueue(ts.co_main())
+            disp.dispatch_all()
+
+            qmp("cont")
+            qmp("quit")
         finally:
-            qemu_p.terminate()
-            qemu_p.wait()
+            emu_p.wait()
+            port_pool.free_port(qmp_port)
+            port_pool.free_port(gdb_port)
+
+        if ts.result != "PASSED":
+            exit_code -= 1
+
+    return exit_code
+
 
 if __name__ == "__main__":
     exit(main() or 0)
