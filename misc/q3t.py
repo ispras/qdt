@@ -159,6 +159,8 @@ class Q3TBreakpoint(object):
             if verbose or not res:
                 print("\tres = %r" % res)
 
+            ts.t_last_br = time()
+
 class Q3TTestState(object):
 
     rt = None
