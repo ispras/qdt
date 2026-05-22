@@ -20,12 +20,19 @@ from debug import (
 from argparse import (
     ArgumentParser,
 )
+from functools import (
+    wraps,
+)
 from os.path import (
     abspath,
     dirname,
     isfile,
     join,
     split,
+)
+from struct import (
+    pack,
+    unpack,
 )
 from subprocess import (
     PIPE,
@@ -45,6 +52,45 @@ with pypath("..pyrsp"):
 # for config
 from c2t.config import *
 from debug.qrsp import *
+
+
+def q3t_u2f(u):
+    return unpack("f", pack("I", u))[0]
+
+def q3t_f2u(f):
+    return unpack("I", pack("f", f))[0]
+
+def q3t_u2d(u):
+    return unpack("d", pack("Q", u))[0]
+
+def q3t_d2u(d):
+    return unpack("Q", pack("d", d))[0]
+
+def q3t_join_be(*uu, **kw):
+    shift = kw.pop("shift", 32)
+    res = 0
+    for u in uu:
+        res <<= shift
+        res |= u
+    return res
+
+def q3t_join_le(*uu, **kw):
+    return q3t_join_be(*reversed(uu), **kw)
+
+def q3t_iter_le(u, shift = 32):
+    mask = (1 << shift) - 1
+    while u:
+        yield u & mask
+        u >>= shift
+
+def q3t_le(*a, **kw):
+    return tuple(q3t_iter_le(*a, **kw))
+
+def q3t_iter_be(*a, **kw):
+    return reversed(tuple(q3t_iter_le(*a, **kw)))
+
+def q3t_be(*a, **kw):
+    return tuple(q3t_iter_be(*a, **kw))
 
 
 class Q3T(object):
@@ -121,7 +167,7 @@ class ExpressionLocals(dict):
             try:
                 reg_idx = rt.reg_idx[name]
             except KeyError:
-                val = getattr(ts, name)
+                raise
             else:
                 val = rt.get_reg(reg_idx)
         else:
@@ -152,7 +198,7 @@ class Q3TBreakpoint(object):
         for expr in self.exprs:
             if verbose:
                 print("`eval`uating %r..." % expr)
-            res = eval(expr, {}, locs)
+            res = eval(expr, ts.namespace, locs)
             # If `verbose`, values are already printed by `ExpressionLocals`.
             if not res:
                 ts.fail(locs)
@@ -163,6 +209,25 @@ class Q3TBreakpoint(object):
                 print("\tres: %r" % res)
 
             ts.t_last_br = time()
+
+
+def is_q3t_name(n):
+    return n.startswith("q3t")
+
+def only_q3t_items(ii):
+    for i in ii:
+        if is_q3t_name(i[0]):
+            yield i
+
+
+def gen_callable_verbose_wrapper(n, v):
+    @wraps(v)
+    def wrapper(*a, **kw):
+        ret = v(*a, **kw)
+        print("\t%s(...): " % (n,) + format_val(ret))
+        return ret
+    return wrapper
+
 
 class Q3TTestState(object):
 
@@ -176,6 +241,22 @@ class Q3TTestState(object):
         self.timed_out = False
         self.t_last_br = None
         self.timeout = timeout
+        self.namespace = ns = dict(only_q3t_items(globals().items()))
+        ns.update(__builtins__.__dict__.items())
+        ns.update((n, getattr(self, n)) for n in dir(self) if is_q3t_name(n))
+
+        if verbose:
+            func_t = type(only_q3t_items)
+            method_t = type(self.q3t_quit)
+            callable_tt = (func_t, method_t)
+
+            for n, v in tuple(ns.items()):
+                if not is_q3t_name(n):
+                    continue
+                if not isinstance(v, callable_tt):
+                    continue
+                ns[n] = gen_callable_verbose_wrapper(n, v)
+
 
     @property
     def result(self):
@@ -188,6 +269,18 @@ class Q3TTestState(object):
     def q3t_quit(self):
         self.working = False
         self.rt.exit()
+        return True
+
+    def q3t_set(self, *pairs, **kw):
+        kw.update(pairs)
+        target = self.rt.target
+        regs = target.regs
+        ns = self.namespace
+        for n, v in kw.items():
+            if n in regs:
+                target.set_reg(n, v)
+            else:
+                ns[n] = v
         return True
 
     def fail(self, locs):
