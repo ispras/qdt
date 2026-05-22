@@ -241,22 +241,26 @@ class Q3TTestState(object):
         self.timed_out = False
         self.t_last_br = None
         self.timeout = timeout
-        self.namespace = ns = dict(only_q3t_items(globals().items()))
-        ns.update(__builtins__.__dict__.items())
-        ns.update((n, getattr(self, n)) for n in dir(self) if is_q3t_name(n))
+        self.namespace = {}
+        self.update_namespace(only_q3t_items(globals().items()))
+        self.update_namespace(__builtins__.__dict__.items(), wrap = False)
+        self.update_namespace(
+            (n, getattr(self, n)) for n in dir(self) if is_q3t_name(n)
+        )
 
-        if verbose:
+    def update_namespace(self, data, wrap = True):
+        ns = self.namespace
+        if wrap and self.verbose:
             func_t = type(only_q3t_items)
             method_t = type(self.q3t_quit)
             callable_tt = (func_t, method_t)
 
-            for n, v in tuple(ns.items()):
-                if not is_q3t_name(n):
-                    continue
-                if not isinstance(v, callable_tt):
-                    continue
-                ns[n] = gen_callable_verbose_wrapper(n, v)
-
+            for n, v in tuple(dict(data).items()):
+                if is_q3t_name(n) and isinstance(v, callable_tt):
+                    v = gen_callable_verbose_wrapper(n, v)
+                ns[n] = v
+        else:
+            ns.update(data)
 
     @property
     def result(self):
