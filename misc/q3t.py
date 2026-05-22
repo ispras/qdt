@@ -113,7 +113,7 @@ class ExpressionLocals(dict):
         ts = self.br.ts
         rt = ts.rt
         try:
-            val_desc = rt["name"]
+            val_desc = rt[name]
         except KeyError:
             try:
                 reg_idx = rt.reg_idx[name]
