@@ -403,6 +403,8 @@ def main():
             print("No q3t breakpoint(s) found")
             continue
 
+        ts.update_namespace(address_map)
+
         disp = CLICoDispatcher()
 
         dic = DWARFInfoCache(di,
