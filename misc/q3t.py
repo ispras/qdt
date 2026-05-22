@@ -287,6 +287,9 @@ class Q3TTestState(object):
                 ns[n] = v
         return True
 
+    def q3t_ld(self, addr, size):
+        return self.rt.target.dump(size, addr)
+
     def fail(self, locs):
         # locs (`ExpressionLocals`) has reference to `Q3TBreakpoint`
         self.working = False
