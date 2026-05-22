@@ -95,12 +95,15 @@ class FileLinesCache(dict):
 file_lines_cache = FileLinesCache()
 
 
-def print_val(name, val):
+def format_val(val):
     if isinstance(val, int):
         val_str = "%d %u 0x%x" % (val, val, val)
     else:
         val_str = repr(val)
-    print("\t%s: %s" % (name, val_str))
+    return val_str
+
+def print_val(name, val):
+    print("\t%s: %s" % (name, format_val(val)))
 
 
 class ExpressionLocals(dict):
