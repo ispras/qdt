@@ -17,6 +17,10 @@ from argparse import (
 from collections import (
     defaultdict,
 )
+from glob import (
+    iglob,
+    escape,
+)
 from json import (
     loads,
 )
@@ -263,6 +267,11 @@ class ICViewer(GUITk, object):
         ))
 
 
+def iter_glob(*files):
+    for f in files:
+        yield from iglob(f)
+
+
 def main():
     ap = ArgumentParser()
     arg = ap.add_argument
@@ -282,10 +291,10 @@ This helps highlight test (set) unique instructions.
     args = ap.parse_args()
 
     tk = ICViewer()
-    tk.account_json(*args.ic_json_file)
+    tk.account_json(*iter_glob(*args.ic_json_file))
     masks = args.mask
     if masks:
-        tk.account_masks(*masks)
+        tk.account_masks(*iter_glob(*masks))
     tk.mainloop()
 
 
