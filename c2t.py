@@ -120,8 +120,8 @@ ORACLE_CPU = machine()
 
 c2t_cfg = None
 
-re_size = compile("^.+_(?:[uf]?(\\d+))_.+$")
-size_match = re_size.match
+re_size = compile("_(?:[uf]?(\\d+))")
+size_search = re_size.search
 
 class DebugSession(object):
     """ This class manages debugging session """
@@ -247,7 +247,7 @@ class DebugSession(object):
 
     @property
     def _var_size(self):
-        size_str = size_match(basename(self.srcfile)).group(1)
+        size_str = size_search(basename(self.srcfile)).group(1)
         return int(size_str) // 8
 
     def _dump_var(self, addr, lineno, var_names):
