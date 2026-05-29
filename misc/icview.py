@@ -96,6 +96,28 @@ class InstructionCounters(dict):
 
         return encodings, consumed_jfnames, errors
 
+    def analyze(self):
+        total_cls = len(self)
+        covered_cls = total_cls
+        full_cls = 0
+        covered_i = 0
+        total_i = 0
+
+        for __, i_cls_stats in self.items():
+            i_cls_stats.analyze()
+            if i_cls_stats.all_zero:
+                covered_cls -= 1
+            elif not i_cls_stats.have_zero:
+                full_cls += 1
+            covered_i += i_cls_stats.covered_i
+            total_i += i_cls_stats.total_i
+
+        self.total_cls = total_cls
+        self.covered_cls = covered_cls
+        self.full_cls = full_cls
+        self.covered_i = covered_i
+        self.total_i = total_i
+
 
 class InstructionClassStats(dict):
 
@@ -107,6 +129,25 @@ class InstructionClassStats(dict):
     def account(self, enc_name, i_name, cnt):
         self[i_name].account(enc_name, cnt)
         self[".cls"].account(enc_name, cnt)
+        if cnt:
+            self.all_zero = False
+
+    def analyze(self):
+        zero_i = 0
+        covered_i = 0
+        for i_name, i_stats in self.items():
+            i_stats.analyze()
+            if i_name.startswith('.'):
+                continue
+            if i_stats.all_zero:
+                zero_i += 1
+            else:
+                covered_i += 1
+        self.zero_i = zero_i
+        self.covered_i = covered_i
+        self.total_i = covered_i + zero_i
+        self.have_zero = bool(zero_i)
+        self.all_zero = covered_i == 0
 
 
 class InstructionStats(dict):
@@ -119,6 +160,9 @@ class InstructionStats(dict):
     def account(self, enc_name, cnt):
         self[enc_name] += cnt
         self[".total"] += cnt
+
+    def analyze(self):
+        self.all_zero = not self[".total"]
 
 
 re_i_name = compile(r"(?P<name>(?P<cls>.*?)_(?P<n>\d+))")
@@ -204,6 +248,8 @@ class ICViewer(GUITk, object):
         if not consumed_jfnames:
             return
 
+        instructions.analyze()
+
         encodings = list(sorted(encodings, key = case_insens))
         instructions_items = list(sorted(instructions.items(),
             key = case_insens_item
@@ -216,11 +262,6 @@ class ICViewer(GUITk, object):
         for enc_name in encodings:
             tv.heading(enc_name, text = enc_name)
 
-        zeros = set()
-        zeros_cls = set()
-        partial_cls = set()
-        total_i = 0
-
         for i_cls, cls_stats in instructions_items:
             cls_stats_cls = cls_stats[".cls"]
 
@@ -232,21 +273,15 @@ class ICViewer(GUITk, object):
                 open = True,
             )
 
-            cls_have_zero = False
-
             for i_name, enc_stats in list(sorted(
                 cls_stats.items(),
                 key = case_insens_item
             )):
                 if i_name.startswith('.'):
                     continue
-                total_i += 1
                 tags = []
-                total = enc_stats[".total"]
-                if not total:
-                    cls_have_zero = True
+                if enc_stats.all_zero:
                     tags.append("all_zero")
-                    zeros.add(i_name)
                 tv.insert(cls_iid, END,
                     text = i_name,
                     values = list(
@@ -256,29 +291,22 @@ class ICViewer(GUITk, object):
                 )
 
             cls_tags = []
-            if not cls_stats_cls[".total"]:
+            if cls_stats.all_zero:
                 cls_tags.append("all_zero")
-                zeros_cls.add(i_cls)
-            elif cls_have_zero:
+            elif cls_stats.have_zero:
                 cls_tags.append("have_zero")
-                partial_cls.add(i_cls)
 
             if cls_tags:
                 tv.item(cls_iid, tags = cls_tags)
 
-        total_cls = len(instructions)
-        covered_cls = total_cls - len(zeros_cls)
-        full_cls = covered_cls - len(partial_cls)
-        covered_i = total_i - len(zeros)
-
         self.title(" ".join(
             [
                 self._title_base.get(),
-                "%u/%u" % (covered_i, total_i),
+                "%u/%u" % (instructions.covered_i, instructions.total_i),
                 "%u/%u/%u" % (
-                    full_cls,
-                    covered_cls,
-                    total_cls
+                    instructions.full_cls,
+                    instructions.covered_cls,
+                    instructions.total_cls
                 ),
                 repr(consumed_jfnames[0]),
             ]
