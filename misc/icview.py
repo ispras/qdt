@@ -42,14 +42,32 @@ def case_insens_item(v):
 
 class InstructionCounters(dict):
 
+    mask = set()
+
     def __missing__(self, i_cls_name):
         ret = InstructionClassStats()
         self[i_cls_name] = ret
         return ret
 
     def account(self, enc_name, i_name, cnt):
+        if (enc_name, i_name) in self.mask:
+            return
         i_cls_name = i_name_match(i_name).group("cls")
         self[i_cls_name].account(enc_name, i_name, cnt)
+
+    def gen_mask(self):
+        mask = set()
+        add = mask.add
+        for __, i_cls_stats in self.items():
+            for i_name, i_stats in i_cls_stats.items():
+                if i_name.startswith("."):
+                    continue
+                for enc_name, cnt in i_stats.items():
+                    if enc_name.startswith("."):
+                        continue
+                    if cnt:
+                        add((enc_name, i_name))
+        return mask
 
     def read_json_files(self, *json_file_names):
         account = self.account
@@ -172,6 +190,7 @@ class ICViewer(GUITk, object):
         )
 
         instructions = InstructionCounters()
+        instructions.mask = m_instructions.gen_mask()
         encodings, consumed_jfnames, errors = instructions.read_json_files(
             *self._json_file_names
         )
@@ -184,25 +203,6 @@ class ICViewer(GUITk, object):
 
         if not consumed_jfnames:
             return
-
-        # masking
-        for m_i_cls, m_cls_stats in m_instructions.items():
-            for m_i_name, m_enc_stats in m_cls_stats.items():
-                if m_i_name.startswith("."):
-                    continue
-                for m_enc_name, m_cnt in m_enc_stats.items():
-                    if m_enc_name.startswith("."):
-                        continue
-                    if not m_cnt:
-                        continue
-                    cls_stats = instructions[m_i_cls]
-                    cnt = cls_stats[m_i_name][m_enc_name]
-                    if not cnt:
-                        continue
-                    cls_stats[m_i_name][m_enc_name] = 0
-                    cls_stats[m_i_name][".total"] -= cnt
-                    cls_stats[".cls"][m_enc_name] -= cnt
-                    cls_stats[".cls"][".total"] -= cnt
 
         encodings = list(sorted(encodings, key = case_insens))
         instructions = list(sorted(instructions.items(),
