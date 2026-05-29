@@ -14,9 +14,6 @@ from widgets import (
 from argparse import (
     ArgumentParser,
 )
-from collections import (
-    defaultdict,
-)
 from glob import (
     iglob,
     escape,
@@ -43,15 +40,33 @@ def case_insens_item(v):
     return case_insens(v[0])
 
 
-def cls_stats():
-    ret = defaultdict(  # i_name -> enc_stats
-        lambda : defaultdict(int)  # enc_name -> counter
-    )
-    return ret
+class InstructionCounters(dict):
+
+    def __missing__(self, i_cls_name):
+        ret = InstructionClassStats()
+        self[i_cls_name] = ret
+        return ret
+
+
+class InstructionClassStats(dict):
+
+    def __missing__(self, i_name):
+        ret = InstructionStats()
+        self[i_name] = ret
+        return ret
+
+
+class InstructionStats(dict):
+
+    def __missing__(self, enc_name):
+        ret = 0
+        self[enc_name] = ret
+        return ret
+
 
 
 def read_json_files(*json_file_names):
-    instructions = defaultdict(cls_stats)
+    instructions = InstructionCounters()
     encodings = set()
 
     consumed_jfnames = []
