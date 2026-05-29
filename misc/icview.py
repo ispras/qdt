@@ -70,7 +70,6 @@ class InstructionCounters(dict):
 
     def read_json_files(self, *json_file_names):
         account = self.account
-        encodings = set()
 
         consumed_jfnames = []
         errors = []
@@ -86,14 +85,13 @@ class InstructionCounters(dict):
                     )
 
                 for enc_name, i_name, cnt in ic:
-                    encodings.add(enc_name)
                     account(enc_name, i_name, cnt)
             except:
                 errors.append(format_exc())
             else:
                 consumed_jfnames.append(jfname)
 
-        return encodings, consumed_jfnames, errors
+        return consumed_jfnames, errors
 
     def analyze(self):
         total_cls = len(self)
@@ -101,6 +99,7 @@ class InstructionCounters(dict):
         full_cls = 0
         covered_i = 0
         total_i = 0
+        self.encodings = encodings = set()
 
         for __, i_cls_stats in self.items():
             i_cls_stats.analyze()
@@ -110,6 +109,7 @@ class InstructionCounters(dict):
                 full_cls += 1
             covered_i += i_cls_stats.covered_i
             total_i += i_cls_stats.total_i
+            encodings.update(i_cls_stats.encodings)
 
         self.total_cls = total_cls
         self.covered_cls = covered_cls
@@ -134,6 +134,7 @@ class InstructionClassStats(dict):
     def analyze(self):
         zero_i = 0
         covered_i = 0
+        self.encodings = encodings = set()
         for i_name, i_stats in self.items():
             i_stats.analyze()
             if i_name.startswith('.'):
@@ -142,6 +143,7 @@ class InstructionClassStats(dict):
                 zero_i += 1
             else:
                 covered_i += 1
+            encodings.update(i_stats.encodings)
         self.zero_i = zero_i
         self.covered_i = covered_i
         self.total_i = covered_i + zero_i
@@ -162,6 +164,7 @@ class InstructionStats(dict):
 
     def analyze(self):
         self.all_zero = not self[".total"]
+        self.encodings = set(n for n in self if not n.startswith('.'))
 
 
 re_i_name = compile(r"(?P<name>(?P<cls>.*?)_(?P<n>\d+))")
@@ -228,13 +231,13 @@ class ICViewer(GUITk, object):
         tv = self._tv
 
         m_instructions = InstructionCounters()
-        __, __, m_errors = m_instructions.read_json_files(
+        __, m_errors = m_instructions.read_json_files(
             *self._masks_file_names
         )
 
         instructions = InstructionCounters()
         instructions.mask = m_instructions.gen_mask()
-        encodings, consumed_jfnames, errors = instructions.read_json_files(
+        consumed_jfnames, errors = instructions.read_json_files(
             *self._json_file_names
         )
 
@@ -249,7 +252,7 @@ class ICViewer(GUITk, object):
 
         instructions.analyze()
 
-        encodings = list(sorted(encodings, key = case_insens))
+        encodings = list(sorted(instructions.encodings, key = case_insens))
         instructions_items = list(sorted(instructions.items(),
             key = case_insens_item
         ))
