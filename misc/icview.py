@@ -117,6 +117,29 @@ class InstructionCounters(dict):
         self.covered_i = covered_i
         self.total_i = total_i
 
+    def fill_treeview(self, tv, parent_iid = ""):
+        for i_cls, cls_stats in sorted(self.items(),
+            key = case_insens_item,
+        ):
+            cls_stats_cls = cls_stats[".cls"]
+
+            cls_tags = []
+            if cls_stats.all_zero:
+                cls_tags.append("all_zero")
+            elif cls_stats.have_zero:
+                cls_tags.append("have_zero")
+
+            cls_iid = tv.insert(parent_iid, END,
+                text = i_cls,
+                values = list(
+                    cls_stats_cls[enc_name] for enc_name in tv.cget("columns")
+                ),
+                open = True,
+                tags = cls_tags,
+            )
+
+            cls_stats.fill_treeview(tv, parent_iid = cls_iid)
+
 
 class InstructionClassStats(dict):
 
@@ -149,6 +172,24 @@ class InstructionClassStats(dict):
         self.total_i = covered_i + zero_i
         self.have_zero = bool(zero_i)
         self.all_zero = covered_i == 0
+
+    def fill_treeview(self, tv, parent_iid = ""):
+        for i_name, i_stats in sorted(
+            self.items(),
+            key = case_insens_item
+        ):
+            if i_name.startswith('.'):
+                continue
+            tags = []
+            if i_stats.all_zero:
+                tags.append("all_zero")
+            tv.insert(parent_iid, END,
+                text = i_name,
+                values = list(
+                    i_stats[enc_name] for enc_name in tv.cget("columns")
+                ),
+                tags = tags,
+            )
 
 
 class InstructionStats(dict):
@@ -253,9 +294,6 @@ class ICViewer(GUITk, object):
         instructions.analyze()
 
         encodings = list(sorted(instructions.encodings, key = case_insens))
-        instructions_items = list(sorted(instructions.items(),
-            key = case_insens_item
-        ))
 
         tv.configure(
             columns = [".total"] + encodings,
@@ -264,42 +302,7 @@ class ICViewer(GUITk, object):
         for enc_name in encodings:
             tv.heading(enc_name, text = enc_name)
 
-        for i_cls, cls_stats in instructions_items:
-            cls_stats_cls = cls_stats[".cls"]
-
-            cls_iid = tv.insert("", END,
-                text = i_cls,
-                values = list(
-                    cls_stats_cls[enc_name] for enc_name in tv.cget("columns")
-                ),
-                open = True,
-            )
-
-            for i_name, enc_stats in list(sorted(
-                cls_stats.items(),
-                key = case_insens_item
-            )):
-                if i_name.startswith('.'):
-                    continue
-                tags = []
-                if enc_stats.all_zero:
-                    tags.append("all_zero")
-                tv.insert(cls_iid, END,
-                    text = i_name,
-                    values = list(
-                        enc_stats[enc_name] for enc_name in tv.cget("columns")
-                    ),
-                    tags = tags,
-                )
-
-            cls_tags = []
-            if cls_stats.all_zero:
-                cls_tags.append("all_zero")
-            elif cls_stats.have_zero:
-                cls_tags.append("have_zero")
-
-            if cls_tags:
-                tv.item(cls_iid, tags = cls_tags)
+        instructions.fill_treeview(tv)
 
         self.title(" ".join(
             [
