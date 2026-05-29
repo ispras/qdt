@@ -205,7 +205,7 @@ class ICViewer(GUITk, object):
             return
 
         encodings = list(sorted(encodings, key = case_insens))
-        instructions = list(sorted(instructions.items(),
+        instructions_items = list(sorted(instructions.items(),
             key = case_insens_item
         ))
 
@@ -221,7 +221,7 @@ class ICViewer(GUITk, object):
         partial_cls = set()
         total_i = 0
 
-        for i_cls, cls_stats in instructions:
+        for i_cls, cls_stats in instructions_items:
             cls_stats_cls = cls_stats[".cls"]
 
             cls_iid = tv.insert("", END,
