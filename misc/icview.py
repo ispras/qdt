@@ -51,6 +51,33 @@ class InstructionCounters(dict):
         i_cls_name = i_name_match(i_name).group("cls")
         self[i_cls_name].account(enc_name, i_name, cnt)
 
+    def read_json_files(self, *json_file_names):
+        account = self.account
+        encodings = set()
+
+        consumed_jfnames = []
+        errors = []
+
+        for jfname in json_file_names:
+            try:
+                with open(jfname, "r") as f:
+                    ic_json = f.read()
+                ic = loads(ic_json)
+                if not isinstance(ic, list):
+                    raise NotImplementedError(
+                        "%r: IC_FORMAT_LISTS is only implemented" % jfname
+                    )
+
+                for enc_name, i_name, cnt in ic:
+                    encodings.add(enc_name)
+                    account(enc_name, i_name, cnt)
+            except:
+                errors.append(format_exc())
+            else:
+                consumed_jfnames.append(jfname)
+
+        return encodings, consumed_jfnames, errors
+
 
 class InstructionClassStats(dict):
 
@@ -74,35 +101,6 @@ class InstructionStats(dict):
     def account(self, enc_name, cnt):
         self[enc_name] += cnt
         self[".total"] += cnt
-
-
-def read_json_files(*json_file_names):
-    instructions = InstructionCounters()
-    account = instructions.account
-    encodings = set()
-
-    consumed_jfnames = []
-    errors = []
-
-    for jfname in json_file_names:
-        try:
-            with open(jfname, "r") as f:
-                ic_json = f.read()
-            ic = loads(ic_json)
-            if not isinstance(ic, list):
-                raise NotImplementedError(
-                    "%r: IC_FORMAT_LISTS is only implemented" % jfname
-                )
-
-            for enc_name, i_name, cnt in ic:
-                encodings.add(enc_name)
-                account(enc_name, i_name, cnt)
-        except:
-            errors.append(format_exc())
-        else:
-            consumed_jfnames.append(jfname)
-
-    return instructions, encodings, consumed_jfnames, errors
 
 
 re_i_name = compile(r"(?P<name>(?P<cls>.*?)_(?P<n>\d+))")
@@ -168,11 +166,13 @@ class ICViewer(GUITk, object):
     def _fill(self):
         tv = self._tv
 
-        m_instructions, __, __, m_errors = read_json_files(
+        m_instructions = InstructionCounters()
+        __, __, m_errors = m_instructions.read_json_files(
             *self._masks_file_names
         )
 
-        instructions, encodings, consumed_jfnames, errors = read_json_files(
+        instructions = InstructionCounters()
+        encodings, consumed_jfnames, errors = instructions.read_json_files(
             *self._json_file_names
         )
 
