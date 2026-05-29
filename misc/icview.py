@@ -16,7 +16,6 @@ from argparse import (
 )
 from glob import (
     iglob,
-    escape,
 )
 from json import (
     loads,
