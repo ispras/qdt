@@ -47,6 +47,10 @@ class InstructionCounters(dict):
         self[i_cls_name] = ret
         return ret
 
+    def account(self, enc_name, i_name, cnt):
+        i_cls_name = i_name_match(i_name).group("cls")
+        self[i_cls_name].account(enc_name, i_name, cnt)
+
 
 class InstructionClassStats(dict):
 
@@ -54,6 +58,10 @@ class InstructionClassStats(dict):
         ret = InstructionStats()
         self[i_name] = ret
         return ret
+
+    def account(self, enc_name, i_name, cnt):
+        self[i_name].account(enc_name, cnt)
+        self[".cls"].account(enc_name, cnt)
 
 
 class InstructionStats(dict):
@@ -63,10 +71,14 @@ class InstructionStats(dict):
         self[enc_name] = ret
         return ret
 
+    def account(self, enc_name, cnt):
+        self[enc_name] += cnt
+        self[".total"] += cnt
 
 
 def read_json_files(*json_file_names):
     instructions = InstructionCounters()
+    account = instructions.account
     encodings = set()
 
     consumed_jfnames = []
@@ -84,11 +96,7 @@ def read_json_files(*json_file_names):
 
             for enc_name, i_name, cnt in ic:
                 encodings.add(enc_name)
-                i_cls = i_name_match(i_name).group("cls")
-                instructions[i_cls][i_name][enc_name] += cnt
-                instructions[i_cls][i_name][".total"] += cnt
-                instructions[i_cls][".cls"][enc_name] += cnt
-                instructions[i_cls][".cls"][".total"] += cnt
+                account(enc_name, i_name, cnt)
         except:
             errors.append(format_exc())
         else:
