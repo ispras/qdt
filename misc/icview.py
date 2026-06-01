@@ -192,10 +192,16 @@ class InstructionClassStats(dict):
             )
 
 
+class undefined_int(int):
+
+    def __str__(self):
+        return "-"
+
+
 class InstructionStats(dict):
 
     def __missing__(self, enc_name):
-        ret = 0
+        ret = undefined_int(0)
         self[enc_name] = ret
         return ret
 
