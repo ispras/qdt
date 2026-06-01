@@ -277,16 +277,23 @@ class ICViewer(GUITk, object):
     def _fill(self):
         tv = self._tv
 
+        jfns = self._json_file_names
+
+        jfn_set = set(jfns)
+        masks = []
+        append = masks.append
+        for f in self._masks_file_names:
+            if f in jfn_set:
+                print("%r: mask ignored: can't mask itself" % (f,))
+                continue
+            append(f)
+
         m_instructions = InstructionCounters()
-        __, m_errors = m_instructions.read_json_files(
-            *self._masks_file_names
-        )
+        __, m_errors = m_instructions.read_json_files(*masks)
 
         instructions = InstructionCounters()
         instructions.mask = m_instructions.gen_mask()
-        consumed_jfnames, errors = instructions.read_json_files(
-            *self._json_file_names
-        )
+        consumed_jfnames, errors = instructions.read_json_files(*jfns)
 
         errors += m_errors
 
