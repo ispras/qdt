@@ -10,12 +10,23 @@ from six.moves.tkinter_ttk import (
 )
 
 
+from functools import (
+    lru_cache,
+)
+
+
 class TreeviewWidthHelper(Treeview):
-    def __init__(self, auto_columns = [], zero_column_extra_width = 40):
+    def __init__(self,
+        auto_columns = [],
+        zero_column_extra_width = 40,
+        widths_cache_size = 1024,
+    ):
         self.auto_columns = list(auto_columns)
         self.zero_column_extra_width = zero_column_extra_width
+        f = Font()
+        self.measure = lru_cache(maxsize = widths_cache_size)(f.measure)
 
-    def get_max_width(self, iid, col, font, hidden):
+    def get_max_width(self, iid, col, hidden):
         if col == 0:
             cell_val = self.item(iid, "text")
         else:
@@ -25,13 +36,13 @@ class TreeviewWidthHelper(Treeview):
             except IndexError:
                 cell_val = ""
 
-        max_width = font.measure(cell_val)
+        max_width = self.measure(cell_val)
 
         """ "open" attribute of "" (root) is 0 while it is always opened...
         Hence, iterate root children anyway. """
         if hidden or (not iid) or self.item(iid, "open"):
             for child_iid in self.get_children(iid):
-                child_max = self.get_max_width(child_iid, col, font, hidden)
+                child_max = self.get_max_width(child_iid, col, hidden)
 
                 if child_max > max_width:
                     max_width = child_max
@@ -39,8 +50,6 @@ class TreeviewWidthHelper(Treeview):
         return max_width
 
     def adjust_widths(self, hidden = False):
-        f = Font()
-
         columns = self.cget("columns")
         if columns == "": # This is Tk!!!
             columns = tuple()
@@ -49,9 +58,9 @@ class TreeviewWidthHelper(Treeview):
             if col not in self.auto_columns:
                 continue
 
-            col_max_len = f.measure(self.heading(col)["text"])
+            col_max_len = self.measure(self.heading(col)["text"])
 
-            max_cell_width = self.get_max_width("", col_idx, f, hidden)
+            max_cell_width = self.get_max_width("", col_idx, hidden)
 
             if col == "#0":
                 max_cell_width += self.zero_column_extra_width
