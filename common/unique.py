@@ -2,11 +2,16 @@ __all__ = [
     "iter_unique",
     "list_of_unique"
   , "iter_unique_tuples"
+  , "iter_file_unique_subpaths"
 ]
 
 
 from .ordered_default_dict import (
     OrderedDefaultDict,
+)
+
+from os import (
+    sep,
 )
 
 
@@ -51,3 +56,15 @@ def iter_unique_tuples(pairs, **kw):
                 continue
             for k, v in iter_unique_tuples(tails, **kw):
                 yield k, (head,) + v
+
+
+def iter_file_unique_subpaths(file_names,
+    pre = reversed,
+    post = sep.join,
+    skipped = ("",)
+):
+    for f, t in iter_unique_tuples(
+        ((f, pre(f.split(sep))) for f in file_names),
+        skipped = skipped,
+    ):
+        yield f, post(t)
