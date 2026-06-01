@@ -61,10 +61,15 @@ def iter_unique_tuples(pairs, **kw):
 def iter_file_unique_subpaths(file_names,
     pre = reversed,
     post = sep.join,
-    skipped = ("",)
+    skipped = ("",),
+    no_unique = next,
 ):
     for f, t in iter_unique_tuples(
         ((f, pre(f.split(sep))) for f in file_names),
         skipped = skipped,
     ):
-        yield f, post(t)
+        if t == skipped:
+            # yield something
+            yield f, no_unique(pre(f.split(sep)))
+        else:
+            yield f, post(t)
