@@ -272,7 +272,9 @@ class ICTreeview(VarTreeview, TreeviewWidthHelper):
 
     def __init__(self, *a, **kw):
         VarTreeview.__init__(self, *a, **kw)
-        TreeviewWidthHelper.__init__(self, ["#0"])
+        TreeviewWidthHelper.__init__(self, ["#0"],
+            widths_cache_size = None,
+        )
 
         self.bind("<<TreeviewOpen>>", self.__adjust_widths_handler__, "+")
         self.bind("<<TreeviewClose>>", self.__adjust_widths_handler__, "+")
