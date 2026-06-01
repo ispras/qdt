@@ -25,7 +25,9 @@ def list_of_unique(i):
     return list(iter_unique(i))
 
 
-def iter_unique_tuples(pairs):
+EMPTY = tuple()
+
+def iter_unique_tuples(pairs, **kw):
     d = OrderedDefaultDict(list)
     for k, v in pairs:
         # `v` can be an iterator already
@@ -35,16 +37,17 @@ def iter_unique_tuples(pairs):
         d[head].append((k, tail))
     if len(d) == 1:
         # `head` is common for all, skip it
+        skipped = kw.get("skipped", EMPTY)
         for __, tails in d.items():
             if len(tails) == 1:
-                yield tails[0][0], tuple()
+                yield tails[0][0], skipped
                 continue
-            for k, v in iter_unique_tuples(tails):
-                yield k, v
+            for k, v in iter_unique_tuples(tails, **kw):
+                yield k, skipped + v
     else:
         for head, tails in d.items():
             if len(tails) == 1:
                 yield tails[0][0], (head,)
                 continue
-            for k, v in iter_unique_tuples(tails):
+            for k, v in iter_unique_tuples(tails, **kw):
                 yield k, (head,) + v
