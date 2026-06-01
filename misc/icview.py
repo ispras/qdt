@@ -8,6 +8,7 @@ from widgets import (
     GUIFrame,
     GUITk,
     tk_delayed,
+    TreeviewWidthHelper,
     VarTreeview,
 )
 
@@ -266,6 +267,29 @@ class FileStats(dict):
 re_i_name = compile(r"(?P<name>(?P<cls>.*?)_(?P<n>\d+))")
 i_name_match = re_i_name.match
 
+
+class ICTreeview(VarTreeview, TreeviewWidthHelper):
+
+    def __init__(self, *a, **kw):
+        VarTreeview.__init__(self, *a, **kw)
+        TreeviewWidthHelper.__init__(self, ["#0"])
+
+        self.bind("<<TreeviewOpen>>", self.__adjust_widths_handler__, "+")
+        self.bind("<<TreeviewClose>>", self.__adjust_widths_handler__, "+")
+        self.bind("<Configure>", self.__adjust_widths_handler__, "+")
+        self.bind("<Destroy>", self.__on_destroy__, "+")
+
+    def __adjust_widths_handler__(self, *__):
+        self.adjust_widths_delayed = 0
+
+    @tk_delayed
+    def adjust_widths_delayed(self):
+        self.adjust_widths()
+
+    def __on_destroy__(self, *__):
+        del self.adjust_widths_delayed
+
+
 class ICViewer(GUITk, object):
 
     def __init__(self, *a, **kw):
@@ -283,7 +307,7 @@ class ICViewer(GUITk, object):
         f.rowconfigure(0, weight = 1)
         f.columnconfigure(0, weight = 1)
 
-        self._tv = tv = VarTreeview(f)
+        self._tv = tv = ICTreeview(f)
         tv.grid(row = 0, column = 0, sticky = "NESW")
         add_scrollbars_native(f, tv, sizegrip = True)
 
