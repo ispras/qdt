@@ -347,7 +347,7 @@ def main():
 Non-zero entries in mask file(s) zeroises corresponding entries in final table.
 This helps highlight test (set) unique instructions.
 """     ,
-        nargs = "*",
+        action = "append",
     )
 
     args = ap.parse_args()
