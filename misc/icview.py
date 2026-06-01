@@ -1,5 +1,6 @@
 from common import (
     mlget as _,
+    iter_file_unique_subpaths,
 )
 from widgets import (
     add_scrollbars_native,
@@ -13,6 +14,9 @@ from widgets import (
 
 from argparse import (
     ArgumentParser,
+)
+from collections import (
+    defaultdict,
 )
 from glob import (
     iglob,
@@ -48,11 +52,11 @@ class InstructionCounters(dict):
         self[i_cls_name] = ret
         return ret
 
-    def account(self, enc_name, i_name, cnt):
+    def account(self, enc_name, i_name, cnt, file_name):
         if (enc_name, i_name) in self.mask:
             return
         i_cls_name = i_name_match(i_name).group("cls")
-        self[i_cls_name].account(enc_name, i_name, cnt)
+        self[i_cls_name].account(enc_name, i_name, cnt, file_name)
 
     def gen_mask(self):
         mask = set()
@@ -71,6 +75,8 @@ class InstructionCounters(dict):
     def read_json_files(self, *json_file_names):
         account = self.account
 
+        f2tag = dict(iter_file_unique_subpaths(json_file_names))
+
         consumed_jfnames = []
         errors = []
 
@@ -85,7 +91,7 @@ class InstructionCounters(dict):
                     )
 
                 for enc_name, i_name, cnt in ic:
-                    account(enc_name, i_name, cnt)
+                    account(enc_name, i_name, cnt, f2tag[jfname])
             except:
                 errors.append(format_exc())
             else:
@@ -148,9 +154,9 @@ class InstructionClassStats(dict):
         self[i_name] = ret
         return ret
 
-    def account(self, enc_name, i_name, cnt):
-        self[i_name].account(enc_name, cnt)
-        self[".cls"].account(enc_name, cnt)
+    def account(self, enc_name, i_name, cnt, file_name):
+        self[i_name].account(enc_name, cnt, file_name)
+        self[".cls"].account(enc_name, cnt, file_name)
         if cnt:
             self.all_zero = False
 
@@ -183,13 +189,15 @@ class InstructionClassStats(dict):
             tags = []
             if i_stats.all_zero:
                 tags.append("all_zero")
-            tv.insert(parent_iid, END,
-                text = i_name,
+            iid = tv.insert(parent_iid, END,
+                text = i_name + " in %u file(s)" % i_stats.total_files,
                 values = list(
                     i_stats[enc_name] for enc_name in tv.cget("columns")
                 ),
                 tags = tags,
+                open = (i_stats.total_files <= 5),
             )
+            i_stats.fill_treeview(tv, iid)
 
 
 class undefined_int(int):
@@ -200,6 +208,45 @@ class undefined_int(int):
 
 class InstructionStats(dict):
 
+    def __init__(self):
+        self.files = defaultdict(FileStats)
+
+    def __missing__(self, enc_name):
+        ret = undefined_int(0)
+        self[enc_name] = ret
+        return ret
+
+    def account(self, enc_name, cnt, file_name):
+        self[enc_name] += cnt
+        self[".total"] += cnt
+        self.files[file_name].account(enc_name, cnt)
+
+    def analyze(self):
+        self.all_zero = not self[".total"]
+        self.encodings = set(n for n in self if not n.startswith('.'))
+        total_files = 0
+        for f_stats in self.files.values():
+            f_stats.analyze()
+            if f_stats[".total"]:
+                total_files += 1
+        self.total_files = total_files
+
+    def fill_treeview(self, tv, parent_iid = ""):
+        for file_name, f_stats in sorted(self.files.items()):
+            if not f_stats[".total"]:
+                continue
+            iid = tv.insert(parent_iid, END,
+                text = file_name,
+                values = list(
+                    f_stats[enc_name] for enc_name in tv.cget("columns")
+                ),
+            )
+            f_stats.fill_treeview(tv, iid)
+
+
+
+class FileStats(dict):
+
     def __missing__(self, enc_name):
         ret = undefined_int(0)
         self[enc_name] = ret
@@ -209,9 +256,11 @@ class InstructionStats(dict):
         self[enc_name] += cnt
         self[".total"] += cnt
 
+    def fill_treeview(self, tv, parent_iid = ""):
+        pass
+
     def analyze(self):
-        self.all_zero = not self[".total"]
-        self.encodings = set(n for n in self if not n.startswith('.'))
+        pass
 
 
 re_i_name = compile(r"(?P<name>(?P<cls>.*?)_(?P<n>\d+))")
