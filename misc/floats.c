@@ -135,5 +135,7 @@ void main(void)
     print_double(uint64_to_double_manual(0x7654321abcdef09)); NL;
     PRINTLN_DOP(4.069039057465399e-188, /, 3.4285662889134074e-298);
     print_double(U64_D(0x56d0000000000000)); NL;
+    print_float((float)1.0e+10); NL;
+    print_double((double)(float)1.0e+20); NL;
 }
 
