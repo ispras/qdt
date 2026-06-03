@@ -386,6 +386,10 @@ def main():
 
     exit_code = 0
 
+    test_state_kw = dict(
+        verbose = verbose,
+        timeout = timeout,
+    )
     for bin_file_name in config.bins:
         bin_file_path = bin_file_name
         if not isfile(bin_file_path):
@@ -396,7 +400,7 @@ def main():
 
         bin_file_path = abspath(bin_file_path)
 
-        ts = Q3TTestState(verbose = verbose, timeout = timeout)
+        ts = Q3TTestState(**test_state_kw)
 
         print("loading %r" % bin_file_path)
 
