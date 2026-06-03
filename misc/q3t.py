@@ -322,6 +322,7 @@ class Q3TTestState(object):
         print("result: " + self.result)
 
 AUTO_EXPRS = tuple(dict(
+    q3t_quit = "q3t_quit()",
 ).items())
 
 
