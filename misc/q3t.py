@@ -260,7 +260,8 @@ class Q3TTestState(object):
         if wrap and self.verbose:
             func_t = type(only_q3t_items)
             method_t = type(self.q3t_quit)
-            callable_tt = (func_t, method_t)
+            builtin_callable_t = type(abs)
+            callable_tt = (func_t, method_t, builtin_callable_t)
 
             for n, v in tuple(dict(data).items()):
                 if isinstance(v, callable_tt):
@@ -440,7 +441,7 @@ def main():
 
         ts.update_namespace(address_map)
         ts.update_namespace(global_q3t)
-        ts.update_namespace(__builtins__.__dict__.items(), wrap = False)
+        ts.update_namespace(__builtins__.__dict__.items())
         ts.populate_namespace()
 
         disp = CLICoDispatcher()
