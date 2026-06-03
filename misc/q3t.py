@@ -95,6 +95,12 @@ def q3t_iter_be(*a, **kw):
 def q3t_be(*a, **kw):
     return tuple(q3t_iter_be(*a, **kw))
 
+def q3t_bits(*shifts):
+    res = 0
+    for shift in shifts:
+        res |= 1 << shift
+    return res
+
 
 class Q3T(object):
     "Qemu Target Test Tool configuration"
