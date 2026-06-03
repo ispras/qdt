@@ -241,9 +241,14 @@ class Q3TTestState(object):
     rt = None
     qmp = None
 
-    def __init__(self, timeout = 5.0, verbose = False):
+    def __init__(self,
+        timeout = 5.0,
+        verbose = False,
+        failures = 1,
+    ):
         self.working = True
         self.verbose = verbose
+        self.max_failures = failures
         self.failures = []
         self.timed_out = False
         self.t_last_br = None
@@ -299,9 +304,10 @@ class Q3TTestState(object):
 
     def fail(self, locs):
         # locs (`ExpressionLocals`) has reference to `Q3TBreakpoint`
-        self.working = False
-        self.rt.exit()
         self.failures.append(locs)
+        if len(self.failures) == self.max_failures:
+            self.working = False
+            self.rt.exit()
 
     def co_main(self):
         if self.t_last_br is None:
@@ -358,6 +364,11 @@ def main():
         type = float,
         help = "stop the emulator if no breakpoints hit during timeout",
     )
+    arg("-f", "--failures",
+        type = int,
+        metavar = "F",
+        help = "run each test till F failures, 0 - no limit",
+    )
 
     args = ap.parse_args()
 
@@ -366,6 +377,7 @@ def main():
     quiet = verbose < 2
     no_ack = not args.ack
     timeout = args.timeout
+    failures = args.failures
 
     config_file_name = abspath(args.config)
     config_dir_name = dirname(config_file_name)
@@ -390,6 +402,9 @@ def main():
         verbose = verbose,
         timeout = timeout,
     )
+    if failures is not None:
+        test_state_kw["failures"] = failures
+
     for bin_file_name in config.bins:
         bin_file_path = bin_file_name
         if not isfile(bin_file_path):
