@@ -464,6 +464,9 @@ def main():
                     if verbose:
                         print("\t%r (auto)" % expr)
 
+            if verbose and not br.exprs:
+                print("\tno expressions")
+
         gdb_port = port_pool.alloc_port()
         if verbose:
             print("gdb_port: " + str(gdb_port))
@@ -521,6 +524,8 @@ def main():
             ts.rt = rt
 
             for addr, br in breakpoints.items():
+                if not br.exprs:
+                    continue
                 rt.br(addr, br, quiet = quiet)
 
             disp.enqueue(rt.co_run_target(kill = False))
