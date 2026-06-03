@@ -41,6 +41,9 @@ from subprocess import (
 from time import (
     time,
 )
+from traceback import (
+    format_exc,
+)
 
 # use ours pyrsp
 with pypath("..pyrsp"):
@@ -198,7 +201,11 @@ class Q3TBreakpoint(object):
         for expr in self.exprs:
             if verbose:
                 print("`eval`uating %r..." % expr)
-            res = eval(expr, ts.namespace, locs)
+            try:
+                res = eval(expr, ts.namespace, locs)
+            except:
+                print(format_exc())
+                res = False
             # If `verbose`, values are already printed by `ExpressionLocals`.
             if not res:
                 ts.fail(locs)
