@@ -263,7 +263,7 @@ class Q3TTestState(object):
             callable_tt = (func_t, method_t)
 
             for n, v in tuple(dict(data).items()):
-                if is_q3t_name(n) and isinstance(v, callable_tt):
+                if isinstance(v, callable_tt):
                     v = gen_callable_verbose_wrapper(n, v)
                 ns[n] = v
         else:
