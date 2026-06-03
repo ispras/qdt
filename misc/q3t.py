@@ -254,11 +254,6 @@ class Q3TTestState(object):
         self.t_last_br = None
         self.timeout = timeout
         self.namespace = {}
-        self.update_namespace(only_q3t_items(globals().items()))
-        self.update_namespace(__builtins__.__dict__.items(), wrap = False)
-        self.update_namespace(
-            (n, getattr(self, n)) for n in dir(self) if is_q3t_name(n)
-        )
 
     def update_namespace(self, data, wrap = True):
         ns = self.namespace
@@ -273,6 +268,11 @@ class Q3TTestState(object):
                 ns[n] = v
         else:
             ns.update(data)
+
+    def populate_namespace(self):
+        self.update_namespace(
+            (n, getattr(self, n)) for n in dir(self) if is_q3t_name(n)
+        )
 
     @property
     def result(self):
@@ -405,6 +405,8 @@ def main():
     if failures is not None:
         test_state_kw["failures"] = failures
 
+    global_q3t = dict(only_q3t_items(globals().items()))
+
     for bin_file_name in config.bins:
         bin_file_path = bin_file_name
         if not isfile(bin_file_path):
@@ -437,6 +439,9 @@ def main():
             continue
 
         ts.update_namespace(address_map)
+        ts.update_namespace(global_q3t)
+        ts.update_namespace(__builtins__.__dict__.items(), wrap = False)
+        ts.populate_namespace()
 
         disp = CLICoDispatcher()
 
