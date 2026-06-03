@@ -321,6 +321,9 @@ class Q3TTestState(object):
 
         print("result: " + self.result)
 
+AUTO_EXPRS = tuple(dict(
+).items())
+
 
 def main():
     ap = ArgumentParser(
@@ -454,6 +457,12 @@ def main():
                 append_expr(expr)
                 if verbose:
                     print("\t%r" % expr)
+
+            for infix, expr in AUTO_EXPRS:
+                if infix in name:
+                    append_expr(expr)
+                    if verbose:
+                        print("\t%r (auto)" % expr)
 
         gdb_port = port_pool.alloc_port()
         if verbose:
