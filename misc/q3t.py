@@ -423,6 +423,9 @@ def main():
         bin_file_dir, bin_file_name_only = split(bin_file_path)
 
         for addr, br in breakpoints.items():
+            name = br.name
+            append_expr = br.exprs.append
+
             rpath, begin_line, end_line = addrmap[addr]
             rpath = tuple(
                 (p if isinstance(p, str) else p.decode()) for p in rpath
@@ -430,7 +433,7 @@ def main():
             src_path = abspath(join(bin_file_dir, *reversed(rpath)))
             if verbose:
                 print("%s at %r %u:%u" % (
-                    br.name,
+                    name,
                     src_path,
                     begin_line,
                     end_line,
@@ -441,7 +444,7 @@ def main():
                 if i < 0:
                     continue
                 expr = line[i+3:].strip()
-                br.exprs.append(expr)
+                append_expr(expr)
                 if verbose:
                     print("\t%r" % expr)
 
