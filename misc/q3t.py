@@ -133,7 +133,10 @@ def build_address_map(srcmap):
     for rpath, lmap in iter_trie_items(srcmap):
         for (begin_line, end_line), entries in lmap.items():
             for entry in entries:
-                addr = entry.state.address
+                state = entry.state
+                if state.end_sequence:
+                    continue
+                addr = state.address
                 _, end_addr = amap.interval(addr)
                 amap[addr:end_addr] = (rpath, begin_line, end_line)
     return amap
