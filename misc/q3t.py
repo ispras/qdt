@@ -145,6 +145,30 @@ def rpath2path(rpath, encoding = "utf-8"):
     )))
 
 
+def print_address_map(amap):
+    entries = []
+    max_addr_len = 0
+    for (s, e), (rpath, begin_line, end_line) in amap.items():
+        s = "%x" % s
+        if e is None:
+            e = ""
+        else:
+            e = "%x" % e
+        max_addr_len = max(len(s), len(e), max_addr_len)
+        entries.append((
+            s, e, str(begin_line), str(end_line), rpath2path(rpath)
+        ))
+    fmt = ("%%%ds" % max_addr_len).__mod__
+    prev_path = None
+    for ba, ea, bl, el, path in entries:
+        if prev_path != path:
+            prev_path = path
+            sfx = " " + path
+        else:
+            sfx = ""
+        print("\t" + fmt(ba) + ":" + fmt(ea) + " < " + bl + ":" + el + sfx)
+
+
 class FileLinesCache(dict):
 
     def __missing__(self, path):
@@ -382,6 +406,10 @@ def main():
         metavar = "F",
         help = "run each test till F failures, 0 - no limit",
     )
+    arg("--print-map",
+        action = "store_true",
+        help = "print address map (addr to src:line) for each binary",
+    )
 
     args = ap.parse_args()
 
@@ -467,6 +495,8 @@ def main():
             dic.account_line_program_CU(cu)
 
         addrmap = build_address_map(dic.srcmap)
+        if args.print_map:
+            print_address_map(addrmap)
 
         bin_file_dir, bin_file_name_only = split(bin_file_path)
 
