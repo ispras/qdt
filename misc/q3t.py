@@ -410,6 +410,10 @@ def main():
         action = "store_true",
         help = "print address map (addr to src:line) for each binary",
     )
+    arg("--infix",
+        default = "q3t",
+        help = "a symbol with such an infix in name is used as a breakpoint",
+    )
 
     args = ap.parse_args()
 
@@ -419,6 +423,7 @@ def main():
     no_ack = not args.ack
     timeout = args.timeout
     failures = args.failures
+    bp_infix = args.infix
 
     config_file_name = abspath(args.config)
     config_dir_name = dirname(config_file_name)
@@ -469,14 +474,14 @@ def main():
         address_map = symtab.address_map
         breakpoints = dict()
         for name, addr in address_map.items():
-            if "q3t" not in name:
+            if bp_infix not in name:
                 continue
             breakpoints[addr] = Q3TBreakpoint(ts, name, addr)
 
         if breakpoints:
-            print("q3t breakpoint(s) found: " + str(len(breakpoints)))
+            print("breakpoint(s) found: " + str(len(breakpoints)))
         else:
-            print("No q3t breakpoint(s) found")
+            print("No breakpoint(s) found")
             continue
 
         ts.update_namespace(address_map)
