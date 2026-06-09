@@ -426,7 +426,7 @@ def main():
     no_ack = not args.ack
     timeout = args.timeout
     failures = args.failures
-    infix = args.infix
+    bp_infix = args.infix
 
     config_file_name = abspath(args.config)
     config_dir_name = dirname(config_file_name)
@@ -477,7 +477,7 @@ def main():
         address_map = symtab.address_map
         breakpoints = dict()
         for name, addr in address_map.items():
-            if infix not in name:
+            if bp_infix not in name:
                 continue
             breakpoints[addr] = Q3TBreakpoint(ts, name, addr)
 
