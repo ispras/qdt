@@ -139,6 +139,12 @@ def build_address_map(srcmap):
     return amap
 
 
+def rpath2path(rpath, encoding = "utf-8"):
+    return join(*reversed(tuple(
+        (p if isinstance(p, str) else p.decode(encoding)) for p in rpath
+    )))
+
+
 class FileLinesCache(dict):
 
     def __missing__(self, path):
@@ -469,10 +475,7 @@ def main():
             append_expr = br.exprs.append
 
             rpath, begin_line, end_line = addrmap[addr]
-            rpath = tuple(
-                (p if isinstance(p, str) else p.decode()) for p in rpath
-            )
-            src_path = abspath(join(bin_file_dir, *reversed(rpath)))
+            src_path = abspath(join(bin_file_dir, rpath2path(rpath)))
             if verbose:
                 print("%s at %r %u:%u" % (
                     name,
