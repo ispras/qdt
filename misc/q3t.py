@@ -456,19 +456,20 @@ def main():
 
     global_q3t = dict(only_q3t_items(globals().items()))
 
-    for bin_file_name in config.bins:
+    bins_n = len(config.bins)
+    for bin_i, bin_file_name in enumerate(config.bins, 1):
         bin_file_path = bin_file_name
         if not isfile(bin_file_path):
             bin_file_path = join(config_dir_name, bin_file_name)
         if not isfile(bin_file_path):
-            print("no such file %r" % bin_file_path)
+            print("%u/%u: no such file %r" % (bin_i, bins_n, bin_file_path))
             continue
 
         bin_file_path = abspath(bin_file_path)
 
         ts = Q3TTestState(**test_state_kw)
 
-        print("loading %r" % bin_file_path)
+        print("%u/%u: loading %r" % (bin_i, bins_n, bin_file_path))
 
         elf = InMemoryELFFile(bin_file_path)
         di = elf.get_dwarf_info()
