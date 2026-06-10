@@ -342,6 +342,9 @@ class Q3TTestState(object):
     def q3t_ld(self, addr, size):
         return self.rt.target.dump(size, addr)
 
+    def q3t_memeq(self, a, b, size):
+        return self.q3t_ld(a, size) == self.q3t_ld(b, size)
+
     def fail(self, locs):
         # locs (`ExpressionLocals`) has reference to `Q3TBreakpoint`
         self.failures.append(locs)
