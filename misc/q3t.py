@@ -252,7 +252,7 @@ class Q3TBreakpoint(object):
                     for name, val in sorted(locs.items()):
                         print_val(name, val)
             if verbose or not res:
-                print("\tres: %r" % res)
+                print("\tres: %r" % (res,))
 
             ts.t_last_br = time()
 
