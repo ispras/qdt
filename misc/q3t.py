@@ -101,6 +101,30 @@ def q3t_bits(*shifts):
         res |= 1 << shift
     return res
 
+def q3t_negN(i, bitsize):
+    mask = (1 << bitsize) - 1
+    return ((i ^ mask) + 1) & mask
+
+def q3t_neg8(i):
+    return q3t_negN(i, 8)
+
+def q3t_neg16(i):
+    return q3t_negN(i, 16)
+
+def q3t_neg32(i):
+    return q3t_negN(i, 32)
+
+def q3t_neg40(i):
+    return q3t_negN(i, 40)
+
+def q3t_neg64(i):
+    return q3t_negN(i, 64)
+
+def q3t_neg80(i):
+    return q3t_negN(i, 80)
+
+def q3t_neg128(i):
+    return q3t_negN(i, 128)
 
 class Q3T(object):
     "Qemu Target Test Tool configuration"
