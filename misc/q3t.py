@@ -253,13 +253,14 @@ class Q3TBreakpoint(object):
         self.addr = addr
         self.name = name
         self.exprs = []
+        self.aliases = [name]
 
     def __call__(self):
         ts = self.ts
         ts.t_last_br = time()
         verbose = ts.verbose
         if verbose:
-            print("hit: " + self.name)
+            print("hit: " + ", ".join(self.aliases))
         locs = ExpressionLocals(self, verbose = verbose)
         for expr in self.exprs:
             if verbose:
@@ -507,7 +508,12 @@ def main():
         for name, addr in address_map.items():
             if bp_infix not in name:
                 continue
-            breakpoints[addr] = Q3TBreakpoint(ts, name, addr)
+            bp = breakpoints.get(addr)
+            if bp is None:
+                bp = Q3TBreakpoint(ts, name, addr)
+                breakpoints[addr] = bp
+            else:
+                bp.aliases.append(name)
 
         if breakpoints:
             print("breakpoint(s) found: " + str(len(breakpoints)))
@@ -537,14 +543,14 @@ def main():
         bin_file_dir, bin_file_name_only = split(bin_file_path)
 
         for addr, br in breakpoints.items():
-            name = br.name
+            aliases = br.aliases
             append_expr = br.exprs.append
 
             rpath, begin_line, end_line = addrmap[addr]
             src_path = abspath(join(bin_file_dir, rpath2path(rpath)))
             if verbose:
                 print("%s at %r %u:%u" % (
-                    name,
+                    ", ".join(aliases),
                     src_path,
                     begin_line,
                     end_line,
@@ -560,10 +566,11 @@ def main():
                     print("\t%r" % expr)
 
             for infix, expr in AUTO_EXPRS:
-                if infix in name:
-                    append_expr(expr)
-                    if verbose:
-                        print("\t%r (auto)" % expr)
+                for name in aliases:
+                    if infix in name:
+                        append_expr(expr)
+                        if verbose:
+                            print("\t%r (auto)" % expr)
 
             if verbose and not br.exprs:
                 print("\tno expressions")
