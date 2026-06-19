@@ -222,6 +222,9 @@ def only_q3t_items(ii):
             yield i
 
 
+global_q3t = dict(only_q3t_items(globals().items()))
+
+
 def gen_callable_verbose_wrapper(n, v):
     @wraps(v)
     def wrapper(*a, **kw):
@@ -450,8 +453,6 @@ def main():
     )
     if failures is not None:
         test_state_kw["failures"] = failures
-
-    global_q3t = dict(only_q3t_items(globals().items()))
 
     bins_n = len(config.bins)
     for bin_i, bin_file_name in enumerate(config.bins, 1):
