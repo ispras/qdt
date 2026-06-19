@@ -479,6 +479,9 @@ def main():
 
             rpath, begin_line, end_line = addrmap[addr]
             src_path = abspath(join(bin_file_dir, rpath2path(rpath)))
+            br.src_path = src_path
+            br.begin_line = begin_line
+            br.end_line = end_line
             if verbose:
                 print("%s at %r %u:%u" % (
                     ", ".join(aliases),
@@ -496,6 +499,7 @@ def main():
                 if verbose:
                     print("\t%r" % expr)
 
+            br.first_auto_expr = len(br.exprs)
             for infix, expr in AUTO_EXPRS:
                 for name in aliases:
                     if infix in name:
