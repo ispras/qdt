@@ -246,6 +246,7 @@ class Q3TTestState(object):
         self.t_last_br = None
         self.timeout = timeout
         self.namespace = {}
+        self.breakpoints = {}
 
     def update_namespace(self, data, wrap = True):
         ns = self.namespace
@@ -432,7 +433,7 @@ def main():
         symtab_sect = elf.get_section_by_name(".symtab")
         symtab = SymTab(symtab_sect)
         address_map = symtab.address_map
-        breakpoints = dict()
+        breakpoints = ts.breakpoints
         for name, addr in address_map.items():
             if bp_infix not in name:
                 continue
