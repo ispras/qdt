@@ -247,14 +247,20 @@ not actual now.
             except:
                 print_exc()
 
-    def co_run_target(self, **kw):
+    def start_rsp_thread(self,
+        name = "RSP client",
+        **kw
+    ):
         t = Thread(
             target = self.rsp_client_main,
             kwargs = kw,
         )
-        t.name = "RSP client"
+        t.name = name
         t.start()
+        return t
 
+    def co_run_target(self, **kw):
+        t = self.start_rsp_thread(**kw)
         while t.is_alive():
             yield False
 
