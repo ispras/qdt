@@ -378,6 +378,15 @@ class Q3TTestState(object):
                         append_expr(expr)
 
     def co_main(self, qmp, rsp, quiet = True):
+        self.update_namespace(self.sym2addr)
+        yield True
+        self.update_namespace(global_q3t)
+        yield True
+        self.update_namespace(__builtins__.__dict__.items())
+        yield True
+        self.populate_namespace()
+        yield True
+
         self.qmp = qmp
 
         rt = Runtime(rsp, self.dic)
@@ -558,10 +567,6 @@ def main():
 
         ts.parse_elf(bin_file_path)
 
-        ts.update_namespace(ts.sym2addr)
-        ts.update_namespace(global_q3t)
-        ts.update_namespace(__builtins__.__dict__.items())
-        ts.populate_namespace()
         if args.print_map:
             print_address_map(ts.a2sl)
 
