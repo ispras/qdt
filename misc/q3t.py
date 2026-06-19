@@ -83,8 +83,8 @@ class Q3T(object):
 port_pool = PortPool()
 
 
-def build_address_map(srcmap):
-    amap = intervalmap()
+def build_addr2srclines_map(srcmap):
+    a2sl = intervalmap()
     for rpath, lmap in iter_trie_items(srcmap):
         for (begin_line, end_line), entries in lmap.items():
             for entry in entries:
@@ -92,9 +92,9 @@ def build_address_map(srcmap):
                 if state.end_sequence:
                     continue
                 addr = state.address
-                _, end_addr = amap.interval(addr)
-                amap[addr:end_addr] = (rpath, begin_line, end_line)
-    return amap
+                _, end_addr = a2sl.interval(addr)
+                a2sl[addr:end_addr] = (rpath, begin_line, end_line)
+    return a2sl
 
 
 def rpath2path(rpath, encoding = "utf-8"):
@@ -501,9 +501,9 @@ def main():
         for cu in dic.iter_CUs():
             dic.account_line_program_CU(cu)
 
-        addrmap = build_address_map(dic.srcmap)
+        a2sl = build_addr2srclines_map(dic.srcmap)
         if args.print_map:
-            print_address_map(addrmap)
+            print_address_map(a2sl)
 
         bin_file_dir, bin_file_name_only = split(bin_file_path)
 
@@ -511,7 +511,7 @@ def main():
             aliases = br.aliases
             append_expr = br.exprs.append
 
-            rpath, begin_line, end_line = addrmap[addr]
+            rpath, begin_line, end_line = a2sl[addr]
             src_path = abspath(join(bin_file_dir, rpath2path(rpath)))
             br.src_path = src_path
             br.begin_line = begin_line
