@@ -23,6 +23,11 @@ from qemu.q3t.helpers import *  # populate `globals()`
 from argparse import (
     ArgumentParser,
 )
+try:
+    import builtins
+except ImportError:
+    # Py2 ?
+    import __builtin__ as builtins
 from collections import (
     OrderedDict,
 )
@@ -370,7 +375,7 @@ class Q3TTestState(object):
         yield True
         self.update_namespace(global_q3t)
         yield True
-        self.update_namespace(__builtins__.__dict__.items())
+        self.update_namespace(builtins.__dict__.items())
         yield True
         self.populate_namespace()
         yield True
