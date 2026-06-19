@@ -478,10 +478,10 @@ def main():
         test_state_kw["failures"] = failures
 
     bins_n = len(config.bins)
-    for bin_i, bin_file_name in enumerate(config.bins, 1):
-        bin_file_path = bin_file_name
+    for bin_i, bin_file in enumerate(config.bins, 1):
+        bin_file_path = bin_file
         if not isfile(bin_file_path):
-            bin_file_path = join(config_dir_name, bin_file_name)
+            bin_file_path = join(config_dir_name, bin_file)
         if not isfile(bin_file_path):
             print("%u/%u: no such file %r" % (bin_i, bins_n, bin_file_path))
             continue
@@ -530,7 +530,7 @@ def main():
         if args.print_map:
             print_address_map(a2sl)
 
-        bin_file_dir, bin_file_name_only = split(bin_file_path)
+        bin_file_dir, bin_file_name = split(bin_file_path)
 
         for addr, br in breakpoints.items():
             aliases = br.aliases
@@ -568,7 +568,7 @@ def main():
         emu_args = list(config.args)
 
         args_ns = dict(
-            bin = bin_file_name_only,
+            bin = bin_file_name,
             gdb_port = str(gdb_port),
             cwd = bin_file_dir,
             qmp_port = str(qmp_port),
