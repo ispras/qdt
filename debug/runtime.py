@@ -224,32 +224,34 @@ not actual now.
         self._exiting = True
         self.pause()
 
-    def co_run_target(self, kill = True):
+    def rsp_client_main(self, kill = True):
         target = self.target
-
-        def run():
-            try:
-                self.run()
-                while self.paused:
-                    while not self._resumed.wait(0.5):
-                        if self._exiting:
-                            break
-
+        try:
+            self.run()
+            while self.paused:
+                while not self._resumed.wait(0.5):
                     if self._exiting:
                         break
 
-                    self.run()
+                if self._exiting:
+                    break
+
+                self.run()
+        except:
+            print_exc()
+            print("Target PC 0x%x" % (self.pc))
+
+        if kill:
+            try:
+                target.send(b"k")
             except:
                 print_exc()
-                print("Target PC 0x%x" % (self.pc))
 
-            if kill:
-                try:
-                    target.send(b"k")
-                except:
-                    print_exc()
-
-        t = Thread(target = run)
+    def co_run_target(self, **kw):
+        t = Thread(
+            target = self.rsp_client_main,
+            kwargs = kw,
+        )
         t.name = "RSP client"
         t.start()
 
