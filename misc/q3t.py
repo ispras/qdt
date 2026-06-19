@@ -473,9 +473,9 @@ def main():
         di = elf.get_dwarf_info()
         symtab_sect = elf.get_section_by_name(".symtab")
         symtab = SymTab(symtab_sect)
-        address_map = symtab.address_map
+        sym2addr = symtab.address_map
         breakpoints = ts.breakpoints
-        for name, addr in address_map.items():
+        for name, addr in sym2addr.items():
             if bp_infix not in name:
                 continue
             bp = breakpoints.get(addr)
@@ -489,7 +489,7 @@ def main():
             ts.print_brs_info()
             continue
 
-        ts.update_namespace(address_map)
+        ts.update_namespace(sym2addr)
         ts.update_namespace(global_q3t)
         ts.update_namespace(__builtins__.__dict__.items())
         ts.populate_namespace()
