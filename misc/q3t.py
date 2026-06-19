@@ -21,6 +21,9 @@ from qemu.q3t.helpers import *  # populate `globals()`
 from argparse import (
     ArgumentParser,
 )
+from collections import (
+    OrderedDict,
+)
 from functools import (
     wraps,
 )
@@ -246,7 +249,8 @@ class Q3TTestState(object):
         self.t_last_br = None
         self.timeout = timeout
         self.namespace = {}
-        self.breakpoints = {}
+        # output must be deterministic
+        self.breakpoints = OrderedDict()
 
     def update_namespace(self, data, wrap = True):
         ns = self.namespace
