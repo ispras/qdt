@@ -531,6 +531,8 @@ def main():
             print_address_map(a2sl)
 
         bin_file_dir, bin_file_name = split(bin_file_path)
+        ts.bin_file_dir = bin_file_dir
+        ts.bin_file_name = bin_file_name
 
         for addr, br in breakpoints.items():
             aliases = br.aliases
