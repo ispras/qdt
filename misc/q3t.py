@@ -99,7 +99,7 @@ def build_addr2srclines_map(srcmap):
     return a2sl
 
 
-def print_address_map(amap):
+def print_addr2srclines_map(amap):
     entries = []
     max_addr_len = 0
     for (s, e), (rpath, begin_line, end_line) in amap.items():
@@ -556,7 +556,7 @@ def main():
         ts.parse_elf(bin_file_path)
 
         if args.print_map:
-            print_address_map(ts.a2sl)
+            print_addr2srclines_map(ts.a2sl)
 
         if not ts.breakpoints:
             ts.print_brs_info()
