@@ -497,6 +497,7 @@ def main():
         symtab_sect = elf.get_section_by_name(".symtab")
         symtab = SymTab(symtab_sect)
         sym2addr = symtab.address_map
+        ts.sym2addr = sym2addr
         breakpoints = ts.breakpoints
         for name, addr in sym2addr.items():
             if bp_infix not in name:
