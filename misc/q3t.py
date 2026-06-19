@@ -527,6 +527,7 @@ def main():
             dic.account_line_program_CU(cu)
 
         a2sl = build_addr2srclines_map(dic.srcmap)
+        ts.a2sl = a2sl
         if args.print_map:
             print_address_map(a2sl)
 
