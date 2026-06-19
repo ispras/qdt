@@ -34,6 +34,9 @@ from common import (
     trie_add,
     trie_find,
 )
+from debug import (
+    path2rpath,
+)
 from .chunks import (
     FunctionDeclaration,
     FunctionDefinition,
@@ -92,7 +95,7 @@ class Source(TypeContainer):
 
     @classmethod
     def lookup(cls, path):
-        rpath = tuple(reversed(path2tuple(path)))
+        rpath = path2rpath(path)
         return trie_find(cls.sources, rpath)[0]
 
     # Only header can do it, see `Header`.
@@ -106,7 +109,7 @@ class Source(TypeContainer):
     ):
         super(Source, self).__init__(**kw)
 
-        rpath = tuple(reversed(path2tuple(path)))
+        rpath = path2rpath(path)
         if trie_add(self.sources, rpath, self) is not self:
             raise ValueError("%r: source file already exists" % path)
 
