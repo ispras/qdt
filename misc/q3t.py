@@ -484,10 +484,8 @@ def main():
             else:
                 bp.aliases.append(name)
 
-        if breakpoints:
-            print("breakpoint(s) found: " + str(len(breakpoints)))
-        else:
-            print("No breakpoint(s) found")
+        if not breakpoints:
+            ts.print_brs_info()
             continue
 
         ts.update_namespace(address_map)
@@ -518,13 +516,6 @@ def main():
             br.src_path = src_path
             br.begin_line = begin_line
             br.end_line = end_line
-            if verbose:
-                print("%s at %r %u:%u" % (
-                    ", ".join(aliases),
-                    src_path,
-                    begin_line,
-                    end_line,
-                ))
 
             for line in file_lines_cache[src_path][begin_line:end_line]:
                 i = line.find(prefix)
@@ -532,19 +523,15 @@ def main():
                     continue
                 expr = line[i+3:].strip()
                 append_expr(expr)
-                if verbose:
-                    print("\t%r" % expr)
 
             br.first_auto_expr = len(br.exprs)
             for infix, expr in AUTO_EXPRS:
                 for name in aliases:
                     if infix in name:
                         append_expr(expr)
-                        if verbose:
-                            print("\t%r (auto)" % expr)
 
-            if verbose and not br.exprs:
-                print("\tno expressions")
+        if verbose > 0:
+            ts.print_brs_info()
 
         gdb_port = port_pool.alloc_port()
         if verbose:
