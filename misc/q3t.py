@@ -14,6 +14,7 @@ from common import (
 from debug import (
     DWARFInfoCache,
     InMemoryELFFile,
+    rpath2path,
     Runtime,
     SymTab,
 )
@@ -96,12 +97,6 @@ def build_addr2srclines_map(srcmap):
                 _, end_addr = a2sl.interval(addr)
                 a2sl[addr:end_addr] = (rpath, begin_line, end_line)
     return a2sl
-
-
-def rpath2path(rpath, encoding = "utf-8"):
-    return join(*reversed(tuple(
-        (p if isinstance(p, str) else p.decode(encoding)) for p in rpath
-    )))
 
 
 def print_address_map(amap):
