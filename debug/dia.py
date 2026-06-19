@@ -9,6 +9,10 @@ from common import (
     trie_find,
     intervalmap
 )
+from .rpath import (
+    rpath2path,
+)
+
 from os.path import (
     join
 )
@@ -459,12 +463,12 @@ pyelftools's `DWARFInfo`.
                 return d[None]
 
             raise ValueError("Given name suffix %s is not long enough to look"
-                " CU up. There are several CUs with such suffix." % join(
-                    *reversed(rpath)
+                " CU up. There are several CUs with such suffix." % rpath2path(
+                    rpath
                 )
             )
 
-        raise KeyError("No CU with name suffix %s" % join(*reversed(rpath)))
+        raise KeyError("No CU with name suffix %s" % rpath2path(rpath))
 
     def iter_CUs(self):
         idx2cu = self.idx2cu
