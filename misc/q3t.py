@@ -243,10 +243,14 @@ class Q3TTestState(object):
         timeout = 5.0,
         verbose = False,
         failures = 1,
+        bp_infix = "q3t",
+        expr_prefix = ">>>",
     ):
         self.working = True
         self.verbose = verbose
         self.max_failures = failures
+        self.bp_infix = bp_infix
+        self.expr_prefix = expr_prefix
         self.failures = []
         self.timed_out = False
         self.t_last_br = None
@@ -312,6 +316,66 @@ class Q3TTestState(object):
         if len(self.failures) == self.max_failures:
             self.working = False
             self.rt.exit()
+
+    def parse_elf(self, bin_file_path):
+        elf = InMemoryELFFile(bin_file_path)
+        di = elf.get_dwarf_info()
+        symtab_sect = elf.get_section_by_name(".symtab")
+        symtab = SymTab(symtab_sect)
+        sym2addr = symtab.address_map
+        self.sym2addr = sym2addr
+        breakpoints = self.breakpoints
+        bp_infix = self.bp_infix
+        for name, addr in sym2addr.items():
+            if bp_infix not in name:
+                continue
+            bp = breakpoints.get(addr)
+            if bp is None:
+                bp = Q3TBreakpoint(self, name, addr)
+                breakpoints[addr] = bp
+            else:
+                bp.aliases.append(name)
+
+        dic = DWARFInfoCache(di,
+            symtab = symtab_sect,
+        )
+        self.dic = dic
+
+        # account all line programms
+        for cu in dic.iter_CUs():
+            dic.account_line_program_CU(cu)
+
+        a2sl = build_addr2srclines_map(dic.srcmap)
+        self.a2sl = a2sl
+
+        bin_file_dir, bin_file_name = split(bin_file_path)
+        self.bin_file_dir = bin_file_dir
+        self.bin_file_name = bin_file_name
+
+        prefix = self.expr_prefix
+
+        for addr, br in breakpoints.items():
+            aliases = br.aliases
+            append_expr = br.exprs.append
+
+            rpath, begin_line, end_line = a2sl[addr]
+            src_path = abspath(join(bin_file_dir, rpath2path(rpath)))
+            br.src_path = src_path
+            br.begin_line = begin_line
+            br.end_line = end_line
+
+            for line in file_lines_cache[src_path][begin_line:end_line]:
+                i = line.find(prefix)
+                if i < 0:
+                    continue
+                expr = line[i+3:].strip()
+                append_expr(expr)
+
+            br.first_auto_expr = len(br.exprs)
+            for infix, expr in AUTO_EXPRS:
+                for name in aliases:
+                    if infix in name:
+                        append_expr(expr)
 
     def co_main(self, qmp, rsp, quiet = True):
         self.qmp = qmp
@@ -443,13 +507,11 @@ def main():
 
     args = ap.parse_args()
 
-    prefix = args.prefix
     verbose = args.verbose - args.quiet
     quiet = verbose < 2
     no_ack = not args.ack
     timeout = args.timeout
     failures = args.failures
-    bp_infix = args.infix
 
     config_file_name = abspath(args.config)
     config_dir_name = dirname(config_file_name)
@@ -473,6 +535,8 @@ def main():
     test_state_kw = dict(
         verbose = verbose,
         timeout = timeout,
+        bp_infix = args.infix,
+        expr_prefix = args.prefix,
     )
     if failures is not None:
         test_state_kw["failures"] = failures
@@ -492,72 +556,18 @@ def main():
 
         print("%u/%u: loading %r" % (bin_i, bins_n, bin_file_path))
 
-        elf = InMemoryELFFile(bin_file_path)
-        di = elf.get_dwarf_info()
-        symtab_sect = elf.get_section_by_name(".symtab")
-        symtab = SymTab(symtab_sect)
-        sym2addr = symtab.address_map
-        ts.sym2addr = sym2addr
-        breakpoints = ts.breakpoints
-        for name, addr in sym2addr.items():
-            if bp_infix not in name:
-                continue
-            bp = breakpoints.get(addr)
-            if bp is None:
-                bp = Q3TBreakpoint(ts, name, addr)
-                breakpoints[addr] = bp
-            else:
-                bp.aliases.append(name)
+        ts.parse_elf(bin_file_path)
 
-        if not breakpoints:
-            ts.print_brs_info()
-            continue
-
-        ts.update_namespace(sym2addr)
+        ts.update_namespace(ts.sym2addr)
         ts.update_namespace(global_q3t)
         ts.update_namespace(__builtins__.__dict__.items())
         ts.populate_namespace()
-
-        dic = DWARFInfoCache(di,
-            symtab = symtab_sect,
-        )
-        ts.dic = dic
-
-        # account all line programms
-        for cu in dic.iter_CUs():
-            dic.account_line_program_CU(cu)
-
-        a2sl = build_addr2srclines_map(dic.srcmap)
-        ts.a2sl = a2sl
         if args.print_map:
-            print_address_map(a2sl)
+            print_address_map(ts.a2sl)
 
-        bin_file_dir, bin_file_name = split(bin_file_path)
-        ts.bin_file_dir = bin_file_dir
-        ts.bin_file_name = bin_file_name
-
-        for addr, br in breakpoints.items():
-            aliases = br.aliases
-            append_expr = br.exprs.append
-
-            rpath, begin_line, end_line = a2sl[addr]
-            src_path = abspath(join(bin_file_dir, rpath2path(rpath)))
-            br.src_path = src_path
-            br.begin_line = begin_line
-            br.end_line = end_line
-
-            for line in file_lines_cache[src_path][begin_line:end_line]:
-                i = line.find(prefix)
-                if i < 0:
-                    continue
-                expr = line[i+3:].strip()
-                append_expr(expr)
-
-            br.first_auto_expr = len(br.exprs)
-            for infix, expr in AUTO_EXPRS:
-                for name in aliases:
-                    if infix in name:
-                        append_expr(expr)
+        if not ts.breakpoints:
+            ts.print_brs_info()
+            continue
 
         if verbose > 0:
             ts.print_brs_info()
@@ -572,9 +582,9 @@ def main():
         emu_args = list(config.args)
 
         args_ns = dict(
-            bin = bin_file_name,
+            bin = ts.bin_file_name,
             gdb_port = str(gdb_port),
-            cwd = bin_file_dir,
+            cwd = ts.bin_file_dir,
             qmp_port = str(qmp_port),
         )
 
