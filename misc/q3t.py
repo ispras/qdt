@@ -455,8 +455,6 @@ def main():
         ts.update_namespace(__builtins__.__dict__.items())
         ts.populate_namespace()
 
-        disp = CLICoDispatcher()
-
         dic = DWARFInfoCache(di,
             symtab = symtab_sect,
         )
@@ -565,6 +563,7 @@ def main():
                     continue
                 rt.br(addr, br, quiet = quiet)
 
+            disp = CLICoDispatcher()
             disp.enqueue(rt.co_run_target(kill = False))
             disp.enqueue(ts.co_main())
             disp.dispatch_all()
