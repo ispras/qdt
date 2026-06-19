@@ -313,10 +313,27 @@ class Q3TTestState(object):
             self.working = False
             self.rt.exit()
 
-    def co_main(self):
+    def co_main(self, qmp, rsp, quiet = True):
+        self.qmp = qmp
+
+        rt = Runtime(rsp, self.dic)
+        self.rt = rt
+
+        yield True
+
+        for addr, br in self.breakpoints.items():
+            if br.exprs:
+                yield True
+                rt.br(addr, br, quiet = quiet)
+
         if self.t_last_br is None:
             self.t_last_br = time()
-        while self.working:
+
+        rst_t = rt.start_rsp_thread(kill = False)
+
+        yield True
+
+        while self.working and rst_t.is_alive():
             t = time()
             dt = t - self.t_last_br
             if dt > self.timeout:
@@ -328,6 +345,12 @@ class Q3TTestState(object):
                 break
 
             yield False
+
+        while rst_t.is_alive():
+            yield False
+
+        qmp("cont")
+        qmp("quit")
 
         print("result: " + self.result)
 
@@ -497,6 +520,7 @@ def main():
         dic = DWARFInfoCache(di,
             symtab = symtab_sect,
         )
+        ts.dic = dic
 
         # account all line programms
         for cu in dic.iter_CUs():
@@ -578,7 +602,6 @@ def main():
             wait_for_tcp_port(qmp_port)
 
             qmp = QMP(qmp_port)
-            ts.qmp = qmp
 
             wait_for_tcp_port(gdb_port)
 
@@ -587,21 +610,9 @@ def main():
                 verbose = verbose > 1,
             )
 
-            rt = Runtime(rsp, dic)
-            ts.rt = rt
-
-            for addr, br in breakpoints.items():
-                if not br.exprs:
-                    continue
-                rt.br(addr, br, quiet = quiet)
-
             disp = CLICoDispatcher()
-            disp.enqueue(rt.co_run_target(kill = False))
-            disp.enqueue(ts.co_main())
+            disp.enqueue(ts.co_main(qmp, rsp, quiet = quiet))
             disp.dispatch_all()
-
-            qmp("cont")
-            qmp("quit")
         finally:
             emu_p.wait()
             port_pool.free_port(qmp_port)
