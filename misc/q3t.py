@@ -11,6 +11,7 @@ from common import (
 from qemu import (
     print_addr2srclines_map,
     Q3TTestState,
+    read_q3t_config,
 )
 
 from argparse import (
@@ -18,7 +19,6 @@ from argparse import (
 )
 from os.path import (
     abspath,
-    dirname,
     isfile,
     join,
 )
@@ -33,33 +33,6 @@ with pypath("..pyrsp"):
         QMP,
         wait_for_tcp_port,
     )
-
-# for config
-from c2t.config import *
-from debug.qrsp import *
-
-
-class Q3T(object):
-    "Qemu Target Test Tool configuration"
-
-    configs = []
-
-    def __init__(self, rsp, bins, args):
-        """
-@param rsp:
-    A callable that returns `debug.runtime.Runtime` compatible `target`.
-    E.g., a `debug.qrsp.QRSP` sub`class`.
-@param bins:
-    An iterable of binary files to process.
-@qargs args:
-    An iterable of arguments for `Popen` to run the emulator.
-    It must define an option to load a target code from file {bin}.
-    E.g., `"-kernel", "{bin}"`.
-        """
-        type(self).configs.append(self)
-        self.rsp = rsp
-        self.bins = list(bins)
-        self.args = list(args)
 
 
 port_pool = PortPool()
@@ -119,22 +92,8 @@ def main():
     timeout = args.timeout
     failures = args.failures
 
-    config_file_name = abspath(args.config)
-    config_dir_name = dirname(config_file_name)
-
-    with open(config_file_name, "r") as f:
-        config_src = f.read()
-
-    config_code = compile(config_src, config_file_name, "exec")
-
-    config_ns = dict()
-    config_glob = dict(globals())
-    config_glob["__file__"] = config_file_name
-
-    exec(config_code, config_ns, config_glob)
-
-    assert len(Q3T.configs) == 1
-    config = Q3T.configs[0]
+    config = read_q3t_config(args.config)
+    config_dir_name = config.dir_path
 
     exit_code = 0
 
