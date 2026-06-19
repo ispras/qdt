@@ -7,6 +7,7 @@ from common import (
     CLICoDispatcher,
     intervalmap,
     iter_trie_items,
+    FileLinesCache,
     PortPool,
     pypath,
 )
@@ -126,14 +127,6 @@ def print_address_map(amap):
             sfx = ""
         print("\t" + fmt(ba) + ":" + fmt(ea) + " < " + bl + ":" + el + sfx)
 
-
-class FileLinesCache(dict):
-
-    def __missing__(self, path):
-        with open(path, "r") as f:
-            text = f.read()
-        self[path] = lines = text.splitlines(False)
-        return lines
 
 file_lines_cache = FileLinesCache()
 
