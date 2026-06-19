@@ -328,6 +328,42 @@ class Q3TTestState(object):
 
         print("result: " + self.result)
 
+    def iter_brs_info_lines(self):
+        breakpoints = self.breakpoints
+        if breakpoints:
+            yield "breakpoint(s) found: " + str(len(breakpoints))
+        else:
+            yield "No breakpoint(s) found"
+            return
+
+        for addr, br in breakpoints.items():
+            print("%s 0x%X at %r %u:%u" % (
+                ", ".join(br.aliases),
+                addr,
+                br.src_path,
+                br.begin_line,
+                br.end_line,
+            ))
+
+            exprs = br.exprs
+            if exprs:
+                first_auto_expr = br.first_auto_expr
+
+                for expr in exprs[:first_auto_expr]:
+                    print("\t%r" % expr)
+                for expr in exprs[first_auto_expr:]:
+                    print("\t%r # auto" % expr)
+            else:
+                print("\tno expressions")
+
+    @property
+    def brs_info(self):
+        return "\n".join(self.iter_brs_info_lines())
+
+    def print_brs_info(self):
+        print(self.brs_info)
+
+
 AUTO_EXPRS = tuple(dict(
     q3t_quit = "q3t_quit()",
 ).items())
