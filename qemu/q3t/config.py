@@ -18,22 +18,57 @@ class Q3T(object):
 
     configs = []
 
-    def __init__(self, rsp, bins, args):
+    def __init__(self, rsp, bins, args,
+        bp_infix = None,
+        expr_prefix = None,
+    ):
         """
 @param rsp:
     A callable that returns `debug.runtime.Runtime` compatible `target`.
     E.g., a `debug.qrsp.QRSP` sub`class`.
+
 @param bins:
     An iterable of binary files to process.
+
 @param args:
     An iterable of arguments for `Popen` to run the emulator.
     It must define an option to load a target code from file {bin}.
     E.g., `"-kernel", "{bin}"`.
+
+@param bp_infix:
+    A `re`gular expression.
+    The value prevails default value.
+    CLI explicit value prevails the value.
+
+    A break point is set on each symbol with matching substring in its name.
+
+@param expr_prefix:
+    A `re`gular expression.
+    The value prevails default value.
+    CLI explicit value prevails the value.
+
+    The tail of a string after matching substring is run as a Python
+    expression on nearby break point stop.
+    `if not (the expression)` then a failure is accounted.
+    An `except`ion during the expression `eval`uation is a failure too.
+    Multiple expressions for a break point is allowed.
+    They are evaluated in line number ascending order.
+
+    Nearness between an expression and corresponding break point is not
+    strictly defined and depends on debug information by
+    the assembler (compiler).
+    Keep expressions as near as possible to its break point symbols (labels)
+    and insert enough instructions (statements) between break points.
+
+    Note that C language labels are not exported as symbols, use functions.
+
         """
         type(self).configs.append(self)
         self.rsp = rsp
         self.bins = list(bins)
         self.args = list(args)
+        self.bp_infix = bp_infix
+        self.expr_prefix = expr_prefix
 
 
 def read_q3t_config(config_file_path):

@@ -38,6 +38,9 @@ with pypath("..pyrsp"):
 port_pool = PortPool()
 
 
+class default_str(str): pass
+
+
 def main():
     ap = ArgumentParser(
         description = __doc__,
@@ -63,7 +66,7 @@ def main():
     )
     arg("-p", "--prefix",
         help = "test expression prefix",
-        default = ">>>",
+        default = default_str(">>>"),
     )
     arg("-t", "--timeout",
         default = 5.0,
@@ -80,7 +83,7 @@ def main():
         help = "print address map (addr to src:line) for each binary",
     )
     arg("--infix",
-        default = "q3t",
+        default = default_str("q3t"),
         help = "a symbol with such an infix in name is used as a breakpoint",
     )
 
@@ -97,11 +100,19 @@ def main():
 
     exit_code = 0
 
+    bp_infix = args.infix
+    if isinstance(bp_infix, default_str):
+        bp_infix = config.bp_infix or bp_infix
+
+    expr_prefix = args.prefix
+    if isinstance(expr_prefix, default_str):
+        expr_prefix = config.expr_prefix or expr_prefix
+
     test_state_kw = dict(
         verbose = verbose,
         timeout = timeout,
-        bp_infix = args.infix,
-        expr_prefix = args.prefix,
+        bp_infix = bp_infix,
+        expr_prefix = expr_prefix,
     )
     if failures is not None:
         test_state_kw["failures"] = failures
