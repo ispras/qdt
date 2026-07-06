@@ -277,8 +277,9 @@ class Q3TTestState(object):
         self.sym2addr = sym2addr
         breakpoints = self.breakpoints
         bp_infix = self.bp_infix
+        bp_search = compile(bp_infix).search
         for name, addr in sym2addr.items():
-            if bp_infix not in name:
+            if bp_search(name) is None:
                 continue
             bp = breakpoints.get(addr)
             if bp is None:
