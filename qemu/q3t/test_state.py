@@ -35,6 +35,9 @@ from os.path import (
     join,
     split,
 )
+from re import (
+    compile,
+)
 from time import (
     time,
 )
@@ -301,6 +304,7 @@ class Q3TTestState(object):
         self.bin_file_name = bin_file_name
 
         prefix = self.expr_prefix
+        search_prefix = compile(prefix).search
 
         for addr, br in breakpoints.items():
             aliases = br.aliases
@@ -313,10 +317,11 @@ class Q3TTestState(object):
             br.end_line = end_line
 
             for line in file_lines_cache[src_path][begin_line:end_line]:
-                i = line.find(prefix)
-                if i < 0:
+                mi = search_prefix(line)
+                if mi is None:
                     continue
-                expr = line[i+3:].strip()
+                i = mi.end()
+                expr = line[i:].strip()
                 append_expr(expr)
 
             br.first_auto_expr = len(br.exprs)
