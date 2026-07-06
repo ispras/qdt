@@ -25,7 +25,7 @@ class Q3T(object):
     E.g., a `debug.qrsp.QRSP` sub`class`.
 @param bins:
     An iterable of binary files to process.
-@qargs args:
+@param args:
     An iterable of arguments for `Popen` to run the emulator.
     It must define an option to load a target code from file {bin}.
     E.g., `"-kernel", "{bin}"`.
