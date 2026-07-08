@@ -62,7 +62,7 @@ def only_q3t_items(ii):
 
 def format_val(val):
     if isinstance(val, int):
-        val_str = "%d %u 0x%x" % (val, val, val)
+        val_str = "%d %u " % (val, val) + hex(val)
     else:
         val_str = repr(val)
     return val_str
