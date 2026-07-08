@@ -106,6 +106,31 @@ def q3t_bits(*shifts):
         res |= 1 << shift
     return res
 
+def q3t_u2s(i, bitsize):
+    s = 1  << (bitsize - 1)
+    if i & s:
+        return -q3t_negN(i, bitsize)
+    else:
+        return i
+
+def q3t_u2s8(i):
+    return q3t_u2s(i, 8)
+
+def q3t_u2s16(i):
+    return q3t_u2s(i, 16)
+
+def q3t_u2s32(i):
+    return q3t_u2s(i, 32)
+
+def q3t_u2s40(i):
+    return q3t_u2s(i, 40)
+
+def q3t_u2s64(i):
+    return q3t_u2s(i, 64)
+
+def q3t_u2s128(i):
+    return q3t_u2s(i, 128)
+
 def q3t_negN(i, bitsize):
     mask = (1 << bitsize) - 1
     return ((i ^ mask) + 1) & mask
