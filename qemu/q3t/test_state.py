@@ -113,7 +113,7 @@ class Q3TBreakpoint(object):
         ts.t_last_br = time()
         verbose = ts.verbose
         if verbose:
-            print("hit: " + ", ".join(self.aliases))
+            print("hit: " + ", ".join(self.aliases) + " " + hex(self.addr))
         locs = ExpressionLocals(self, verbose = verbose)
         for expr in self.exprs:
             if verbose:
