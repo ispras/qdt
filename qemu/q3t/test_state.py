@@ -331,7 +331,7 @@ class Q3TTestState(object):
                     continue
                 add(lineno)
                 try:
-                    line = file_lines[lineno]
+                    line = file_lines[lineno - 1]
                 except IndexError:
                     continue
                 mi = search_prefix(line)
@@ -361,7 +361,7 @@ class Q3TTestState(object):
                     continue
                 add(lineno)
                 try:
-                    line = file_lines[lineno]
+                    line = file_lines[lineno - 1]
                 except IndexError:
                     continue
                 mi = search_prefix(line)
