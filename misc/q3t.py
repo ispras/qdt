@@ -86,6 +86,12 @@ def main():
         default = default_str("q3t"),
         help = "a symbol with such an infix in name is used as a breakpoint",
     )
+    arg("-a", "--auto-bps",
+        action = "store_true",
+        help = "a break point is automatically created for each test"
+        " expression without a symbol nearby"
+        ,
+    )
 
     args = ap.parse_args()
 
@@ -116,6 +122,8 @@ def main():
     )
     if failures is not None:
         test_state_kw["failures"] = failures
+    if args.auto_bps:
+        test_state_kw["auto_bps"] = True
 
     bins_n = len(config.bins)
     for bin_i, bin_file in enumerate(config.bins, 1):
