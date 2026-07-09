@@ -25,6 +25,7 @@ except ImportError:
     # Py2 ?
     import __builtin__ as builtins
 from collections import (
+    defaultdict,
     OrderedDict,
 )
 from functools import (
@@ -196,12 +197,14 @@ class Q3TTestState(object):
         failures = 1,
         bp_infix = "q3t",
         expr_prefix = ">>>",
+        auto_bps = False,
     ):
         self.working = True
         self.verbose = verbose
         self.max_failures = failures
         self.bp_infix = bp_infix
         self.expr_prefix = expr_prefix
+        self.auto_bps = auto_bps
         self.failures = []
         self.timed_out = False
         self.t_last_br = None
@@ -307,6 +310,8 @@ class Q3TTestState(object):
         prefix = self.expr_prefix
         search_prefix = compile(prefix).search
 
+        processed_lines = defaultdict(set)
+
         for addr, br in breakpoints.items():
             aliases = br.aliases
             append_expr = br.exprs.append
@@ -317,7 +322,18 @@ class Q3TTestState(object):
             br.begin_line = begin_line
             br.end_line = end_line
 
-            for line in file_lines_cache[src_path][begin_line:end_line]:
+            file_proc_lines = processed_lines[rpath]
+            add = file_proc_lines.add
+
+            file_lines = file_lines_cache[src_path]
+            for lineno in range(begin_line, end_line):
+                if lineno in file_proc_lines:
+                    continue
+                add(lineno)
+                try:
+                    line = file_lines[lineno]
+                except IndexError:
+                    continue
                 mi = search_prefix(line)
                 if mi is None:
                     continue
@@ -330,6 +346,41 @@ class Q3TTestState(object):
                 for name in aliases:
                     if infix in name:
                         append_expr(expr)
+
+        if not self.auto_bps:
+            return
+
+        for (addr, __), (rpath, begin_line, end_line) in sorted(a2sl.items()):
+            file_proc_lines = processed_lines[rpath]
+            add = file_proc_lines.add
+            src_path = abspath(join(bin_file_dir, rpath2path(rpath)))
+            file_lines = file_lines_cache[src_path]
+            append_expr = None
+            for lineno in range(begin_line, end_line):
+                if lineno in file_proc_lines:
+                    continue
+                add(lineno)
+                try:
+                    line = file_lines[lineno]
+                except IndexError:
+                    continue
+                mi = search_prefix(line)
+                if mi is None:
+                    continue
+                i = mi.end()
+                expr = line[i:].strip()
+                if append_expr is None:
+                    assert addr not in breakpoints
+                    br = Q3TBreakpoint(self, "[auto]", addr)
+                    br.src_path = src_path
+                    br.begin_line = begin_line
+                    br.end_line = end_line
+                    breakpoints[addr] = br
+                    append_expr = br.exprs.append
+                append_expr(expr)
+
+            if append_expr is not None:
+                br.first_auto_expr = len(br.exprs)
 
     def co_main(self, qmp, rsp, quiet = True):
         self.update_namespace(self.sym2addr)
