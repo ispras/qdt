@@ -3,10 +3,12 @@
 from source.function.tree import (
     BinaryOperator,
     BranchElse,
+    CaseRange,
     Declare,
     LoopFor,
     OpDeclareAssign,
     Return,
+    SwitchCaseDefault,
 )
 from source.langs.c_decl import (
     CDeclarationAndExpr,
@@ -102,6 +104,21 @@ class ShortStatement(CDeclarationAndExpr):
     @staticmethod
     def s_primary_expression__define(identifier, DEFINE, primary_expression):
         return Define(identifier, primary_expression)
+
+    @staticmethod
+    def s_statement__default(DEFAULT):
+        return SwitchCaseDefault()
+
+    # This is GCC extension.
+    # This is not a statement but it will be handled as `case` range by
+    # misc/short_inst.py/MergeContext.merge_statements.
+    @staticmethod
+    def s_statement__case_range(
+        constant_expression__l,
+        DOTS,
+        constant_expression__r
+    ):
+        return CaseRange(constant_expression__l, constant_expression__r)
 
     @staticmethod
     def t_error(t):
