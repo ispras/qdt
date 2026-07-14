@@ -26,6 +26,7 @@ from source import (
     BodyTree,
     BranchElse,
     BranchIf,
+    BranchSwitch,
     Comment,
     CBlock,
     CDecl,
@@ -37,6 +38,8 @@ from source import (
     Late,
     LateLinker,
     LoopFor,
+    SwitchCase,
+    SwitchCaseDefault,
     Variable,
     VarUsageAnalyzer,
 )
@@ -791,6 +794,8 @@ class MergeContext(object):
 
         sub_stmnts = list(iter_join_BranchElse(sub_stmnts))
 
+        # sub_stmnts = list(iter_join_switch(sub_stmnts))
+
         if not sub_stmnts:
             return
 
@@ -800,6 +805,7 @@ class MergeContext(object):
             if not isinstance(last_stmnt, CBlock):
 
                 for_stmnt = None
+                default_stmnt = None
                 for i, s in enumerate(sub_stmnts):
                     if isinstance(s, LoopFor) and s not in self.for_loops:
                         if for_stmnt is not None:
@@ -807,10 +813,50 @@ class MergeContext(object):
         "%s: %r: multiple loop statements in block" % (heading.n, str(heading))
                             )
                         for_stmnt = i, s
+                    if isinstance(s, SwitchCaseDefault):
+                        if default_stmnt is not None:
+                            raise SyntaxError(
+"%s: %r: multiple `default` statements in block" % (heading.n, str(heading))
+                            )
+                        default_stmnt = i, s
 
                 if for_stmnt is None:
-                    last_stmnt = BranchIf(last_stmnt)
+                    if default_stmnt is None:
+                        last_stmnt = BranchIf(last_stmnt)
+                    else:
+                        default_stmnt = default_stmnt[1]
+                        last_stmnt = BranchSwitch(last_stmnt)
+                        switch_sub_stmnts = []
+                        append = switch_sub_stmnts.append
+                        for ss in sub_stmnts:
+                            if ss is default_stmnt:
+                                append(ss)
+                                continue
+                            ss_children = ss.children
+                            if ss_children:
+                                # It was converted to BranchIf by previous
+                                # recursive call of merge_statements
+                                if not isinstance(ss, BranchIf):
+                                    raise SyntaxError(
+"%s: %r: have wrong child statement for a `switch`" % (heading.n, str(heading))
+                                    )
+                                # TODO: non-constant cases must be moved as
+                                # `if`-`else if` chain into the
+                                # beginning of `default`.
+                                ss = SwitchCase(ss.cond)
+                                ss(*ss_children)
+                                del ss_children[:]
+                            else:
+                                ss = SwitchCase(ss)
+                            append(ss)
+                        sub_stmnts = switch_sub_stmnts
                 else:
+                    if default_stmnt is not None:
+                        raise SyntaxError(
+                "%s: %r: `default` and `for` cannot be in the same block" % (
+                                heading.n, str(heading)
+                            )
+                        )
                     i, s = for_stmnt
                     del sub_stmnts[i]
                     s.cond = last_stmnt
