@@ -1,23 +1,10 @@
-from argparse import (
-    ArgumentParser
-)
-from six.moves.tkinter import (
-    ALL,
-    BOTH,
-    BROWSE,
-    HORIZONTAL,
-    RAISED,
-)
-from git import (
-    Repo
-)
 from common import (
     bidict,
     dismiss,
     DynamicGraphPlacer2D,
     ee,
     listen,
-    mlget as _
+    mlget as _,
 )
 from widgets import (
     add_scrollbars_native,
@@ -31,6 +18,20 @@ from common.git.macrograph import (
     GitMacrograph,
     GitMgEdge,
     GitMgNode,
+)
+
+from argparse import (
+    ArgumentParser,
+)
+from git import (
+    Repo,
+)
+from six.moves.tkinter import (
+    ALL,
+    BOTH,
+    BROWSE,
+    HORIZONTAL,
+    RAISED,
 )
 
 
