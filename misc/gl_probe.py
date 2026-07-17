@@ -1,5 +1,5 @@
 """
-sudo python3 -m pip install --upgrade pyopengl_accelerate
+sudo python3 -m pip install --upgrade pyopengl pyopengl_accelerate
 sudo apt install python3-opengl togl-demos
 """
 
