@@ -9,10 +9,11 @@ from common import (
 )
 from widgets import (
     add_scrollbars_native,
-    AutoPanedWindow,
     CanvasDnD,
     GUIFrame,
     GUITk,
+    HideShowBinding,
+    MenuBuilder,
     VarToplevel,
     VarTreeview,
 )
@@ -31,9 +32,8 @@ from git import (
 from six.moves.tkinter import (
     ALL,
     BOTH,
+    BooleanVar,
     BROWSE,
-    HORIZONTAL,
-    RAISED,
 )
 
 
@@ -528,26 +528,23 @@ class GGVWindow(GUITk):
         GUITk.__init__(self)
         self.title(_("Git Graph Viewer"))
 
-        ap = AutoPanedWindow(self,
-            sashrelief = RAISED,
-            orient = HORIZONTAL,
-        )
-        ap.pack(fill = BOTH, expand = True)
-
-        self._ggvw = ggvw = GGVWidget(ap, sizegrip = False)
-
-        ap.add(ggvw, sticky = "NESW")
-
-        self._gevw = gevw = GEVWidget(ap, sizegrip = True)
-
-        ap.add(gevw, sticky = "NESW")
+        self._ggvw = ggvw = GGVWidget(self, sizegrip = True)
+        ggvw.pack(fill = BOTH, expand = True)
 
         ggvw.bind("<<Edge>>", self._on_edge, "+")
         ggvw.bind("<<Node>>", self._on_node, "+")
+
+        self._gevw = gevw = GEVWindow(self)
         gevw.bind("<<Commit>>", self._on_commit, "+")
 
         # print("repo = " + repo)
         ggvw.repo_path = repo
+
+        with MenuBuilder(self) as menubar:
+            with menubar(_("Windows")) as windows_menu:
+                self._v_gevw = v = BooleanVar(self)
+                windows_menu(gevw.title(), variable = v)
+                HideShowBinding(gevw, v)
 
         self._commit = None
 
@@ -586,6 +583,7 @@ class GGVWindow(GUITk):
     def _on_edge(self, e):
         edge = e.widget.edge
         self._gevw.edge = [edge._ancestor] + edge + [edge._descendant]
+        self._v_gevw.set(True)
 
     def _on_node(self, e):
         self.commit = self._ggvw.node
