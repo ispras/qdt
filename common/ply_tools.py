@@ -7,17 +7,15 @@ __all__ = [
   , "make_count_columns"
 ]
 
+
+from .ply_helpers import (
+    iter_tokens,
+)
+
 from types import (
     FunctionType,
     MethodType
 )
-from .pypath import (
-    pypath
-)
-with pypath("..ply"):
-    from ply.helpers import (
-        iter_tokens
-    )
 
 
 def gen_tokens(glob):
