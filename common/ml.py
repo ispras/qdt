@@ -69,7 +69,7 @@ class ML(FormatVar):
         def update(self):
             val = ML.current_translation.gettext(self.key_value)
             # Previously used `lgettext` has been seen in at most Py3.10.
-            # Moreover, Py3 doc recomends to avoid using l-prefixed functions.
+            # Moreover, Py3 doc recommends to avoid using l-prefixed functions.
             self.set(val)
     else:
         def update(self):
