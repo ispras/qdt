@@ -6,6 +6,9 @@ __all__ = [
 from common import (
     mlget as _,
 )
+from .device_tree_widget import (
+    QOMTypeSelectDialog,
+)
 from .gui_frame import (
     GUIFrame,
 )
@@ -15,9 +18,6 @@ from .hotkey import (
 from qemu import (
     MachineNodeOperation,
     MOp_SetCPUAttr,
-)
-from .device_tree_widget import (
-    QOMTypeSelectDialog,
 )
 from .settings_window import (
     QOMInstanceSettingsWidget,
@@ -56,7 +56,7 @@ class CPUSettingsWidget(QOMInstanceSettingsWidget, object):
 
         b = VarButton(fr,
             text = _("Select"),
-            command = self.on_press_select_qom_type
+            command = self.on_press_select_qom_type,
         )
         b.grid(row = 0, column = 2, sticky = "EW")
 
