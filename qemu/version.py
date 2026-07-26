@@ -115,8 +115,8 @@ def define_only_qemu_2_6_0_types():
     add_tcg_type = tcg_header.add_type
     for n in iter_specified_type_names(
         "tcg",
-        ("signed", "unsigned"),
-        ("short", "long"),
+        ("signed", "unsigned",),
+        ("short", "long",),
     ):
         add_tcg_type(Type(n, incomplete = False))
 
