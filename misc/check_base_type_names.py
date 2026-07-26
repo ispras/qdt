@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     code = "\n".join(lines)
 
-    print("Compilling code...\n%s\n\n" % code)
+    print("Compiling code...\n%s\n\n" % code)
 
     gcc = Popen(
         [
