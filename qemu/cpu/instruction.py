@@ -146,7 +146,7 @@ class Instruction(object):
 
     The string may contain <places, for, formatted, operands>.
     Look `name_to_format` parameter description of CPUInfo.__doc__ for
-    farther explanation.
+    further explanation.
 
 :param comment:
     string to be inserted into the generated semantic boilerplate code (the
