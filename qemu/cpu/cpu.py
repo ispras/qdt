@@ -146,8 +146,8 @@ spec_and_len2typename = {
 
 re_format_specifier = compile("(?<!%)(?:%%)*(%(?:"
     "(?:[-+ #0]{0,5})"         # flags
-    r"(?:\d+|\*)?"              # width
-    r"(?:\.(?:\d+|\*))?"        # precision
+    r"(?:\d+|\*)?"             # width
+    r"(?:\.(?:\d+|\*))?"       # precision
     "(hh|h|l|ll|j|z|t|L)?"     # length
     "([diuoxXfFeEgGaAcspn])))" # specifier
 )
