@@ -166,8 +166,7 @@ class Node(TypeContainer):
         if indent_children is not None:
             self.indent_children = indent_children
         self.children = []
-        for child in children:
-            self.add_child(child)
+        self.add_children(children)
 
     def __call__(self, *children):
         self.add_children(children)
