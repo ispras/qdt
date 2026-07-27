@@ -1061,7 +1061,7 @@ class OpTernCond(Operator):
         super(OpTernCond, self).__init__(cond, true_val, false_val)
 
     def _write_children(self, writer):
-        cond, true_val, false_fal = self.children
+        cond, true_val, false_val = self.children
 
         self.out_child(cond, writer)
 
@@ -1075,7 +1075,7 @@ class OpTernCond(Operator):
         writer.write(":")
         writer.write(self.delim)
 
-        self.out_child(false_fal, writer)
+        self.out_child(false_val, writer)
 
 
 op_priority = {
