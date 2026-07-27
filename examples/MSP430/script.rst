@@ -302,7 +302,7 @@ AMD64) и проверяемую, а затем запустить под отл
 	qdt/src/c2t.py \
 	    -t ^.+\\.c$ \
 	    -s ^_readme_.*$ \
-	    -s ^.*m_stack_u?((32)|(64)).*$ \
+	    -s ^.*_stack_.?((32)|(64)).*$ \
 	    -j 8 \
 	    -e 0 \
 	    qdt/src/examples/MSP430/msp430/config_msp430g2553.py
