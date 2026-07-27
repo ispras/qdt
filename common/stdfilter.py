@@ -42,17 +42,22 @@ class LineFilter:
     infix = False
 
     def _iter_filter(self, data, a, kw):
-        i = iter(data.splitlines(keepends = True))
-        if self.infix:
-            for l in i:
-                yield self.__infix__(l)
-                break
-        for l in i:
-            yield self.__line__(l)
         if data:
-            self.infix = data[-1] not in "\r\n"
+            i = iter(data.splitlines(keepends = True))
+            if self.infix:
+                for l in i:
+                    yield self.__infix__(l)
+                    break
+            for l in i:
+                yield self.__line__(l)
+            self.infix = l[-1] not in "\r\n"
         else:
-            self.infix = True
+            if self.infix:
+                yield self.__infix__(data)
+                # self.infix = True # already
+            else:
+                yield self.__line__(data)
+                self.infix = True
 
     def __infix__(self, data):
         return data
