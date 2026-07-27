@@ -376,6 +376,15 @@ class ProcessWithErrCatching(Thread):
         # If the process has been explicitly wiped, do not `c2t_exit`
         if not self._wiped:
             if process.returncode != 0:
+                if not isinstance(err, str):
+                    try:
+                        err = err.decode("utf-8")
+                    except:
+                        try:
+                            err = err.decode("charmap")
+                        except:
+                            err = repr(err)
+
                 c2t_exit(err, prog = self.prog)
 
     def wipe(self):
