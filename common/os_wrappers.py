@@ -141,11 +141,9 @@ else:
     fixpath = lambda x : x
 
     from os import (
+        _exit,
         fork,
         setpgrp
-    )
-    from os import (
-        _exit
     )
 
     def demonize():
