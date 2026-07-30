@@ -598,6 +598,11 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
             self._sel_start = self._sel_limit = None
             self.draw()
 
+        if not self._picked_lines:
+            # Text view is fully scrolled to the end.
+            # No lines are displayed.
+            # Nothing to select.
+            return
         self._state = selecting_started
         self._sel_start_point = e.x, e.y
 
