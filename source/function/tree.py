@@ -1112,7 +1112,7 @@ op_priority = {
     OpLogAnd:        11,
     OpLogOr:         12,
     OpTernCond:      13,
-    OpAssign:        13,
-    OpDeclareAssign: 13,
-    OpCombAssign:    13,
+    OpAssign:        14,
+    OpDeclareAssign: 14,
+    OpCombAssign:    14,
 }
