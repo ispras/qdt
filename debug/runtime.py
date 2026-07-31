@@ -2,29 +2,34 @@ __all__ = [
     "Runtime"
 ]
 
-from traceback import (
-    print_exc
-)
-from threading import (
-    Thread
-)
-from collections import (
-    defaultdict,
-    deque
-)
-from itertools import (
-    repeat
-)
 from common import (
-    charcodes,
     bstr,
-    notifier,
     cached,
-    reset_cache
+    charcodes,
+    notifier,
+    reset_cache,
 )
 from .value import (
     Returned,
-    Value
+    Value,
+)
+
+from collections import (
+    defaultdict,
+    deque,
+)
+from itertools import (
+    repeat,
+)
+from six import (
+    integer_types,
+)
+from threading import (
+    Event,
+    Thread,
+)
+from traceback import (
+    print_exc,
 )
 
 
@@ -36,13 +41,30 @@ class Breakpoints(object):
         self._alive = True
 
     def __call__(self):
+        rt = self._rt
+        target = rt.target
+        event = target.stop_event
+        thread = target.thread
+
+        rt._Runtime__notify_stop(*event)
+
         self.__notify_break()
 
-        rt = self._rt
-        rt.on_resume()
-        # This breakpoint can be removed during preceding notification.
-        if self._alive:
-            rt.target.step_over_br()
+        if rt._pause:
+            rt._pause = False
+
+            # `run` should return control
+            target.exit = True
+
+            # Remember the breakpoint because a step over will likely be
+            # needed before target resumption.
+            rt._breakpoint = self
+        else:
+            rt.on_resume(thread)
+
+            # This breakpoint can be removed during preceding notification.
+            if self._alive:
+                target.step_over_br()
 
     # See: https://stackoverflow.com/a/5288992/7623015
     def __bool__(self): # Py3
@@ -51,6 +73,10 @@ class Breakpoints(object):
     __nonzero__ = __bool__ # Py2
 
 
+@notifier(
+    "stop", # RSP stop event parts: kind, `int` signal, `dict` data
+    "resume" # thread id
+)
 class Runtime(object):
     "A context of debug session with access to DWARF debug information."
 
@@ -70,11 +96,15 @@ class Runtime(object):
         self.target = target
         self.dic = dic
 
-        self.pc = target.registers.index(target.pc_reg)
+        self.reg_idx = reg_idx = dict(
+            (n, i) for (i, n) in enumerate(target.registers)
+        )
+
+        self.pc_idx = reg_idx[target.pc_reg]
         self.base_address = base_address
 
         # cache of register values converted to integer
-        self.regs = [None] * len(target.registers)
+        self.regs = [None] * len(reg_idx)
 
         # support for `cached` decorator
         self.__lazy__ = []
@@ -85,7 +115,7 @@ class Runtime(object):
             # TODO: account targets's calling convention
             self.return_reg = 0
         else:
-            self.return_reg = target.registers.index(return_reg_name)
+            self.return_reg = reg_idx[return_reg_name]
 
         # TODO: this must be done using DWARF because "bitsize" and address
         # size are not same values semantically (but same by implementation).
@@ -99,20 +129,72 @@ class Runtime(object):
         # breakpoints and its handlers
         self.brs = defaultdict(lambda : Breakpoints(self))
 
+        # Is there a request to pause the target?
+        self._pause = False
+        self._resumed = Event()
+        # If the target has been paused on a breakpoint, this attribute refers
+        # to the breakpoint.
+        self._breakpoint = None
+        self._exiting = False
+
+    def pause(self):
+        """ Ask to pause after current or soonest breakpoint handling. Method
+`run` will return control.
+        """
+        self._pause = True
+        # TODO: Ctrl-C (0x03) target interruption.
+        # See: https://sourceware.org/gdb/onlinedocs/gdb/Interrupts.html
+        # But `pyrsp` does not support it now.
+
+    def run(self):
+        "Start the target for a first time or resume it after pause."
+        t, br = self.target, self._breakpoint
+
+        if br is not None: # paused?
+            self.on_resume(t.thread)
+
+            # Do it exactly after `on_resume` because it allows "resume" event
+            # watchers to distinguish immediate resumption after a breakpoint
+            # handling and a resumption after a pause. Last case, `paused`
+            # returns `True`.
+            self._breakpoint = None
+
+            if br._alive:
+                t.step_over_br()
+
+        t.run(setpc = False)
+
+    @property
+    def paused(self):
+        "If the target is paused. I.e. after a breakpoint handling."
+        return self._breakpoint is not None
+
     def add_br(self, addr_str, cb, quiet = False):
         cbs = self.brs[addr_str]
         if not cbs:
             self.target.set_br_a(addr_str, cbs, quiet)
         cbs.watch_break(cb)
 
-    def remove_br(self, addr_str, cb, quiet = False):
+    def br(self, addr, *a, **kw):
+        ba = self.base_address
+        if isinstance(addr, integer_types):
+            addr = self.target.reg_fmt % (addr + ba)
+        self.add_br(addr, *a, **kw)
+
+    def rbr(self, addr, *a, **kw):
+        ba = self.base_address
+        if isinstance(addr, integer_types):
+            addr = self.target.reg_fmt % (addr + ba)
+        self.remove_br(addr, *a, **kw)
+
+    def remove_br(self, addr_str, cb = None, quiet = False):
         cbs = self.brs[addr_str]
         cbs.unwatch_break(cb)
         if not cbs:
             cbs._alive = False
             self.target.del_br(addr_str, quiet)
 
-    def on_resume(self, *_, **__):
+    def on_resume(self, thread, *_, **__):
         """ When target resumes all cached data must be reset because it is
 not actual now.
         """
@@ -122,6 +204,8 @@ not actual now.
         self.regs[:] = repeat(None, len(self.regs))
 
         reset_cache(self)
+
+        self.__notify_resume(thread)
 
     def get_reg(self, idx):
         regs = self.regs
@@ -135,41 +219,72 @@ not actual now.
 
         return val
 
-    def co_run_target(self):
+    def exit(self):
+        "exit `co_run_target` during next or current breakpoint"
+        self._exiting = True
+        self.pause()
+
+    def rsp_client_main(self, kill = True):
         target = self.target
+        try:
+            self.run()
+            while self.paused:
+                while not self._resumed.wait(0.5):
+                    if self._exiting:
+                        break
 
-        def run():
-            try:
-                target.run(setpc = False)
-            except:
-                print_exc()
-                print("Target PC 0x%x" % (self.get_reg(self.pc)))
+                if self._exiting:
+                    break
 
+                self.run()
+        except:
+            print_exc()
+            print("Target PC 0x%x" % (self.pc))
+
+        if kill:
             try:
                 target.send(b"k")
             except:
                 print_exc()
 
-        t = Thread(target = run)
-        t.name = "RSP client"
+    def start_rsp_thread(self,
+        name = "RSP client",
+        **kw
+    ):
+        t = Thread(
+            target = self.rsp_client_main,
+            kwargs = kw,
+        )
+        t.name = name
         t.start()
+        return t
 
+    def co_run_target(self, **kw):
+        t = self.start_rsp_thread(**kw)
         while t.is_alive():
             yield False
+
+    @cached
+    def pc(self):
+        return self.get_reg(self.pc_idx)
+
+    @cached
+    def bpc(self):
+        return self.pc - self.base_address
 
     @cached
     def returned_value(self):
         """ Value being returned by current subprogram. Note that it is
 normally correct only when the target is stopped at the subprogram epilogue.
         """
-        pc = self.get_reg(self.pc) - self.base_address
+        pc = self.bpc
         val_desc = Returned(self.dic, self.return_reg, pc)
         return Value(val_desc, runtime = self, version = self.version)
 
     @cached
     def subprogram(self):
         "Subprogram corresponding to current program counter."
-        pc = self.get_reg(self.pc) - self.base_address
+        pc = self.bpc
         return self.dic.subprogram(pc)
 
     @cached
@@ -181,7 +296,7 @@ normally correct only when the target is stopped at the subprogram epilogue.
 
     @cached
     def cfa(self):
-        pc = self.get_reg(self.pc) - self.base_address
+        pc = self.bpc
         cfa_expr = self.dic.cfa(pc)
         cfa = cfa_expr.eval(self)
         return cfa
@@ -250,17 +365,21 @@ TODO: target registers
         """
 
         prog = self.subprogram
-        _locals = prog.data
-        bname = bstr(name)
 
-        try:
-            datum = _locals[bname]
-        except KeyError:
-            cu = prog.die.cu
-            _globals = self.dic.get_CU_global_variables(cu)
-            try:
-                datum = _globals[bname]
-            except KeyError:
-                raise KeyError("No name '%s' found in runtime" % name)
+        while True:  # not a loop
+            if prog is not None:
+                _locals = prog.data
+                bname = bstr(name)
+                try:
+                    datum = _locals[bname]
+                except KeyError:
+                    cu = prog.die.cu
+                    _globals = self.dic.get_CU_global_variables(cu)
+                    try:
+                        datum = _globals[bname]
+                    except KeyError:
+                        break
+                return Value(datum, runtime = self, version = self.version)
+            break
 
-        return Value(datum, runtime = self, version = self.version)
+        raise KeyError("No name '%s' found in runtime" % name)
