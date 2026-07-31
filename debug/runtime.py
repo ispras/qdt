@@ -224,7 +224,7 @@ not actual now.
         self._exiting = True
         self.pause()
 
-    def co_run_target(self):
+    def co_run_target(self, kill = True):
         target = self.target
 
         def run():
@@ -243,10 +243,11 @@ not actual now.
                 print_exc()
                 print("Target PC 0x%x" % (self.pc))
 
-            try:
-                target.send(b"k")
-            except:
-                print_exc()
+            if kill:
+                try:
+                    target.send(b"k")
+                except:
+                    print_exc()
 
         t = Thread(target = run)
         t.name = "RSP client"
