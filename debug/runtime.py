@@ -199,6 +199,11 @@ not actual now.
 
         return val
 
+    def exit(self):
+        "exit `co_run_target` during next or current breakpoint"
+        self._exiting = True
+        self.pause()
+
     def co_run_target(self):
         target = self.target
 
