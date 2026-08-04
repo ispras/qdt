@@ -1,3 +1,12 @@
+from sys import (
+    path as PYTHONPATH,
+)
+from os.path import (
+    abspath,
+    dirname,
+)
+PYTHONPATH.insert(0, dirname(dirname(abspath(__file__))))
+
 from common import (
     mlget as _,
     iter_file_unique_subpaths,
