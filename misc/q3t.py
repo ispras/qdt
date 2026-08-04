@@ -2,6 +2,14 @@
 
 """ Qemu Target Test Tool
 """
+from sys import (
+    path as PYTHONPATH,
+)
+from os.path import (
+    abspath,
+    dirname,
+)
+PYTHONPATH.insert(0, dirname(dirname(abspath(__file__))))
 
 from common import (
     CLICoDispatcher,
@@ -18,7 +26,6 @@ from argparse import (
     ArgumentParser,
 )
 from os.path import (
-    abspath,
     isfile,
     join,
 )
