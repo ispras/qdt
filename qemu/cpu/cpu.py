@@ -700,6 +700,10 @@ class CPUType(QOMCPU):
                 "char*", "ic_file_name",
                 is_property = True,
             ))
+            self.add_state_field(QOMTypeStateField(
+                "bool", "ic_file_reset",
+                is_property = True,
+            ))
 
         cpu_arch_state = env_state_desc.gen_c_type()
 

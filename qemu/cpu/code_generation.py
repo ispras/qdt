@@ -1551,6 +1551,7 @@ def fill_update_icount_body(cputype, function):
 def fill_update_icounts_body(cputype, function):
     cpu, = function.args
     ic_file_name = OpSDeref(cpu, "ic_file_name")
+    ic_file_reset = OpSDeref(cpu, "ic_file_reset")
     fp = Type["FILE*"]("fp")
     sz = Type["size_t"]("sz")
     buf = Type["char*"]("buf")
@@ -1599,19 +1600,21 @@ def fill_update_icounts_body(cputype, function):
         )
     body(
         BranchIf(OpLogNot(ic_file_name))(Return()),
-        OpAssign(fp, Call("fopen", ic_file_name, CSTR("rb"))),
-        BranchIf(OpNEq(fp, NULL))(
-            Call("fseek", fp, 0, Type["SEEK_END"]),
-            OpAssign(sz, Call("ftell", fp)),
-            BranchIf(OpGreater(sz, 0))(
-                OpAssign(buf, Call("g_malloc", sz + 1)),
-                Call("fseek", fp, 0, Type["SEEK_SET"]),
-                Call("fread", buf, 1, sz, fp),
-                OpAssign(OpIndex(buf, sz), 0),
-                OpAssign(loaded, Call("qobject_from_json", buf, NULL)),
-                Call("g_free", buf),
+        BranchIf(OpLogNot(ic_file_reset))(
+            OpAssign(fp, Call("fopen", ic_file_name, CSTR("rb"))),
+            BranchIf(OpNEq(fp, NULL))(
+                Call("fseek", fp, 0, Type["SEEK_END"]),
+                OpAssign(sz, Call("ftell", fp)),
+                BranchIf(OpGreater(sz, 0))(
+                    OpAssign(buf, Call("g_malloc", sz + 1)),
+                    Call("fseek", fp, 0, Type["SEEK_SET"]),
+                    Call("fread", buf, 1, sz, fp),
+                    OpAssign(OpIndex(buf, sz), 0),
+                    OpAssign(loaded, Call("qobject_from_json", buf, NULL)),
+                    Call("g_free", buf),
+                ),
+                Call("fclose", fp),
             ),
-            Call("fclose", fp),
         ),
     )
 
