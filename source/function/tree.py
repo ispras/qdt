@@ -892,13 +892,13 @@ class OpNot(UnaryOperator):
 class OpMinus(UnaryOperator):
 
     def __init__(self, arg1):
-        super(OpNot, self).__init__("-", arg1)
+        super(OpMinus, self).__init__("-", arg1)
 
 
 class OpPlus(UnaryOperator):
 
     def __init__(self, arg1):
-        super(OpNot, self).__init__("+", arg1)
+        super(OpPlus, self).__init__("+", arg1)
 
 
 class BinaryOperator(Operator):
