@@ -6,23 +6,26 @@ __all__ = [
       , "Ifdef"
       , "CNode"
           , "Label"
-          , "LoopWhile"
-          , "LoopDoWhile"
-          , "LoopFor"
-          , "BranchIf"
-          , "BranchSwitch"
-          , "BranchElse"
-          , "SwitchCase"
-          , "SwitchCaseDefault"
+          , "CBlock"
+              , "LoopWhile"
+              , "LoopDoWhile"
+              , "LoopFor"
+              , "BranchIf"
+              , "BranchSwitch"
+              , "BranchElse"
+              , "SwitchCase"
+              , "SwitchCaseDefault"
           , "StrConcat"
           # SemicolonPresence
               , "Break"
+              , "Continue"
               , "Call"
               , "Goto"
               , "Declare"
               , "MCall"
               , "Return"
               # Operator
+                  , "OpCast"
                   , "OpIndex"
                   , "OpSDeref"
                   # UnaryOperator
@@ -35,9 +38,10 @@ __all__ = [
                       , "OpPreInc"
                       , "OpDeref"
                       , "OpNot"
-                      , "OpCast"
+                      , "OpMinus"
+                      , "OpPlus"
                       , "OpSizeOf"
-                  # BinaryOperator
+                  , "BinaryOperator"
                       , "OpAssign"
                       , "OpDeclareAssign"
                       , "OpCombAssign"
@@ -51,6 +55,7 @@ __all__ = [
                       , "OpXor"
                       , "OpLShift"
                       , "OpRShift"
+                      , "OpRotR"
                       , "OpLogAnd"
                       , "OpLogOr"
                       , "OpLogNot"
@@ -61,6 +66,8 @@ __all__ = [
                       , "OpGreater"
                       , "OpLess"
                       , "CaseRange"
+                  , "OpTernCond"
+  , "define_python_operators"
   , "flat_list"
 ]
 
@@ -82,7 +89,6 @@ from ..type_container import (
 from common import (
     ee,
     SkipVisiting,
-    lazy
 )
 from six import (
     integer_types
@@ -140,24 +146,30 @@ class Node(TypeContainer):
     __node__ = ("children",)
     __type_references__ = __node__
 
-    def __init__(self,
-        val = "",
-        new_line = "",
-        indent_children = True,
-        children = []
-    ):
-        super(Node, self).__init__()
+    val = ""
+    new_line = ""
+    indent_children = True
 
-        self.val = val
-        self.new_line = new_line
-        self.indent_children = indent_children
+    def __init__(self,
+        val = None,
+        new_line = None,
+        indent_children = None,
+        children = [],
+        **kw
+    ):
+        super(Node, self).__init__(**kw)
+
+        if val is not None:
+            self.val = val
+        if new_line is not None:
+            self.new_line = new_line
+        if indent_children is not None:
+            self.indent_children = indent_children
         self.children = []
-        for child in children:
-            self.add_child(child)
+        self.add_children(children)
 
     def __call__(self, *children):
-        for c in children:
-            self.add_child(c)
+        self.add_children(children)
         return self
 
     def add_child(self, child):
@@ -165,6 +177,11 @@ class Node(TypeContainer):
             self.children.extend(flat_iter(child))
         else:
             self.children.append(child)
+
+    def add_children(self, children):
+        add_child = self.add_child
+        for c in children:
+            add_child(c)
 
     def out_children(self, writer):
         if self.indent_children:
@@ -185,17 +202,18 @@ class Node(TypeContainer):
 
 class Ifdef(Node):
 
-    def __init__(self, val, *args):
-        if isinstance(val, Macro):
-            val = val.c_name
+    __node__ = Node.__node__ + ("cond",)
+    __type_references__ = __node__
+
+    new_line = None
+    indent_children = False
+
+    def __init__(self, cond, *children, **kw):
         super(Ifdef, self).__init__(
-            # Since the macro can be undefined and unknown to the model,
-            # we refer it using its string name.
-            val = str(val),
-            indent_children = False,
-            children = args
+            children = children,
+            **kw
         )
-        self.new_line = None
+        self.cond = cond
 
     def __c__(self, writer):
         with writer.cpp:
@@ -205,6 +223,13 @@ class Ifdef(Node):
         with writer.cpp:
             writer.pop_indent()
             writer.line("endif")
+
+    @property
+    def val(self):
+        cond = self.cond
+        if isinstance(cond, Macro):
+            return cond.c_name
+        return cond
 
 
 class CNode(Node):
@@ -221,43 +246,16 @@ class CNode(Node):
     def out_child(child, writer):
         child.__c__(writer)
 
-    def __add__(self, arg):
-        return OpAdd(self, arg)
-
-    def __radd__(self, arg):
-        return OpAdd(arg, self)
-
-    def __and__(self, arg):
-        return OpAnd(self, arg)
-
-    def __sub__(self, arg):
-        return OpSub(self, arg)
-
-    def __rsub__(self, arg):
-        return OpSub(arg, self)
-
-    def __or__(self, arg):
-        return OpOr(self, arg)
-
-    def __xor__(self, arg):
-        return OpXor(self, arg)
-
-    def __lshift__(self, arg):
-        return OpLShift(self, arg)
-
-    def __rshift__(self, arg):
-        return OpRShift(self, arg)
-
-    def __invert__(self):
-        return OpNot(self)
-
 
 class Comment(Node):
 
-    def __init__(self, text):
-        super(Comment, self).__init__(
-            val = "/*@s" + text.replace(" ", "@s") + "@s*/"
-        )
+    def __init__(self, text, **kw):
+        super(Comment, self).__init__(**kw)
+        self.text = text
+
+    @property
+    def val(self):
+        return "/*@s" + self.text.replace(" ", "@s") + "@s*/"
 
 
 class Label(CNode):
@@ -280,11 +278,11 @@ class NewLine(Node):
 class MacroBranch(Node):
     """ MacroBranch describes construction like MACRO(x, y) { ... } """
 
-    __node__ = ("children", "macro_call")
+    __node__ = Node.__node__ + ("macro_call",)
     __type_references__ = ("macro_call",)
 
-    def __init__(self, macro_call):
-        super(MacroBranch, self).__init__()
+    def __init__(self, macro_call, **kw):
+        super(MacroBranch, self).__init__(**kw)
         self.macro_call = macro_call
 
     def __c__(self, writer):
@@ -294,9 +292,13 @@ class MacroBranch(Node):
         writer.write("}")
 
 
-class LoopWhile(CNode):
+class CBlock(CNode):
+    pass
 
-    __node__ = ("children", "cond")
+
+class LoopWhile(CBlock):
+
+    __node__ = CBlock.__node__ + ("cond",)
     __type_references__ = ("cond",)
 
     def __init__(self, cond):
@@ -311,13 +313,13 @@ class LoopWhile(CNode):
         writer.write("}")
 
 
-class LoopDoWhile(CNode):
+class LoopDoWhile(CBlock):
 
     __node__ = ("children", "cond")
     __type_references__ = ("cond",)
 
-    def __init__(self, cond):
-        super(LoopDoWhile, self).__init__()
+    def __init__(self, cond, **kw):
+        super(LoopDoWhile, self).__init__(**kw)
         self.cond = cond
 
     def __c__(self, writer):
@@ -328,13 +330,13 @@ class LoopDoWhile(CNode):
         writer.write(");")
 
 
-class LoopFor(CNode):
+class LoopFor(CBlock):
 
     __node__ = ("children", "init", "cond", "step")
     __type_references__ = ("init", "cond", "step")
 
-    def __init__(self, init = None, cond = None, step = None):
-        super(LoopFor, self).__init__()
+    def __init__(self, init = None, cond = None, step = None, **kw):
+        super(LoopFor, self).__init__(**kw)
         self.init = init
         self.cond = cond
         self.step = step
@@ -356,13 +358,13 @@ class LoopFor(CNode):
         writer.write("}")
 
 
-class BranchIf(CNode):
+class BranchIf(CBlock):
 
     __node__ = ("children", "cond", "else_blocks")
     __type_references__ = ("cond", "else_blocks")
 
-    def __init__(self, cond):
-        super(BranchIf, self).__init__()
+    def __init__(self, cond, **kw):
+        super(BranchIf, self).__init__(**kw)
         self.cond = cond
         self.else_blocks = []
 
@@ -390,14 +392,14 @@ class BranchIf(CNode):
         writer.write("}")
 
 
-class BranchElse(CNode):
+class BranchElse(CBlock):
     """ BranchElse must be added to parent BranchIf node using `add_else`. """
 
     __node__ = ("children", "cond")
     __type_references__ = ("cond",)
 
-    def __init__(self, cond = None):
-        super(BranchElse, self).__init__()
+    def __init__(self, cond = None, **kw):
+        super(BranchElse, self).__init__(**kw)
         self.cond = cond
 
     def __c__(self, writer):
@@ -410,18 +412,20 @@ class BranchElse(CNode):
         self.out_children(writer)
 
 
-class BranchSwitch(CNode):
+class BranchSwitch(CBlock):
 
-    __node__ = ("children", "var")
+    __node__ = CBlock.__node__ + ("var",)
     __type_references__ = ("var",)
+
+    indent_children = False
 
     def __init__(self, var,
         add_break_in_default = True,
         cases = [],
-        child_indent = False,
-        separate_cases = False
+        separate_cases = False,
+        **kw
     ):
-        super(BranchSwitch, self).__init__(indent_children = child_indent)
+        super(BranchSwitch, self).__init__(**kw)
         self.default_case = None
         self.add_break_in_default = add_break_in_default
         self.var = var
@@ -436,12 +440,7 @@ class BranchSwitch(CNode):
         self.children.append(case)
 
     def add_cases(self, cases):
-        for case in cases:
-            self.add_child(case)
-
-    def __call__(self, *cases):
-        self.add_cases(cases)
-        return self
+        return self(*cases)
 
     def __c__(self, writer):
         if not self.default_case:
@@ -469,10 +468,10 @@ class BranchSwitch(CNode):
         children[:] = new_ch
 
 
-class SwitchCase(CNode):
+class SwitchCase(CBlock):
 
-    def __init__(self, const, add_break = True):
-        super(SwitchCase, self).__init__()
+    def __init__(self, const, add_break = True, **kw):
+        super(SwitchCase, self).__init__(**kw)
         self.add_break = add_break
 
         if isinstance(const, integer_types):
@@ -481,6 +480,13 @@ class SwitchCase(CNode):
             const = CaseRange(*const)
 
         self.const = const
+
+    @property
+    def new_line(self):
+        if DeclarationSearcher(self).visit().have_declaration:
+            return "}"
+        else:
+            return None
 
     def __c__(self, writer):
         if (   self.add_break
@@ -496,18 +502,23 @@ class SwitchCase(CNode):
         if DeclarationSearcher(self).visit().have_declaration:
             writer.line(":@b{")
             self.out_children(writer)
-            self.new_line = "}"
         else:
             writer.line(":")
             self.out_children(writer)
-            self.new_line = None
 
 
-class SwitchCaseDefault(CNode):
+class SwitchCaseDefault(CBlock):
 
-    def __init__(self, add_break = True):
-        super(SwitchCaseDefault, self).__init__()
+    def __init__(self, add_break = True, **kw):
+        super(SwitchCaseDefault, self).__init__(**kw)
         self.add_break = add_break
+
+    @property
+    def new_line(self):
+        if DeclarationSearcher(self).visit().have_declaration:
+            return "}"
+        else:
+            return None
 
     def __c__(self, writer):
         if (   self.add_break
@@ -521,19 +532,18 @@ class SwitchCaseDefault(CNode):
         if DeclarationSearcher(self).visit().have_declaration:
             writer.line("default:@b{")
             self.out_children(writer)
-            self.new_line = "}"
         else:
             writer.line("default:")
             self.out_children(writer)
-            self.new_line = None
 
 
 # TODO: joining "a""b" to "ab". Optionally? By a helper function?
 class StrConcat(CNode):
 
-    def __init__(self, *args, **kw_args):
-        super(StrConcat, self).__init__(children = args)
-        self.delim = kw_args.get("delim", "")
+    def __init__(self, *children, **kw_args):
+        delim = kw_args.pop("delim", "")
+        super(StrConcat, self).__init__(children = children, **kw_args)
+        self.delim = delim
 
     def __c__(self, writer):
         writer.join(self.delim, self.children, self.out_child)
@@ -542,20 +552,22 @@ class StrConcat(CNode):
 class SemicolonPresence(CNode):
     "SemicolonPresence class is used to decide when to print semicolon."
 
-    def __init__(self, *args, **kw_args):
-        kw_args["new_line"] = ";"
-        super(SemicolonPresence, self).__init__(*args, **kw_args)
+    new_line = ";"
 
 
 class Break(SemicolonPresence):
 
-    def __init__(self):
-        super(Break, self).__init__(val = "break")
+    val = "break"
+
+
+class Continue(SemicolonPresence):
+
+    val = "continue"
 
 
 class Call(SemicolonPresence):
 
-    def __init__(self, func, *args):
+    def __init__(self, func, *args, **kw):
         if isinstance(func, str):
             func = Type[func]
         elif not isinstance(func, (Variable, Function, CNode)):
@@ -563,7 +575,7 @@ class Call(SemicolonPresence):
                 "Invalid type of func in Call: " + type(func).__name__
             )
 
-        super(Call, self).__init__(children = (func,) + args)
+        super(Call, self).__init__(children = (func,) + args, **kw)
 
     @property
     def func(self):
@@ -583,8 +595,8 @@ class Call(SemicolonPresence):
 
 class Declare(SemicolonPresence):
 
-    def __init__(self, *variables):
-        super(Declare, self).__init__(children = variables)
+    def __init__(self, *variables, **kw):
+        super(Declare, self).__init__(children = variables, **kw)
 
     def iter_variables(self):
         for child in self.children:
@@ -670,12 +682,17 @@ class MCall(SemicolonPresence):
 
     __type_references__ = ("type",)
 
-    def __init__(self, macro, *args):
-        super(MCall, self).__init__(children = args)
+    def __init__(self, macro, *args, **kw):
+        super(MCall, self).__init__(children = args, **kw)
+        self.macro = macro
+
+    @property
+    def type(self):
+        macro = self.macro
         if isinstance(macro, Macro):
-            self.type = macro
+            return macro
         else:
-            self.type = Type[macro]
+            return Type[macro]
 
     def __c__(self, writer):
         writer.write(self.type.c_name)
@@ -688,13 +705,16 @@ class MCall(SemicolonPresence):
 
 class Return(SemicolonPresence):
 
-    def __init__(self, arg = None):
-        super(Return, self).__init__()
-        if arg is not None:
-            self.val = "return" + "@b"
-            self.add_child(arg)
+    def __init__(self, *child, **kw):
+        super(Return, self).__init__(**kw)
+        self(*child)
+
+    @property
+    def val(self):
+        if self.children:
+            return "return@b"
         else:
-            self.val = "return"
+            return "return"
 
     def __c__(self, writer):
         writer.write(self.val)
@@ -704,8 +724,16 @@ class Return(SemicolonPresence):
 
 class Goto(SemicolonPresence):
 
-    def __init__(self, label):
-        super(Goto, self).__init__(val = "goto@b" + label.name)
+    __node__ = SemicolonPresence.__node__ + ("label",)
+    __type_references__ = SemicolonPresence.__type_references__ + ("label",)
+
+    def __init__(self, label, **kw):
+        super(Goto, self).__init__(**kw)
+        self.label = label
+
+    @property
+    def val(self):
+        return "goto@b" + self.label.name
 
 
 class Operator(SemicolonPresence):
@@ -713,10 +741,15 @@ class Operator(SemicolonPresence):
     prefix = ""
     delim = "@s"
     suffix = ""
+    prior = None
 
-    def __init__(self, *args, **kw_args):
-        self.prior = op_priority[type(self)]
-        super(Operator, self).__init__(children = args)
+    def __init__(self, *children, **kw_args):
+        # `prior`ity can be defined at `class` level.
+        # This is for custom operators mostly.
+        # TODO: define all `prior`ities in that way?
+        if self.prior is None:
+            self.prior = op_priority[type(self)]
+        super(Operator, self).__init__(children = children)
 
         self.parenthesis = kw_args.get("parenthesis", False)
 
@@ -727,23 +760,35 @@ class Operator(SemicolonPresence):
             if self.prior < child.prior:
                 child.parenthesis = True
 
+    def _write_children(self, writer):
+        writer.join(self.delim, self.children, self.out_child)
+
     def __c__(self, writer):
         if self.parenthesis:
             writer.write("(")
 
         writer.write(self.prefix)
-        writer.join(self.delim, self.children, self.out_child)
+        self._write_children(writer)
         writer.write(self.suffix)
         if self.parenthesis:
             writer.write(")")
 
 
+class OpCast(Operator):
+
+    prefix = "("
+    delim = ")"
+
+    def __init__(self, type_or_name, arg, **kw):
+        if isinstance(type_or_name, str):
+            type_or_name = Type[type_or_name]
+        super(OpCast, self).__init__(type_or_name, arg, **kw)
+
+
 class OpIndex(Operator):
 
-    def __init__(self, var, index):
-        super(OpIndex, self).__init__(var, index)
-        self.delim = "["
-        self.suffix = "]"
+    delim = "["
+    suffix = "]"
 
     def add_child(self, child):
         # Note, ignore `Operator.add_child` to suppress unnecessary parentheses
@@ -751,8 +796,6 @@ class OpIndex(Operator):
 
 
 class OpSDeref(Operator):
-
-    __type_references__ = ("struct",)
 
     def __init__(self, value, field):
         super(OpSDeref, self).__init__(value)
@@ -782,7 +825,7 @@ class OpSDeref(Operator):
                 struct, field
             ))
 
-    @lazy
+    @property
     def type(self):
         return self.struct.fields[self.field].type
 
@@ -799,25 +842,17 @@ class OpSDeref(Operator):
 
 
 class UnaryOperator(Operator):
-
-    def __init__(self, op_str, arg1, suffix_op = False):
-        super(UnaryOperator, self).__init__(arg1)
-        if suffix_op:
-            self.suffix = op_str
-        else:
-            self.prefix = op_str
+    pass
 
 
 class OpInc(UnaryOperator):
 
-    def __init__(self, var):
-        super(OpInc, self).__init__("++", var, suffix_op = True)
+    suffix = "++"
 
 
 class OpDec(UnaryOperator):
 
-    def __init__(self, var):
-        super(OpDec, self).__init__("--", var, suffix_op = True)
+    suffix = "--"
 
 
 OpPostDec = OpDec
@@ -828,79 +863,67 @@ OpPostInc = OpInc
 
 class OpPreDec(UnaryOperator):
 
-    def __init__(self, var):
-        super(OpPreDec, self).__init__("--", var, suffix_op = False)
+    prefix = "--"
 
 
 class OpPreInc(UnaryOperator):
 
-    def __init__(self, var):
-        super(OpPreInc, self).__init__("++", var, suffix_op = False)
-
-
-class OpCast(UnaryOperator):
-
-    __type_references__ = ("type",)
-
-    def __init__(self, type_or_name, arg):
-        if isinstance(type_or_name, Type):
-            type_name = type_or_name.c_name
-        else:
-            type_name = type_or_name
-        super(OpCast, self).__init__("(" + type_name + ")", arg)
-        self.type = Type[type_name]
+    prefix = "++"
 
 
 class OpSizeOf(UnaryOperator):
 
-    def __init__(self, arg):
-        super(OpSizeOf, self).__init__("sizeof(", arg, suffix_op = False)
-        self.suffix = ")"
+    prefix = "sizeof("
+    suffix = ")"
 
 
 class OpAddr(UnaryOperator):
 
-    def __init__(self, arg1):
-        super(OpAddr, self).__init__("&", arg1)
+    prefix = "&"
 
 
 class OpDeref(UnaryOperator):
 
-    def __init__(self, arg1):
-        super(OpDeref, self).__init__("*", arg1)
+    prefix = "*"
 
 
 class OpLogNot(UnaryOperator):
 
-    def __init__(self, arg1):
-        super(OpLogNot, self).__init__("!", arg1)
+    prefix = "!"
 
 
 class OpNot(UnaryOperator):
 
-    def __init__(self, arg1):
-        super(OpNot, self).__init__("~", arg1)
+    prefix = "~"
+
+
+class OpMinus(UnaryOperator):
+
+    prefix = "-"
+
+
+class OpPlus(UnaryOperator):
+
+    prefix = "+"
 
 
 class BinaryOperator(Operator):
 
-    def __init__(self, op_str, arg1, arg2, parenthesis):
-        super(BinaryOperator, self).__init__(arg1, arg2,
-            parenthesis = parenthesis
-        )
-        self.delim = "@b" + op_str + "@s"
+    # subclass must define `op_str`
+
+    @property
+    def delim(self):
+        return "@b" + self.op_str + "@s"
 
 
 class OpAssign(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpAssign, self).__init__("=", arg1, arg2, parenthesis)
+    op_str = "="
 
 
 class OpDeclareAssign(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpDeclareAssign, self).__init__("=", arg1, arg2, parenthesis)
+    op_str = "="
 
     @staticmethod
     def out_child(child, writer):
@@ -924,124 +947,136 @@ class OpDeclareAssign(BinaryOperator):
 
 class OpCombAssign(BinaryOperator):
 
-    def __init__(self, arg1, arg2, op_str, parenthesis = False):
-        super(OpCombAssign, self).__init__(op_str + "=",
-            arg1, arg2, parenthesis
-        )
+    def __init__(self, arg1, arg2, op_sym, **kw):
+        super(OpCombAssign, self).__init__(arg1, arg2, **kw)
+        self.op_sym = op_sym
+
+    @property
+    def op_str(self):
+        return self.op_sym + "="
 
 
 class OpAdd(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpAdd, self).__init__("+", arg1, arg2, parenthesis)
+    op_str = "+"
 
 
 class OpSub(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpSub, self).__init__("-", arg1, arg2, parenthesis)
+    op_str = "-"
 
 
 class OpMul(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpMul, self).__init__("*", arg1, arg2, parenthesis)
+    op_str = "*"
 
 
 class OpDiv(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpDiv, self).__init__("/", arg1, arg2, parenthesis)
+    op_str = "/"
 
 
 class OpRem(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpRem, self).__init__("%", arg1, arg2, parenthesis)
+    op_str = "%"
 
 
 class OpAnd(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpAnd, self).__init__("&", arg1, arg2, parenthesis)
+    op_str = "&"
 
 
 class OpOr(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpOr, self).__init__("|", arg1, arg2, parenthesis)
+    op_str = "|"
 
 
 class OpXor(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpXor, self).__init__("^", arg1, arg2, parenthesis)
+    op_str = "^"
 
 
 class OpLShift(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpLShift, self).__init__("<<", arg1, arg2, parenthesis)
+    op_str = "<<"
 
 
 class OpRShift(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpRShift, self).__init__(">>", arg1, arg2, parenthesis)
+    op_str = ">>"
+
+
+class OpRotR(BinaryOperator):
+
+    op_str = ">>>"
 
 
 class OpLogAnd(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpLogAnd, self).__init__("&&", arg1, arg2, parenthesis)
+    op_str = "&&"
 
 
 class OpLogOr(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpLogOr, self).__init__("||", arg1, arg2, parenthesis)
+    op_str = "||"
 
 
 class OpEq(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpEq, self).__init__("==", arg1, arg2, parenthesis)
+    op_str = "=="
 
 
 class OpNEq(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpNEq, self).__init__("!=", arg1, arg2, parenthesis)
+    op_str = "!="
 
 
 class OpGE(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpGE, self).__init__(">=", arg1, arg2, parenthesis)
+    op_str = ">="
 
 
 class OpLE(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpLE, self).__init__("<=", arg1, arg2, parenthesis)
+    op_str = "<="
 
 
 class OpGreater(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpGreater, self).__init__(">", arg1, arg2, parenthesis)
+    op_str = ">"
 
 
 class OpLess(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpLess, self).__init__("<", arg1, arg2, parenthesis)
+    op_str = "<"
 
 
 class CaseRange(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(CaseRange, self).__init__("...", arg1, arg2, parenthesis)
+    op_str = "..."
+
+
+class OpTernCond(Operator):
+
+    def __init__(self, cond, true_val, false_val, **kw):
+        super(OpTernCond, self).__init__(cond, true_val, false_val, **kw)
+
+    def _write_children(self, writer):
+        cond, true_val, false_val = self.children
+
+        self.out_child(cond, writer)
+
+        writer.write(self.delim)
+        writer.write("?")
+        writer.write(self.delim)
+
+        self.out_child(true_val, writer)
+
+        writer.write(self.delim)
+        writer.write(":")
+        writer.write(self.delim)
+
+        self.out_child(false_val, writer)
 
 
 op_priority = {
@@ -1058,6 +1093,8 @@ op_priority = {
     OpLogNot:        2,
     OpCast:          2,
     OpSizeOf:        2,
+    OpMinus:         2,
+    OpPlus:          2,
     OpMul:           3,
     OpDiv:           3,
     OpRem:           3,
@@ -1065,6 +1102,7 @@ op_priority = {
     OpSub:           4,
     OpLShift:        5,
     OpRShift:        5,
+    OpRotR:          5,
     OpGE:            6,
     OpLE:            6,
     OpGreater:       6,
@@ -1076,7 +1114,63 @@ op_priority = {
     OpOr:            10,
     OpLogAnd:        11,
     OpLogOr:         12,
-    OpAssign:        13,
-    OpDeclareAssign: 13,
-    OpCombAssign:    13,
+    OpTernCond:      13,
+    OpAssign:        14,
+    OpDeclareAssign: 14,
+    OpCombAssign:    14,
 }
+
+
+def define_python_operators(cls):
+    """ Define Python operators for some types to make function tree
+construction simpler. Can be a class @decorator.
+    """
+    for attr, value in PYTHON_OPERATORS.items():
+        if hasattr(cls, attr):
+            print("%s.%s: redefined" % (cls, attr))
+        setattr(cls, attr, value)
+    return cls
+
+
+PYTHON_OPERATORS = dict(
+    __invert__ = lambda self: OpNot(self),
+    __getitem__ = lambda self, key: OpIndex(self, key),
+)
+
+for name, oper in {
+    "add": OpAdd,
+    "and": OpAnd,
+    "div": OpDiv,  # Py2 compatibility
+    "truediv": OpDiv,
+    "lshift": OpLShift,
+    "mod": OpRem,
+    "mul": OpMul,
+    "or": OpOr,
+    "rshift": OpRShift,
+    "sub": OpSub,
+    "xor": OpXor,
+}.items():
+    handler = lambda self, o, _oper = oper: _oper(self, o)
+    PYTHON_OPERATORS["__" + name + "__"] = handler
+    rhandler = lambda self, o, _oper = oper: _oper(o, self)
+    PYTHON_OPERATORS["__r" + name + "__"] = rhandler
+
+for name, oper in {
+    "iadd": "+",
+    "iand": "&",
+    "idiv": "/",  # Py2 compatibility
+    "itruediv": "/",
+    "ilshift": "<<",
+    "imod": "%",
+    "imul": "*",
+    "ior": "|",
+    "irshift": ">>",
+    "isub": "-",
+    "ixor": "^",
+}.items():
+    opgen = lambda a, b, _oper = oper: OpCombAssign(a, b, _oper)
+    PYTHON_OPERATORS["__" + name + "__"] = opgen
+
+
+define_python_operators(CNode)
+define_python_operators(Variable)

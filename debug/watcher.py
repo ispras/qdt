@@ -20,7 +20,7 @@ from .line_adapter import (
 )
 
 
-re_breakpoint_pos = compile("^\s*([^:]*):([1-9][0-9]*)(\s?.*)$")
+re_breakpoint_pos = compile(r"^\s*([^:]*):([1-9][0-9]*)(\s?.*)$")
 
 def breakpoint_matches(lines, match = re_breakpoint_pos.match):
     for l in lines:

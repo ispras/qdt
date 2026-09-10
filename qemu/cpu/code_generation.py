@@ -350,13 +350,7 @@ def fill_cpuclass_tlb_fill_body(function):
         Declare(
             OpDeclareAssign(
                 prot,
-                OpOr(
-                    MCall("PAGE_READ"),
-                    OpOr(
-                        MCall("PAGE_WRITE"),
-                        MCall("PAGE_EXEC")
-                    )
-                )
+                MCall("PAGE_READ") | MCall("PAGE_WRITE") | MCall("PAGE_EXEC")
             )
         ),
         OpCombAssign(function.args[1], MCall("TARGET_PAGE_MASK"), "&"),
@@ -422,9 +416,14 @@ def fill_decode_opc_body(cputype, function, cpu_env):
             func.extra_references = set_pc_ref
             h.add_type(func)
 
+            semantics = instruction.semantics
+
+            if isinstance(semantics, FunctionType):
+                semantics = semantics(func, h)
+
             func.body = BodyTree()(
                 Comment(comment),
-                *instruction.semantics(func, h)
+                *semantics
             )
 
         node(Call(func, ctx, *operands))
@@ -779,21 +778,21 @@ def fill_gen_intermediate_code_body(cputype, function, cpu_env):
         Call("gen_tb_start", tb),
         LoopDoWhile(
             OpLogAnd(
-                OpLogNot(Call("tcg_op_buf_full")),
                 OpLogAnd(
-                    OpLogNot(OpSDeref(cs, "singlestep_enabled")),
                     OpLogAnd(
+                        OpLogAnd(
+                            OpLogNot(Call("tcg_op_buf_full")),
+                            OpLogNot(OpSDeref(cs, "singlestep_enabled"))
+                        ),
                         OpLogNot(
                             Header["exec/exec-all.h"].global_variables[
                                 "singlestep"
                             ]
-                        ),
-                        OpLogAnd(
-                            OpEq(ctx_bstate, Type["BS_NONE"]),
-                            OpLess(num_insns, max_insns)
                         )
-                    )
-                )
+                    ),
+                    OpEq(ctx_bstate, Type["BS_NONE"])
+                ),
+                OpLess(num_insns, max_insns)
             )
         )(
             Call("tcg_gen_insn_start", ctx_pc),

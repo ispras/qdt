@@ -17,6 +17,9 @@ from .ordered_set import (
 from .reflection import (
     get_class_total_args,
 )
+from .snake_case import (
+    snake_case,
+)
 from .visitor import (
     ObjectVisitor,
     SkipVisiting,
@@ -30,6 +33,9 @@ from inspect import (
 )
 from itertools import (
     count,
+)
+from keyword import (
+    iskeyword,
 )
 from six import (
     binary_type,
@@ -153,13 +159,13 @@ require reference to the current object.
             try:
                 var_base = obj.__var_base__
             except AttributeError:
-                var_base = "obj"
+                var_base = snake_case(type(obj).__name__)
             else:
                 var_base = var_base()
 
             name = var_base
 
-            if name in self.name2obj:
+            if name in self.name2obj or iskeyword(name):
                 for i in self.name_counter.setdefault(var_base, count(0)):
                     name = "%s%d" % (var_base, i)
                     if name not in self.name2obj:
@@ -328,13 +334,23 @@ require reference to the current object.
 
         self.line()
 
+    def pprint_join(self, sep, iterable, per_line = True):
+        write = self.line if per_line else self.write
+
+        i = iter(iterable)
+        try:
+            val = next(i)
+        except StopIteration:
+            return
+        self.pprint(val)
+        for val in i:
+            write(sep)
+            self.pprint(val)
+
     def pprint_list(self, val):
         self.line("[")
         self.push_indent()
-        self.pprint(val[0])
-        for v in val[1:]:
-            self.line(",")
-            self.pprint(v)
+        self.pprint_join(",", val)
         self.pop_indent()
         self.line()
         self.write("]")
@@ -418,11 +434,11 @@ require reference to the current object.
             self.write(s)
 
 
-def dumps(root):
-    return pygenerate(root).w.getvalue()
+def dumps(root, **pygen_kw):
+    return pygenerate(root, **pygen_kw).w.getvalue()
 
 
-def pythonize(root, path):
+def pythonize(root, path, **pygen_kw):
     """ Serializes graph of objects presented by its :root: object to Python
     script and writes it to file. See `PyGenerator`.
 
@@ -432,7 +448,7 @@ def pythonize(root, path):
 
     # Pythonization can be long enough.
     # Do not touch target file until it ended.
-    data = dumps(root).encode("utf-8")
+    data = dumps(root, **pygen_kw).encode("utf-8")
 
     with open(path, "wb") as _file:
         _file.write(data)
@@ -441,10 +457,10 @@ def pythonize(root, path):
 EMPTY = tuple()
 
 
-def pygenerate(*objs):
+def pygenerate(*objs, **pygen_kw):
     # See `PyGenerator` for general algorithm description.
 
-    gen = PyGenerator()
+    gen = PyGenerator(**pygen_kw)
     gen.reset()
 
     if not objs:

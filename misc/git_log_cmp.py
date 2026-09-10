@@ -40,7 +40,7 @@ re_commit = compile(r"^commit [0-9a-f]{40}$")
 re_commit_match = re_commit.match
 is_commit_line = lambda l: bool(re_commit_match(l))
 
-re_index = compile(r"^index [0-9a-f]{9}..[0-9a-f]{9} \d{6}$")
+re_index = compile(r"^index [0-9a-f]{40}..[0-9a-f]{40} \d{6}$")
 re_index_match = re_index.match
 is_index_line = lambda l: bool(re_index_match(l))
 
@@ -108,7 +108,7 @@ Helper to compare `git log` (commit summary) of different revisions as text.
     for rev_id in rev_ids:
         rev_range = base + ".." + rev_id
         if showpatch:
-            log_args = (rev_range, "-p")
+            log_args = (rev_range, "-p", "--full-index")
         else:
             log_args = (rev_range,)
 

@@ -10,7 +10,6 @@ from common import (
     OrderedSet,
     pythonize,
     qdtdirs,
-    UserSettings,
     Variable,
 )
 from examples import (
@@ -47,6 +46,7 @@ from widgets import (
     HotKeyBinding,
     ProjectWidget,
     QDCGUISignalHelper,
+    QDTUserSettings,
     Statusbar,
     VarMenu,
 )
@@ -60,6 +60,7 @@ from os import (
 from os.path import (
     abspath,
     dirname,
+    isdir,
     isfile,
 )
 from six.moves.cPickle import (
@@ -783,7 +784,19 @@ in process. Do you want to start cache rebuilding?")
         AddDescriptionDialog(self.pht, self)
 
     def on_set_qemu_build_path(self):
-        _dir = askdirectory(self, title = _("Select Qemu build path"))
+        kw = {}
+        try:
+            build_path = self.pw.build_path
+        except:
+            pass
+        else:
+            if build_path is not None and isdir(build_path):
+                kw["initialdir"] = build_path
+
+        _dir = askdirectory(self,
+            title = _("Select Qemu build path"),
+            **kw
+        )
         if not _dir:
             return
 
@@ -937,9 +950,19 @@ later.").get()
             self._update_recent_projects()
 
     def on_save_as(self):
+        kw = {}
+        try:
+            current_file_name = self.current_file_name
+        except:
+            pass
+        else:
+            if isfile(current_file_name):
+                kw["initial_file"] = current_file_name
+
         fname = asksaveas(self,
             [(_("QDC GUI Project defining script"), ".py")],
-            title = _("Save project")
+            title = _("Save project"),
+            **kw
         )
 
         if not fname:
@@ -1035,7 +1058,7 @@ all changes are saved. """
         self.update_target_qemu()
 
 
-class Settings(UserSettings):
+class Settings(QDTUserSettings):
     "Keeps user settings in a file."
 
     _suffix = ".qdt.py"

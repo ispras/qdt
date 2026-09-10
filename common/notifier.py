@@ -2,8 +2,8 @@ __all__ = [
     "notifier"
 ]
 
-from inspect import (
-    getargspec
+from .compat import (
+    getargspec,
 )
 from .os_wrappers import (
     ee

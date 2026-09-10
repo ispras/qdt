@@ -507,14 +507,15 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         else:
             raise NotImplementedError
 
-        parent = next(tree.find(name = parent_name))
+        if parent_name is not None:
+            parent = next(tree.find(name = parent_name))
 
-        qtn = QemuTypeName(desc.name)
-        QType(qtn.for_id_name,
-            parent = parent,
-            macros = [qtn.type_macro],
-            arches = set(parent.arches)
-        )
+            qtn = QemuTypeName(desc.name)
+            QType(qtn.for_id_name,
+                parent = parent,
+                macros = [qtn.type_macro],
+                arches = set(parent.arches)
+            )
 
     def on_qvc_available(self):
         pht = self.pht
@@ -563,4 +564,5 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             if qvd.qvc is not None:
                 qvd.forget_cache()
 
-        self.reload_build_path()
+        if self.p.build_path:
+            self.reload_build_path()

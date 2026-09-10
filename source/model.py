@@ -366,8 +366,6 @@ class Structure(Type):
 
         self.fields[v_name] = variable
 
-        ForwardDeclarator(variable).visit()
-
     def append_fields(self, fields):
         for v in fields:
             self.append_field(v)
@@ -1256,7 +1254,9 @@ class Variable(TypeContainer):
         super(Variable, self).__init__(**kw)
 
         self.name = name
-        self.type = _type if isinstance(_type, Type) else Type[_type]
+        if isinstance(_type, str):
+            _type = Type[_type]
+        self.type = _type
         self.initializer = initializer
         self.static = static
         self.const = const
@@ -1346,78 +1346,6 @@ class Variable(TypeContainer):
         if not isinstance(other, (Type, Variable)):
             return NotImplemented
         return self.name < other.name
-
-    def __add__(self, arg):
-        from .function import (
-            OpAdd
-        )
-        return OpAdd(self, arg)
-
-    def __radd__(self, arg):
-        from .function import (
-            OpAdd
-        )
-        return OpAdd(arg, self)
-
-    def __and__(self, arg):
-        from .function import (
-            OpAnd
-        )
-        return OpAnd(self, arg)
-
-    def __getitem__(self, arg):
-        from .function import (
-            OpIndex
-        )
-        return OpIndex(self, arg)
-
-    def __sub__(self, arg):
-        from .function import (
-            OpSub
-        )
-        return OpSub(self, arg)
-
-    def __or__(self, arg):
-        from .function import (
-            OpOr
-        )
-        return OpOr(self, arg)
-
-    def __xor__(self, arg):
-        from .function import (
-            OpXor
-        )
-        return OpXor(self, arg)
-
-    def __lshift__(self, arg):
-        from .function import (
-            OpLShift
-        )
-        return OpLShift(self, arg)
-
-    def __rlshift__(self, arg):
-        from .function import (
-            OpLShift
-        )
-        return OpLShift(arg, self)
-
-    def __rshift__(self, arg):
-        from .function import (
-            OpRShift
-        )
-        return OpRShift(self, arg)
-
-    def __rrshift__(self, arg):
-        from .function import (
-            OpRShift
-        )
-        return OpRShift(arg, self)
-
-    def __invert__(self):
-        from .function import (
-            OpNot
-        )
-        return OpNot(self)
 
     __type_references__ = ["type", "initializer"]
 

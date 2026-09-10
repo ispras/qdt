@@ -3,9 +3,12 @@ __all__ = [
   , "get_class_total_args"
 ]
 
+from .compat import (
+    getargspec,
+)
+
 from inspect import (
     getmro,
-    getargspec
 )
 from collections import (
     OrderedDict
@@ -19,7 +22,7 @@ def get_default_args(func):
     """
     returns a dictionary of arg_name:default_values for the input function
     """
-    args, varargs, keywords, defaults = getargspec(func)
+    args, __, __, defaults = getargspec(func)
     if defaults is not None:
         return dict(zip(args[-len(defaults):], defaults))
     else:
@@ -53,7 +56,7 @@ def get_class_total_args(Class):
 
         args, varargs, keywords, defaults = getargspec(Class.__init__)
 
-        kwargs_count = 0 if defaults is None else  len(defaults)
+        kwargs_count = 0 if defaults is None else len(defaults)
 
         # slice from index 1 to exclude 'self'
         if kwargs_count > 0:

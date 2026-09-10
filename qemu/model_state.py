@@ -22,13 +22,16 @@ class StateStruct(object):
         for field in fields:
             self.add_field(field)
 
+    def __iter__(self):
+        return iter(self.fields)
+
     def __var_base__(self):
         return "ss_" + self.c_type_name.lower()
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
         gen.gen_args(self, pa_names = False)
-        for f in self.fields:
+        for f in self:
             gen.gen_field("")
             gen.pprint(f)
         gen.gen_end()
@@ -41,7 +44,7 @@ class StateStruct(object):
         s = Structure(self.c_type_name,
             origin = self,
         )
-        for f in self.fields:
+        for f in self:
             s.append_field(Type[f.c_type_name](
                 f.name,
                 array_size = f.array_size,
@@ -63,7 +66,7 @@ class StateStruct(object):
         used_vars = set()
         global type2vmstate
 
-        for f in self.fields:
+        for f in self:
             if not f.need_save_in_vmsd:
                 continue
 

@@ -40,9 +40,6 @@ class VarUsageAnalyzer(NodeVisitor):
 
 class BodyTree(CNode):
 
-    def __init__(self):
-        super(BodyTree, self).__init__()
-
     def __str__(self):
         VarUsageAnalyzer(self).visit()
         cw = CodeWriter()

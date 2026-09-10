@@ -146,8 +146,8 @@ spec_and_len2typename = {
 
 re_format_specifier = compile("(?<!%)(?:%%)*(%(?:"
     "(?:[-+ #0]{0,5})"         # flags
-    "(?:\d+|\*)?"              # width
-    "(?:\.(?:\d+|\*))?"        # precision
+    r"(?:\d+|\*)?"             # width
+    r"(?:\.(?:\d+|\*))?"       # precision
     "(hh|h|l|ll|j|z|t|L)?"     # length
     "([diuoxXfFeEgGaAcspn])))" # specifier
 )
@@ -245,7 +245,8 @@ class CPUType(QOMCPU):
         target_phys_addr_space_bits = 32,
         target_virt_addr_space_bits = 32,
         nb_mmu_modes = 1,
-        info_path = None
+        info_path = None,
+        **qom_kw
     ):
         """ CPU description.
 
@@ -256,7 +257,7 @@ class CPUType(QOMCPU):
         name of Target architecture
         """
 
-        super(CPUType, self).__init__(name, directory)
+        super(CPUType, self).__init__(name, directory, **qom_kw)
 
         self.target_bigendian = target_bigendian
 
@@ -277,7 +278,7 @@ class CPUType(QOMCPU):
         translate_cpu_semantics = True,
         instruction_tree_optimizations = True,
         include_paths = tuple(),
-        **_
+        **__
     ):
         import cpu_imports
         loaded = dict(cpu_imports.__dict__)
@@ -455,8 +456,13 @@ class CPUType(QOMCPU):
         yield True
 
         self.gen_files = OrderedDict()
-        file_list = ["cpu.h", "translate.inc.c", "cpu.c", "helper.c",
-            "machine.c", "translate.c"
+        file_list = [
+            "cpu.h",
+            "translate.inc.c",
+            "cpu.c",
+            "helper.c",
+            "machine.c",
+            "translate.c",
         ]
         if get_vp("cpu-param header exists"):
             file_list = ["cpu-param.h"] + file_list
@@ -1177,7 +1183,9 @@ class CPUType(QOMCPU):
             else:
                 adapter_name = adapter
 
-            arg_count = op_names.count(',') + 1
+            op_names_lst = [an.strip() for an in op_names.split(",")]
+
+            arg_count = len(op_names_lst)
             if added.get(adapter_name) is None:
                 if fmt is not None:
                     f_spec_match = re_format_specifier.search(fmt)
@@ -1202,13 +1210,18 @@ class CPUType(QOMCPU):
                     ]
                     ret_type = Type["void"]
 
-                # TODO: can we derive argument names from `op_names`?
-                if arg_count == 1:
-                    args += [ Type["uint64_t"]("arg") ]
-                else:
-                    args += [ Type["uint64_t"]("arg" + str(i))
-                        for i in range(0, arg_count)
-                    ]
+                # Derive argument names from `op_names`.
+                for op_name in op_names_lst:
+                    arg_name = op_name
+                    for j in count():
+                        for arg in args:
+                            if arg.name == arg_name:
+                                arg_name = op_name + str(j)
+                                break
+                        else:
+                            break
+
+                    args.append(Type["uint64_t"](arg_name))
 
                 if isinstance(adapter, FunctionType):
                     f = Function(
@@ -1242,7 +1255,10 @@ class CPUType(QOMCPU):
                     if fmt is not None:
                         fill_disas_write_helper_body(f)
 
-                c.add_type(f)
+                # Don't add the function explicitly.
+                # It will be added by TypeFixerVisitor, if used.
+                # Else, unused static function error is avoided.
+                # c.add_type(f)
 
                 added[adapter_name] = (arg_count, fmt is None)
             elif added[adapter_name] != (arg_count, fmt is None):
@@ -1353,7 +1369,7 @@ def patch_configure(src, arch_bigendian, target_name):
             f.write("".join(lines))
 
 
-re_arch_enum_definition = compile("^    (\w+) = \(1 << (\d+)\),\n$")
+re_arch_enum_definition = compile(r"^    (\w+) = \(1 << (\d+)\),\n$")
 
 def patch_arch_init_header(src, target_name):
     arch_init_header = join(src, "include", "sysemu", "arch_init.h")
@@ -1481,7 +1497,9 @@ def patch_disas_header(src, print_insn_name, bfd_arch_name):
     print_insn = "int {:28}(bfd_vma, disassemble_info*);\n".format(
         print_insn_name
     )
-    r = compile("^int %s *\(bfd_vma, disassemble_info\*\);$" % print_insn_name)
+    r = compile(
+        r"^int %s *\(bfd_vma, disassemble_info\*\);$" % print_insn_name
+    )
     inserted_print_insn = any(r.match(line) for line in lines)
 
     if inserted_bfd_arch and inserted_print_insn:

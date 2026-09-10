@@ -90,7 +90,8 @@ from traceback import (
 )
 
 
-bp_file_name = "build_path_list"
+legacy_bp_file_name = "build_path_list"
+bp_file_name = join(qdtdirs.user_cache_dir, legacy_bp_file_name)
 
 # Two level dict:
 # 1. path (of Qemu Git repo)
@@ -119,11 +120,14 @@ def load_build_path_list():
 
     qvd_reg = {}
 
-    if not isfile(bp_file_name):
+    if isfile(bp_file_name):
+        with open(bp_file_name) as f:
+            build_path_list = f.readlines()
+    elif isfile(legacy_bp_file_name):
+        with open(legacy_bp_file_name) as f:
+            build_path_list = f.readlines()
+    else:
         return
-
-    with open(bp_file_name) as f:
-        build_path_list = f.readlines()
 
     for val in build_path_list:
         v = val.rstrip()

@@ -16,6 +16,7 @@ from source import (
     OpAddr,
     Declare,
     Initializer,
+    iter_specified_type_names,
     add_base_types,
     Pointer,
     Header,
@@ -105,12 +106,19 @@ def define_only_qemu_2_6_0_types():
         Function(name = "tcg_global_mem_new_i32"),
         Function(name = "tcg_global_mem_new_i64"),
         Function(name = "tcg_op_buf_full"),
-        # `tcg` is a fake type intended to mark variables which are to be
-        # replaced by I3S translator.
-        # `tcg` is then converted to some existing QEMU types (`TCGv_i32`,
-        # `TCGv_i64` or `TCGv`).
-        Type("tcg", incomplete = False)
     ])
+
+    # `tcg` is a fake type intended to mark variables which are to be
+    # replaced by I3S translator.
+    # `tcg` is then converted to some existing QEMU types (`TCGv_i32`,
+    # `TCGv_i64` or `TCGv`).
+    add_tcg_type = tcg_header.add_type
+    for n in iter_specified_type_names(
+        "tcg",
+        ("signed", "unsigned",),
+        ("short", "long",),
+    ):
+        add_tcg_type(Type(n, incomplete = False))
 
     if get_vp("Init cpu_env in arch"):
         # These are required fields only
@@ -125,7 +133,26 @@ def define_only_qemu_2_6_0_types():
         memop_header = tcg_header
     memop_header.add_type(
         # These are required elements only
-        Enumeration(["MO_UB", "MO_UW", "MO_UL", "MO_TE"],
+        Enumeration([
+                "MO_8",
+                "MO_16",
+                "MO_32",
+                "MO_64",
+                "MO_SIGN",
+                "MO_BSWAP",
+                "MO_UB",
+                "MO_UW",
+                "MO_UL",
+                "MO_SB",
+                "MO_SW",
+                "MO_SL",
+                "MO_Q",
+                "MO_TE",
+                "MO_BE",
+                "MO_LE",
+                "MO_BEUW",
+                "MO_BEUL",
+            ],
             typedef_name = memop_type_name
         )
     )
@@ -137,9 +164,18 @@ def define_only_qemu_2_6_0_types():
 
     tcg_op_h_path = get_vp("tcg headers prefix") + "tcg-op.h"
     Header[tcg_op_h_path].add_types([
+        Function(name = "tcg_temp_local_new_i32"),
+        Function(name = "tcg_temp_free_i32"),
+        Function(name = "tcg_gen_ld_i32"),
+        Function(name = "tcg_gen_st_i32"),
+        Function(name = "tcg_gen_addi_i32"),
         Function(name = "tcg_gen_insn_start"),
         Function(name = "tcg_gen_goto_tb"),
         Function(name = "tcg_gen_exit_tb"),
+        Function(name = "tcg_gen_qemu_ld_i32"),
+        Function(name = "tcg_gen_qemu_ld_i64"),
+        Function(name = "tcg_gen_qemu_st_i32"),
+        Function(name = "tcg_gen_qemu_st_i64"),
         # `tcg_op_fake_type` is a fake type used to add the `tcg-op.h` header
         # inclusion into the `translate.inc.c` header. This inclusion is
         # necessary for future function bodies.
@@ -164,6 +200,17 @@ def define_only_qemu_2_6_0_types():
         )
 
     Header["exec/cpu_ldst.h"].add_types([
+        Function(name = "cpu_ldub_data"),
+        Function(name = "cpu_ldsb_data"),
+        Function(name = "cpu_stb_data"),
+        # Those are Macro, actually
+        # Function(name = "cpu_lduw_data"),
+        # Function(name = "cpu_ldsw_data"),
+        # Function(name = "cpu_stw_data"),
+        # Function(name = "cpu_ldl_data"),
+        # Function(name = "cpu_stl_data"),
+        # Function(name = "cpu_ldq_data"),
+        # Function(name = "cpu_stq_data"),
         Function(name = "cpu_ldub_code", ret_type = Type["uint8_t"]),
         Function(name = "cpu_lduw_code", ret_type = Type["uint16_t"]),
         Function(name = "cpu_ldl_code", ret_type = Type["uint32_t"]),
@@ -677,6 +724,8 @@ def define_only_qemu_2_6_0_types():
                 ]
             )
         )
+    else:
+        Type["DeviceClass"].append_field(Pointer(Type["Property"])("props"))
     # qdev_new/qdev_realize_and_unref replaces qdev_create/qdev_init_nofail
     if get_vp("use qdev_new"):
         qdev_core_header.add_types([

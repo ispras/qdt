@@ -1,5 +1,6 @@
 __all__ = [
-    "disable_auto_lock_inclusions"
+    "ChunkGenerator"
+  , "disable_auto_lock_inclusions"
   , "enable_auto_lock_inclusions"
   , "Source"
       , "Header"
@@ -43,6 +44,7 @@ from .function import (
 from .model import (
     CPP,
     CPPMacro,
+    ForwardDeclarator,
     Function,
     Macro,
     registry,
@@ -236,6 +238,10 @@ class Source(TypeContainer):
             # Register the type with any name in order to be able to generate
             # its chunks.
             self.types[".anonymous" + str(id(_type))] = _type
+
+        if isinstance(_type, Structure) and _type.definition is _type:
+            for field in _type.fields.values():
+                ForwardDeclarator(field).visit()
 
         # Some types (like `Enumeration`) contains types without definer or
         # may reference to other just created types.

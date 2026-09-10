@@ -144,14 +144,21 @@ class Instruction(object):
 :param disas_format:
     string that describes the disassembler output for this instruction
 
+    The string may contain <places, for, formatted, operands>.
+    Look `name_to_format` parameter description of CPUInfo.__doc__ for
+    further explanation.
+
 :param comment:
     string to be inserted into the generated semantic boilerplate code (the
     leaves of the instruction tree)
 
 :param semantics:
-    callable object which gets `Function` and source containing the
-    function, and must return list of function body tree elements that
-    describe the semantics of the instruction (see `no_semantics` example)
+    is an iterable of function body tree elements that describe the semantics
+    of the instruction.
+    It can be a callable object which is called at source generation time.
+    The callable is given the `Function` (the body is being generated for)
+    and source being generated (containing the `Function`), and must return
+    such an iterable (see `no_semantics` example).
 
 :param priority:
     number that determines which instruction will be selected if the encoding
@@ -171,7 +178,7 @@ class Instruction(object):
         self.disas_format = kw_args.get("disas_format", mnemonic)
         self.comment = kw_args.get("comment", self.disas_format)
         self.semantics = kw_args.get("semantics", no_semantics)
-        self.priority =  kw_args.get("priority", 0)
+        self.priority = kw_args.get("priority", 0)
 
         # mark for finding unreachable instructions
         self.used = False
@@ -376,11 +383,12 @@ def format_instructions(instructions, indent = "", max_bitsize = None):
     if max_bitsize is None:
         max_bitsize = max(i.bitsize for i in instructions)
     return "\n".join(
-        "{0}{2:<{1}} (priority {3}) {4}".format(
+        "{0}{2:<{1}} (priority {3}) mnemonic: {4}; comment: {5}".format(
             indent,
             max_bitsize,
             i.opcode_bits_string,
             i.priority,
+            i.mnemonic,
             i.comment
         ) for i in instructions
     )
