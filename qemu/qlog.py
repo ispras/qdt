@@ -15,6 +15,9 @@ from common import (
     pipeline,
 )
 
+from collections import (
+    defaultdict,
+)
 from itertools import (
     count,
 )
@@ -165,14 +168,16 @@ It can have runtime (trace) information.
     __slots__ = (
         "in_instr",
         "trace",
+        "repeats",
     )
 
-    def __init__(self, in_instr, trace, icount):
+    def __init__(self, in_instr, trace, icount, repeats = None):
         super(TraceInstr, self).__init__()
 
         self.in_instr = in_instr
         self.trace = trace
         self.icount = icount
+        self.repeats = repeats
 
     # Proxify static info.
 
@@ -424,12 +429,20 @@ class QEMULog(object):
             return self.in_asm[fromCache].lookLinkDown(start_id)
 
     def trace_stage(self):
-        ready_instrs = []
+        ready = []
+        instrs = []
+        interrupts = []
+
+        repeats = defaultdict(count)
 
         next_icount = 0
 
-        t = yield
         while True:
+            if ready:
+                t = (yield ready)
+                ready = []
+            else:
+                t = (yield EMPTY)
             while t.bad:
                 t = (yield EMPTY)
 
@@ -438,18 +451,23 @@ class QEMULog(object):
 
             if isinstance(t, CPUIORecompile):
                 # Don't yield last instruction because there is no exception.
-                ready_instrs.pop()
+                instrs.pop()
                 continue
 
             if isinstance(t, LogInt):
-                assert not ready_instrs
                 t.icount = next_icount
-                t = (yield [t])
+                interrupts.append(t)
                 continue
 
+            # isinstance(t, QTrace), i.e. next trace record or EOL
+            ready.extend(instrs)
+            instrs = []
+            ready.extend(interrupts)
+            interrupts = []
+
             if t is EOL:
-                if ready_instrs:
-                    yield ready_instrs
+                if ready:
+                    yield ready
                 break
 
             addr = t.firstAddr
@@ -458,7 +476,9 @@ class QEMULog(object):
             if instr is not None:
                 instr = instr[0]
 
-                instr = TraceInstr(instr, t, next_icount)
+                instr = TraceInstr(instr, t, next_icount,
+                    repeats = next(repeats[instr.addr]),
+                )
                 next_icount += 1
 
                 tb = instr.tb
@@ -471,7 +491,7 @@ class QEMULog(object):
                     if DEBUG < 2:
                         print("0x%08X: %s" % (instr.addr, instr.disas))
 
-                    ready_instrs.append(instr)
+                    instrs.append(instr)
 
                     addr += instr.size
 
@@ -521,14 +541,10 @@ class QEMULog(object):
 
                         nextInstr = nextInstr[0]
 
-                    instr = TraceInstr(nextInstr, None, next_icount)
+                    instr = TraceInstr(nextInstr, None, next_icount,
+                        repeats = next(repeats[nextInstr.addr]),
+                    )
                     next_icount += 1
-
-            if ready_instrs:
-                t = (yield ready_instrs)
-                ready_instrs = []
-            else:
-                t = (yield EMPTY)
 
     def cache_overwritten(self):
         cur = self.current_cache
