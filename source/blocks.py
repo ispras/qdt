@@ -42,7 +42,7 @@ class BlockParser(object):
         pass
 
     def parse(self, data):
-        state = self.INIT
+        state = self.INIT()
 
         for c in data:
             state = state(c)
@@ -53,14 +53,14 @@ class BlockParser(object):
         # Its `child` is `Block` containing all items found in the `data`.
         return self.vheading
 
-    def INIT(self, c):
+    def INIT(self):
         self.vheading = vheading = self.Line()
         self.stack = [(tuple(), vheading, [])]
         self.indent = []
         self.line = []
         self.line_n = 1
 
-        return self.INDENT(c)
+        return self.INDENT
 
     def INDENT(self, c):
         if self.is_indent(c):
