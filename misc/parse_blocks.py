@@ -124,4 +124,4 @@ Parses indentation block structure of a text file and returns graph
 
 
 if __name__ == "__main__":
-    exit(main() or 0)
+    exit(main() or 0)  # No newline at end of file is for testing.
