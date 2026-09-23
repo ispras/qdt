@@ -47,6 +47,10 @@ class BlockParser(object):
         for c in data:
             state = state(c)
 
+        if state in (self.INDENT, self.LINE):
+            # No CR/NL at EOF.
+            self._line_end()
+
         self._finalize_stack_top(0)
 
         # vheading is a virtual line, not existing in the `data`.
