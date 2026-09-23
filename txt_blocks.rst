@@ -31,6 +31,12 @@ They are to be considered one big patch.
 Last patch adds ``misc/parse_blocks.py`` script.
 It is just an example of the parser usage.
 
+v2
+--
+* Topmost block may have indent.
+* Support empty files.
+* Don't loss last line without a newline character.
+
 Обсуждение
 ----------
 Добавил в конец ветки правку,
