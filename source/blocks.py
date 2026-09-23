@@ -51,7 +51,7 @@ class BlockParser(object):
             # No CR/NL at EOF.
             self._line_end()
 
-        self._finalize_stack_top(0)
+        self._finalize_stack_top(1)
 
         # vheading is a virtual line, not existing in the `data`.
         # Its `child` is `Block` containing all items found in the `data`.
@@ -59,7 +59,7 @@ class BlockParser(object):
 
     def INIT(self):
         self.vheading = vheading = self.Line()
-        self.stack = [(tuple(), vheading, [])]
+        self.stack = [(None, None, [vheading])]
         self.indent = []
         self.line = []
         self.line_n = 1
@@ -127,10 +127,7 @@ class BlockParser(object):
                 block.append(line)
                 break
         else:
-            block_1 = stack[-1][-1]
-            if not block_1:
-                raise SyntaxError("Indented line at the beginning of data")
-            stack.append((indent, block_1[-1], [line]))
+            stack.append((indent, stack[-1][-1][-1], [line]))
             return
 
         self._finalize_stack_top(i + 1)
