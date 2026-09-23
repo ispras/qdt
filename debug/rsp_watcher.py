@@ -12,7 +12,7 @@ from re import (
     compile,
 )
 from .symtab import (
-    SymTab,
+    load_symtab,
 )
 
 re_symbol = compile(u"(\\w|_)(\\w|\\d|_)*")
@@ -49,7 +49,7 @@ name of symbol. The breakpoint is set on address of the symbol according to
 
     def __init__(self, rsp, elf_file_name):
         self.rsp = rsp
-        self.symtab = symtab = SymTab(elf_file_name)
+        self.symtab = symtab = load_symtab(elf_file_name)
         address_map = symtab.address_map
 
         for cb, sym in iter_br_cbs(self):
