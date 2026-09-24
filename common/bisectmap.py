@@ -70,7 +70,7 @@ class BisectMap(object):
         if i == len(_keys):
             _keys.append(k)
             self._values.append(v)
-        if _keys[i] != k:
+        elif _keys[i] != k:
             _keys.insert(i, k)
             self._values.insert(i, v)
 
