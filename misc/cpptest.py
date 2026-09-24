@@ -42,6 +42,8 @@ from subprocess import (
     Popen,
 )
 from time import (
+    gmtime,
+    strftime,
     time,
 )
 from traceback import (
@@ -208,8 +210,10 @@ def main():
     ap = ArgumentParser()
     arg = ap.add_argument
 
+    ts_dir = strftime("%Y%m%d_%H%M%S", gmtime(time()))
+
     arg("-o",
-        default = join(qdtdirs.user_cache_dir, "cpptest", str(time())),
+        default = join(qdtdirs.user_cache_dir, "cpptest", ts_dir),
         help = "output directory",
         metavar = "output_dir",
     )
