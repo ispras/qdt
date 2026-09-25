@@ -45,6 +45,27 @@ class _GridAxisSliceSlot(object):
         self._set_size(v)
 
     def _set_size(self, v):
+        changed = tuple(self._set_size_iter_changed_slices(v))
+        if not changed:
+            return
+        # `notify`cation may result in immediate access to `@lazy` attributes
+        # of any changed axis.
+        # They must be invalidated first.
+        for slc in changed:
+            del slc.axis.offs
+
+        # Grid reference is same for all `a`xis.
+        g = slc.axis.g
+
+        for slc in changed:
+            notify(g, "resized",
+                # axis (coordinate) index
+                slc.axis.i,
+                # all objects which coords[i] > coord are considered moved
+                slc.coord,
+            )
+
+    def _set_size_iter_changed_slices(self, v):
         for slc, sc, vc in zip(self.slices, self.size, v):
             if sc == vc:
                 # size along the axis is not changed
@@ -89,7 +110,7 @@ class _GridAxisSliceSlot(object):
                 (nvc == 1 and slc.max() == vc)
             or  (nsc == 0 and (slc.max() or 0) < sc)
             ):
-                slc.axis._invalidate(slc.coord)
+                yield slc
 
         self.size = v
 
@@ -141,15 +162,6 @@ class _GridAxis(AttributeChangeNotifier):
         # Last offset is virtual.
         # This is position just after last object along the axis.
         yield off
-
-    def _invalidate(self, coord):
-        del self.offs
-        notify(self.g, "resized",
-            # axis (coordinate) index
-            self.i,
-            # all objects which coords[i] > coord are considered moved
-            coord,
-        )
 
     @lazy
     def offs(self):
