@@ -82,6 +82,11 @@ def _zero(_):
 
 
 class _GridSlice(BisectMap):
+    """Counts different object size amounts.
+Objects are in slots of the grid.
+All slots have same `coord` along the `axis`.
+Sizes are along the `axis` too.
+    """
 
     __slots__ = ("axis", "coord",)
 
@@ -100,8 +105,6 @@ class _GridAxis(AttributeChangeNotifier):
         self.slices = BisectMap(self._gen_slice)
 
     def _gen_slice(self, coord):
-        # Value is amount of slots with corresponding `size` (key)
-        # along the `axis`.
         return _GridSlice(self, coord)
 
     def iter_offs(self):
