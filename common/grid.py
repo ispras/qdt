@@ -50,27 +50,44 @@ class _GridAxisSliceSlot(object):
                 # size along the axis is not changed
                 continue
 
-            nsc = slc[sc] - 1
-            if nsc:
-                slc[sc] = nsc
+            if sc:
+                nsc = slc[sc] - 1
+                if nsc > 0:
+                    slc[sc] = nsc
+                else:
+                    del slc[sc]
             else:
-                del slc[sc]
+                # Zero sizes are not counted.
+                # Nothing to decrement.
+                # Also, size of just created slot is zero.
+                # It has never been accounted in a slice.
 
-            nvc = slc[vc] + 1
-            slc[vc] = nvc
+                # Define it for `if` below.
+                nsc = None
+
+            if vc:
+                nvc = slc[vc] + 1
+                slc[vc] = nvc
+            else:
+                # Define it for `if` below.
+                nvc = None
 
             # `if nvc == 1` then `vc` is new value in sizes.
-            # And, `if vc == sizes.max()` then slice is either inflatred
-            # (`if sc < vc`) or deflated (`if vc < sc`).
+            # And, `if vc == slc.max()` then `sc < vc`.
+            # Hence, the slice is inflated.
+
             # `if nsc == 0` then there are no more `sc`-sized values
             # in the slice.
-            # And, `if vc < sc` then slice can be defalted.
-            # And, `if sizes.max() < sc` then `sc` was previous maxsimum.
-            # So, the slice is definetly deflated.
+            # And, `if slc.max() < sc` then `sc` was previous maxsimum.
+            # So, the slice is deflated.
+
+            # If `vc == 0` then `slc.max()` may `return None`.
+            # I.e. map became empty and `sc > 0`.
+            # I.e. the slice is deflated.
 
             if (
                 (nvc == 1 and slc.max() == vc)
-            or  ((not nsc) and slc.max() < sc)
+            or  (nsc == 0 and (slc.max() or 0) < sc)
             ):
                 slc.axis._invalidate(slc.coord)
 
