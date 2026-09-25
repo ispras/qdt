@@ -1,3 +1,4 @@
 *.pyc
 /locale/*/LC_MESSAGES/*.mo
 this.py
+parse_blocks.py.gv
