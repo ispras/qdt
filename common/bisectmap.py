@@ -44,10 +44,16 @@ class BisectMap(object):
         return zip(self._keys, self._values)
 
     def max(self):
-        return self._keys[-1]
+        try:
+            return self._keys[-1]
+        except IndexError:
+            return None
 
     def min(self):
-        return self._keys[0]
+        try:
+            return self._keys[0]
+        except IndexError:
+            return None
 
     def __bool__(self):
         return bool(self._keys)
