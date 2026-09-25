@@ -126,7 +126,11 @@ class _GridAxis(AttributeChangeNotifier):
 
     def iter_offs(self):
         slices = self.slices
-        ni = slices.min() - 1
+        ni = slices.min()
+        if ni is None:
+            # Grid is empty.
+            return
+        ni -= 1
         off = 0
         for i, s in slices.items():
             while ni < i:
