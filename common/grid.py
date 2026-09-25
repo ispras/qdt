@@ -138,6 +138,8 @@ class _GridAxis(AttributeChangeNotifier):
                 ni += 1
             if s:
                 off += s.max()
+        # Last offset is virtual.
+        # This is position just after last object along the axis.
         yield off
 
     def _invalidate(self, coord):
