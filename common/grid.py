@@ -28,7 +28,7 @@ from six.moves import (
 
 class _GridAxisSliceSlot(object):
 
-    __slice__ = ("size", "o", "slices",)
+    __slots__ = ("size", "o", "slices",)
 
     def __init__(self, o, dim):
         self.o = o
