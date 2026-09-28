@@ -18,7 +18,6 @@ from os.path import (
 import sys
 from inspect import (
     stack,
-    getmodule
 )
 from os import (
     listdir
@@ -49,8 +48,9 @@ def caller_file_name():
     # stack[1] - caller of `caller_file_name`
     # stack[2] - caller which file name is requested
     frame = stack()[2]
-    module = getmodule(frame[0])
-    return module.__file__
+    # https://stackoverflow.com/a/52202077/7623015
+    # This is also compatible with `-m cProfile`.
+    return frame[0].f_code.co_filename
 
 
 def pypath(rel_path):
