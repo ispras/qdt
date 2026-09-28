@@ -732,7 +732,7 @@ class GEVWindow(GUIToplevel):
 
         GUIToplevel.__init__(self, *a, **kw)
 
-        self.title("Git Edge Viewer")
+        self.title(_("Git Edge Viewer"))
 
         self._gevw = gevw = GEVWidget(self,
             sizegrip = True,
