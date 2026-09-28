@@ -12,6 +12,7 @@ from common import (
 from widgets import (
     add_scrollbars_native,
     CanvasDnD,
+    CommitInfoToplevel,
     GUIFrame,
     GUITk,
     GUIToplevel,
@@ -778,6 +779,10 @@ class GGVWindow(GUITk):
         self._gevw = gevw = GEVWindow(self)
         gevw.bind("<<Commit>>", self._on_commit, "+")
 
+        self._cit = cit = CommitInfoToplevel(self,
+            topmost = True,
+        )
+
         # print("repo = " + repo)
         ggvw.repo_path = repo
 
@@ -786,6 +791,10 @@ class GGVWindow(GUITk):
                 self._v_gevw = v = BooleanVar(self)
                 windows_menu(gevw.title(), variable = v)
                 HideShowBinding(gevw, v)
+
+                self._v_cit = v = BooleanVar(self)
+                windows_menu(cit.title(), variable = v)
+                HideShowBinding(cit, v)
 
         self._commit = None
 
@@ -808,6 +817,7 @@ class GGVWindow(GUITk):
         # `_recursion` check prevents this.
 
         gevw.commit = commit
+        self._cit.commit = commit.commit
 
         if commit is None:
             ggvw.node = None
@@ -831,6 +841,7 @@ class GGVWindow(GUITk):
 
     def _on_commit(self, e):
         self.commit = self._gevw.commit
+        self._v_cit.set(True)
 
 
 def main():
