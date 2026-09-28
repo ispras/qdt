@@ -110,6 +110,10 @@ Notes:
             self._mg._account_if_macronode(self)
 
     @lazy
+    def commit(self):
+        return self._mg._repo.commit(self.sha)
+
+    @lazy
     def refs(self):
         refs = self._mg._sha2ref.get(self.sha)
         if refs:
