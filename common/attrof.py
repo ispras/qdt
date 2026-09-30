@@ -23,21 +23,22 @@ def _gen_descriptor(path, name):
     )
     ns = {}
     exec(code, globals(), ns)
-    return ns["attrof_desc"](path)
+    return ns["attrof_desc"](path, name)
 
 
 class NameIsNotSet(AssertionError): pass
 
 class attrof_impl:
 
-    def __init__(self, path):
+    def __init__(self, path, name = None):
         self.path = path
+        self.name = name
 
     def __set_name__(self, owner, name):
         # Update the descriptor object in `owner`.
         # This is not enough to set `self.__get__`, `...__set__` and
         #  `...__delete__` attributes.
-        setattr(owner, name, _gen_descriptor(self.path, name))
+        setattr(owner, name, _gen_descriptor(self.path, self.name or name))
 
     def _raise(self, o):
         raise NameIsNotSet(type(o).__name__ + "." + self.path)
