@@ -68,6 +68,7 @@ class PatchEditorFrame(
 
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
+        editor_popups = kw.pop("editor_popups", True)
         # properties
         self._patch_file_name = None
         self._patch_set = None
@@ -103,7 +104,6 @@ class PatchEditorFrame(
         tv.tag_configure(TAG_MODIFIED, background = "#FFFFDD")
 
         tv.bind("<<TreeviewSelect>>", self._on_tv_files_select, "+")
-        tv.bind("<Button-3>", self._on_tv_files_b3, "+")
         self.current_file = None
 
         # file view
@@ -133,6 +133,14 @@ class PatchEditorFrame(
 
         t.grid(row = 0, column = 0, sticky = "NESW")
 
+        # delayed file selection (if treeview is being constructed)
+        self._do_select_file = None
+
+        if not editor_popups:
+            return
+
+        tv.bind("<Button-3>", self._on_tv_files_b3, "+")
+
         t.bind("<Button-3>", self._on_t_file_b3, "+")
         self.current_hunk = None
 
@@ -153,9 +161,6 @@ class PatchEditorFrame(
             label = _("Move to..."),
             command = self._on_move_dir_to
         )
-
-        # delayed file selection (if treeview is being constructed)
-        self._do_select_file = None
 
     def iter_current_directory(self):
         tv = self._tv_files
