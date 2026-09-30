@@ -7,6 +7,7 @@ from common import (
     GridRect,
     listen,
     mlget as _,
+    pypath,
     REFS_ORDER_RECENT_FIRST,
 )
 from widgets import (
@@ -18,6 +19,7 @@ from widgets import (
     GUIToplevel,
     HideShowBinding,
     MenuBuilder,
+    PatchEditorFrame,
     VarTreeview,
 )
 from common.git.macrograph import (
@@ -47,6 +49,10 @@ from six.moves.tkinter import (
     BooleanVar,
     BROWSE,
 )
+with pypath("..unidiff"):
+    from unidiff import (
+        PatchSet,
+    )
 
 
 # Set this env. var. to output macrograph to file in Graphviz format.
@@ -762,6 +768,54 @@ class GEVWindow(GUIToplevel):
         self._gevw.commit = commit
 
 
+
+class ExCommitInfoToplevel(CommitInfoToplevel):
+
+    def __init__(self, *a, **kw):
+        sizegrip = kw.pop("sizegrip", True)
+        # will create its own sizegrip
+        kw["sizegrip"] = False
+        CommitInfoToplevel.__init__(self, *a, **kw)
+
+        # re-pack, don't expand
+        self._cif.pack(fill = BOTH, expand = False)
+
+        self._pef = pef = PatchEditorFrame(self,
+            sizegrip = sizegrip,
+        )
+        pef.pack(fill = BOTH, expand = True)
+
+    _base_commit = CommitInfoToplevel.commit
+
+    @property
+    def commit(self):
+        return self._base_commit
+
+    @commit.setter
+    def commit(self, commit):
+        if commit is self._base_commit:
+            return
+        self._base_commit = commit
+        patch_data = commit.repo.git.diff_tree(commit,
+            color = False,
+            # pass same options to diff-tree as gitk
+            r = True,
+            p = True,
+            textconv = True,
+            submodule = True,
+            C = True,
+            cc = True,
+            commit_id = False,
+            unified = 3,
+            root = True,
+        )
+        patch_set = PatchSet.from_string(patch_data)
+        pef = self._pef
+        pef.patch_set = patch_set
+        if patch_set:
+            pef.select_file(0)
+
+
 _recursion = object()
 
 class GGVWindow(GUITk):
@@ -779,7 +833,7 @@ class GGVWindow(GUITk):
         self._gevw = gevw = GEVWindow(self)
         gevw.bind("<<Commit>>", self._on_commit, "+")
 
-        self._cit = cit = CommitInfoToplevel(self,
+        self._cit = cit = ExCommitInfoToplevel(self,
             topmost = True,
         )
 
