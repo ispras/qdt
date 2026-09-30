@@ -41,7 +41,6 @@ with pypath("..unidiff"):
         PatchSet,
         LINE_TYPE_ADDED,
         LINE_TYPE_REMOVED,
-        PatchedFile,
     )
     from unidiff.constants import (
         LINE_TYPE_NO_NEWLINE,
