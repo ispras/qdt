@@ -61,10 +61,6 @@ def get_commit_authored_timestamp(commit):
     "Authored Timestamp"
     return str(commit.authored_datetime)
 
-def get_commit_title(commit):
-    "Title"
-    return commit.message.splitlines()[0]
-
 
 COMMIT_ATTR_GETTERS = tuple(
     f for (n, f) in globals().items() if (
