@@ -167,6 +167,7 @@ class CommitInfoFrame(
 class CommitInfoToplevel(GUIToplevel):
 
     def __init__(self, *a, **kw):
+        sizegrip = kw.pop("sizegrip", True)
         topmost = kw.pop("topmost", None)
 
         GUIToplevel.__init__(self, *a, **kw)
@@ -176,7 +177,9 @@ class CommitInfoToplevel(GUIToplevel):
 
         self.title(_("Git Commit Info"))
 
-        self._cif = cif = CommitInfoFrame(self)
+        self._cif = cif = CommitInfoFrame(self,
+            sizegrip = sizegrip,
+        )
         cif.pack(fill = BOTH, expand = True)
 
     commit = attrof("_cif")
