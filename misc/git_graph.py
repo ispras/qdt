@@ -20,6 +20,8 @@ from widgets import (
     HideShowBinding,
     MenuBuilder,
     PatchEditorFrame,
+    TkPopupHelper,
+    VarMenu,
     VarTreeview,
 )
 from common.git.macrograph import (
@@ -769,7 +771,10 @@ class GEVWindow(GUIToplevel):
 
 
 
-class ExCommitInfoToplevel(CommitInfoToplevel):
+class ExCommitInfoToplevel(
+    CommitInfoToplevel,
+    TkPopupHelper,
+):
 
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", True)
@@ -785,7 +790,54 @@ class ExCommitInfoToplevel(CommitInfoToplevel):
         )
         pef.pack(fill = BOTH, expand = True)
 
+        pef.bind("<<Button-3-File>>", self._on_b3_file, "+")
+
+        self._file_popup = menu = VarMenu(self, tearoff = False)
+        menu.add("command",
+            label = _("Diff Tool"),
+            command = self._on_file_difftool
+        )
+        self._difftool_processes = []
+
     _base_commit = CommitInfoToplevel.commit
+
+    def _on_b3_file(self, __):
+        self.show_popup(
+            self.winfo_pointerx(),
+            self.winfo_pointery(),
+            self._file_popup,
+            tag = self._pef.current_file
+        )
+
+    def _on_file_difftool(self):
+        self.notify_popup_command()
+        pef = self._pef
+        file = pef.patch_set[pef.current_file]
+        if file.is_binary_file:
+            return
+        commit = self._base_commit
+        if file.is_removed_file:
+            f_path = file.source_file
+        else:
+            f_path = file.target_file
+        try:
+            parent = commit.parents[0]
+        except IndexError:
+            # https://stackoverflow.com/a/40884093
+            # empty tree
+            parent = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+        # Cut "a/" ot "b/" prefix off.
+        f_path = f_path[2:]
+        p = commit.repo.git.difftool(
+            parent,
+            commit,
+            "--",
+            f_path,
+            # don't wait for termination
+            as_process = True,
+        )
+        # Else, it is immediately interrupted.
+        self._difftool_processes.append(p)
 
     @property
     def commit(self):
