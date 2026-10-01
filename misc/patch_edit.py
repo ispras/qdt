@@ -467,7 +467,6 @@ class PatchSeriesEditorFrame(
 
         # patch editor
         self._pef = pef = PatchEditorFrame(autopaned,
-            editor_popups = False,
             sizegrip = sizegrip
         )
         autopaned.add(pef, sticky = "NESW")
