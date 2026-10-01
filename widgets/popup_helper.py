@@ -13,16 +13,21 @@ class DoShow(BaseException):
         self.show = show
 
 class TkPopupHelper(Misc):
-    def __init__(self):
-        self.current_popup = None
-        self.current_popup_tag = None
 
+    def __init__(self):
+        print("TkPopupHelper.__init__ call is not required anymore")
+
+    def __init_popup_helper(self):
+        self.__init_popup_helper = lambda : None
         toplevel = self.winfo_toplevel()
         if toplevel is not None:
             toplevel.bind("<Button-1>", self.__hide_on_mouse, "+")
 
     def __hide_on_mouse(self, event):
         self.hide_popup()
+
+    current_popup = None
+    current_popup_tag = None
 
     def tk_popup_helper_cleanup(self):
         self.current_popup = None
@@ -44,6 +49,8 @@ Else showing it for another one should show unpost previous menu and post new
 It could be any object reference unique for the essence with respect to "!="
 operator (except None)
         """
+        self.__init_popup_helper()
+
         # Do not show same menu again. Just hide it.
         try:
             if self.current_popup is None:
