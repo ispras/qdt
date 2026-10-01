@@ -105,6 +105,7 @@ class PatchEditorFrame(
 
         tv.bind("<<TreeviewSelect>>", self._on_tv_files_select, "+")
         self.current_file = None
+        self.current_dir = None
 
         # file view
         fr = GUIFrame(autopaned)
@@ -133,16 +134,20 @@ class PatchEditorFrame(
 
         t.grid(row = 0, column = 0, sticky = "NESW")
 
+        tv.bind("<Button-3>", self._on_tv_files_b3, "+")
+        self.current_hunk = None
+
+        t.bind("<Button-3>", self._on_t_file_b3, "+")
+
         # delayed file selection (if treeview is being constructed)
         self._do_select_file = None
 
         if not editor_popups:
             return
 
-        tv.bind("<Button-3>", self._on_tv_files_b3, "+")
-
-        t.bind("<Button-3>", self._on_t_file_b3, "+")
-        self.current_hunk = None
+        self.bind("<<Button-3-File>>", self._on_b3_file, "+")
+        self.bind("<<Button-3-Dir>>", self._on_b3_dir, "+")
+        self.bind("<<Button-3-Hunk>>", self._on_b3_hunk, "+")
 
         self._hunk_popup = menu = VarMenu(self, tearoff = False)
         menu.add("command",
@@ -197,11 +202,17 @@ class PatchEditorFrame(
             except ValueError:
                 continue
         else:
-            self.current_hunk = None
             return
         self.current_hunk = hunk_idx
+        self.event_generate("<<Button-3-Hunk>>")
 
-        self.show_popup(e.x_root, e.y_root, self._hunk_popup, tag = hunk_idx)
+    def _on_b3_hunk(self, __):
+        self.show_popup(
+            self.winfo_pointerx(),
+            self.winfo_pointery(),
+            self._hunk_popup,
+            tag = self.current_hunk,
+        )
 
     def _on_move_hunk_to(self):
         self.notify_popup_command()
@@ -311,7 +322,7 @@ class PatchEditorFrame(
                 assert parent == insert(prev_parent, END, parent,
                     text = f_path_t[i - 1],
                     open = True,
-                    tags = ["", "-1"]
+                    tags = ["", "-1", f_path_t[:i]]
                 )
                 prev_parent = parent
 
@@ -344,15 +355,29 @@ class PatchEditorFrame(
         if _id:
             tv.selection_set(_id)
 
-            i = int(tv.item(_id, "tags")[1])
+            tags = tv.item(_id, "tags")
+            i = int(tags[1])
             if i >= 0:
-                popup = self._file_popup
+                self.event_generate("<<Button-3-File>>")
             else:
-                popup = self._dir_popup
+                self.current_dir = tags[2]
+                self.event_generate("<<Button-3-Dir>>")
 
-            self.show_popup(e.x_root, e.y_root, popup,
-                tag = _id
-            )
+    def _on_b3_file(self, __):
+        self.show_popup(
+            self.winfo_pointerx(),
+            self.winfo_pointery(),
+            self._file_popup,
+            tag = self.current_file
+        )
+
+    def _on_b3_dir(self, __):
+        self.show_popup(
+            self.winfo_pointerx(),
+            self.winfo_pointery(),
+            self._dir_popup,
+            tag = self.current_dir
+        )
 
     def select_file(self, i):
         if hasattr(self, "_reading_task"):
