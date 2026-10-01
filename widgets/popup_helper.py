@@ -28,23 +28,22 @@ class TkPopupHelper(Misc):
         self.current_popup = None
         self.current_popup_tag = None
 
-    """ The method notify_popup_command should be called during any popup menu
-    command callback to cleanup the helper internal attributes. """
     def notify_popup_command(self):
+        """The method notify_popup_command should be called during any popup
+menu command callback to cleanup the helper internal attributes.
+        """
         self.tk_popup_helper_cleanup()
 
-    """
-show_popup method shows given menu (popup)
-
-tag:
+    def show_popup(self, x, y, popup, tag = None):
+        """Shows given menu (popup).
+@param tag:
     Sometimes one instance of the menu is used for a set of similar essences.
 Then posting the menu for one of they twice should result in menu unposting.
 Else showing it for another one should show unpost previous menu and post new
 (at new position likely). The tag argument is used to identify the essence.
 It could be any object reference unique for the essence with respect to "!="
-operator (except None).
-    """
-    def show_popup(self, x, y, popup, tag = None):
+operator (except None)
+        """
         # Do not show same menu again. Just hide it.
         try:
             if self.current_popup is None:
