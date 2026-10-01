@@ -12,14 +12,10 @@ from .gui_text import (
     GUIText,
     READONLY,
 )
-from .popup_helper import (
-    TkPopupHelper,
-)
 from .scrollframe import (
     add_scrollbars_native,
 )
 from .var_widgets import (
-    VarMenu,
     VarTreeview,
 )
 
@@ -62,19 +58,18 @@ line_type_to_tag = {
 
 class PatchEditorFrame(
     GUIFrame,
-    TkPopupHelper,
     object # for `property` (Py2)
 ):
 
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
-        editor_popups = kw.pop("editor_popups", True)
+        if kw.pop("editor_popups", None) is not None:
+            print("editor_popups has been removed")
         # properties
         self._patch_file_name = None
         self._patch_set = None
 
         GUIFrame.__init__(self, *a, **kw)
-        TkPopupHelper.__init__(self)
 
         self._ap = autopaned = AutoPanedWindow(self,
             sashrelief = RAISED,
@@ -142,31 +137,6 @@ class PatchEditorFrame(
         # delayed file selection (if treeview is being constructed)
         self._do_select_file = None
 
-        if not editor_popups:
-            return
-
-        self.bind("<<Button-3-File>>", self._on_b3_file, "+")
-        self.bind("<<Button-3-Dir>>", self._on_b3_dir, "+")
-        self.bind("<<Button-3-Hunk>>", self._on_b3_hunk, "+")
-
-        self._hunk_popup = menu = VarMenu(self, tearoff = False)
-        menu.add("command",
-            label = _("Move to..."),
-            command = self._on_move_hunk_to
-        )
-
-        self._file_popup = menu = VarMenu(self, tearoff = False)
-        menu.add("command",
-            label = _("Move to..."),
-            command = self._on_move_file_to
-        )
-
-        self._dir_popup = menu = VarMenu(self, tearoff = False)
-        menu.add("command",
-            label = _("Move to..."),
-            command = self._on_move_dir_to
-        )
-
     def iter_current_directory(self):
         tv = self._tv_files
         for dir_id in tv.selection():
@@ -205,26 +175,6 @@ class PatchEditorFrame(
             return
         self.current_hunk = hunk_idx
         self.event_generate("<<Button-3-Hunk>>")
-
-    def _on_b3_hunk(self, __):
-        self.show_popup(
-            self.winfo_pointerx(),
-            self.winfo_pointery(),
-            self._hunk_popup,
-            tag = self.current_hunk,
-        )
-
-    def _on_move_hunk_to(self):
-        self.notify_popup_command()
-        self.event_generate("<<MoveHunkTo>>")
-
-    def _on_move_file_to(self):
-        self.notify_popup_command()
-        self.event_generate("<<MoveFileTo>>")
-
-    def _on_move_dir_to(self):
-        self.notify_popup_command()
-        self.event_generate("<<MoveDirTo>>")
 
     @property
     def patch_file_name(self):
@@ -362,22 +312,6 @@ class PatchEditorFrame(
             else:
                 self.current_dir = tags[2]
                 self.event_generate("<<Button-3-Dir>>")
-
-    def _on_b3_file(self, __):
-        self.show_popup(
-            self.winfo_pointerx(),
-            self.winfo_pointery(),
-            self._file_popup,
-            tag = self.current_file
-        )
-
-    def _on_b3_dir(self, __):
-        self.show_popup(
-            self.winfo_pointerx(),
-            self.winfo_pointery(),
-            self._dir_popup,
-            tag = self.current_dir
-        )
 
     def select_file(self, i):
         if hasattr(self, "_reading_task"):
