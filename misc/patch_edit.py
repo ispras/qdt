@@ -467,13 +467,56 @@ class PatchSeriesEditorFrame(
 
         # patch editor
         self._pef = pef = PatchEditorFrame(autopaned,
+            editor_popups = False,
             sizegrip = sizegrip
         )
         autopaned.add(pef, sticky = "NESW")
 
-        pef.bind("<<MoveHunkTo>>", self._on_move_hunk_to)
-        pef.bind("<<MoveFileTo>>", self._on_move_file_to)
-        pef.bind("<<MoveDirTo>>", self._on_move_dir_to)
+        pef.bind("<<Button-3-File>>", self._on_b3_file, "+")
+        pef.bind("<<Button-3-Dir>>", self._on_b3_dir, "+")
+        pef.bind("<<Button-3-Hunk>>", self._on_b3_hunk, "+")
+
+        self._hunk_popup = menu = VarMenu(self, tearoff = False)
+        menu.add("command",
+            label = _("Move to..."),
+            command = self._on_move_hunk_to
+        )
+
+        self._file_popup = menu = VarMenu(self, tearoff = False)
+        menu.add("command",
+            label = _("Move to..."),
+            command = self._on_move_file_to
+        )
+
+        self._dir_popup = menu = VarMenu(self, tearoff = False)
+        menu.add("command",
+            label = _("Move to..."),
+            command = self._on_move_dir_to
+        )
+
+    def _on_b3_hunk(self, __):
+        self.show_popup(
+            self.winfo_pointerx(),
+            self.winfo_pointery(),
+            self._hunk_popup,
+            tag = self._pef.current_hunk,
+        )
+
+    def _on_b3_file(self, __):
+        self.show_popup(
+            self.winfo_pointerx(),
+            self.winfo_pointery(),
+            self._file_popup,
+            tag = self._pef.current_file
+        )
+
+    def _on_b3_dir(self, __):
+        self.show_popup(
+            self.winfo_pointerx(),
+            self.winfo_pointery(),
+            self._dir_popup,
+            tag = self._pef.current_dir
+        )
 
     def _ask_for_target(self):
         move_targets = list(self.patch_names)
@@ -501,7 +544,9 @@ class PatchSeriesEditorFrame(
             if tv.item(_id, "text") == target_name:
                 return _id
 
-    def _on_move_hunk_to(self, __):
+    def _on_move_hunk_to(self):
+        self.notify_popup_command()
+
         dst_patch_id = self._ask_for_target()
         if dst_patch_id is None:
             return
@@ -566,7 +611,9 @@ class PatchSeriesEditorFrame(
         tv.item(src_patch_id, values = ["*"])
         tv.item(dst_patch_id, values = ["*"])
 
-    def _on_move_file_to(self, __):
+    def _on_move_file_to(self):
+        self.notify_popup_command()
+
         dst_patch_id = self._ask_for_target()
         if dst_patch_id is None:
             return
@@ -620,7 +667,9 @@ class PatchSeriesEditorFrame(
         tv.item(src_patch_id, values = ["*"])
         tv.item(dst_patch_id, values = ["*"])
 
-    def _on_move_dir_to(self, __):
+    def _on_move_dir_to(self):
+        self.notify_popup_command()
+
         dst_patch_id = self._ask_for_target()
         if dst_patch_id is None:
             return
