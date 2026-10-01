@@ -782,7 +782,6 @@ class ExCommitInfoToplevel(CommitInfoToplevel):
 
         self._pef = pef = PatchEditorFrame(self,
             sizegrip = sizegrip,
-            editor_popups = False,
         )
         pef.pack(fill = BOTH, expand = True)
 
