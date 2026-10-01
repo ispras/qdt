@@ -63,8 +63,7 @@ class PatchEditorFrame(
 
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
-        if kw.pop("editor_popups", None) is not None:
-            print("editor_popups has been removed")
+
         # properties
         self._patch_file_name = None
         self._patch_set = None
