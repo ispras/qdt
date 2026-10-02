@@ -53,6 +53,12 @@ class lazy(object):
         obj.__dict__[self.name] = val
         return val
 
+    def __set__(self, obj, val):
+        try:
+            assert obj.__dict__.setdefault(self.name, val) is val
+        except AssertionError:
+            raise AttributeError
+
     # Using `del` is faster than `reset_lazy`.
     # Especially when there are only few invalidated `@lazy` attributes.
     # That's not an error to reset (`del`) not yet evaluated attribute.
