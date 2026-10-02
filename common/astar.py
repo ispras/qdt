@@ -21,10 +21,16 @@ class CoAStep:
     def __lt__(self, step):
         raise NotImplementedError
 
+    def iter_reversed(self):
+        return a_iter_reversed(self)
+
     def a_star_path_str(self, sep = " <- "):
         return sep.join(map(str, a_iter_reversed(self)))
 
     __a_prev__ = None
+
+    def co_a_star(self):
+        return co_a_star(self)
 
 
 def co_a_star(start):
