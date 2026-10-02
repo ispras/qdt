@@ -4,9 +4,8 @@ __all__= [
 ]
 
 from ..astar import (
-    a_iter_reversed,
-    CoAStep,
-    co_a_star,
+    CoAWorseStep,
+    CoStepForbidden,
 )
 from ..attr_change_notifier import (
     AttributeChangeNotifier,
@@ -24,6 +23,9 @@ from ..grid import (
 )
 from ..diag_xy import (
     iter_diag_xy,
+)
+from ..lazy import (
+    lazy,
 )
 
 from collections import (
@@ -406,10 +408,6 @@ class _Edge(tuple):
     pass
 
 
-class _StepForbidden(BaseException):
-    "not a failure"
-
-
 class _PlacingContext(object):
 
     def __init__(self, component, target, backward):
@@ -427,10 +425,10 @@ class _PlacingContext(object):
 
     def _co_place_edge(self, end_step):
         if self.backward:
-            e = _Edge(s.xy for s in a_iter_reversed(end_step))
+            e = _Edge(s.p for s in end_step.iter_reversed())
         else:
-            reversed_steps = tuple(a_iter_reversed(end_step))
-            e = _Edge(s.xy for s in reversed(reversed_steps))
+            reversed_steps = tuple(end_step.iter_reversed())
+            e = _Edge(s.p for s in reversed(reversed_steps))
 
         yield True
 
@@ -465,85 +463,65 @@ class _PlacingContext(object):
         raise CoReturn(e)
 
 
-class _PlacingStep(CoAStep):
+class _PlacingStep(CoAWorseStep):
 
-    def __init__(self, ctx, xy, w = 0, d = None, r = None):
-        """
-@param w:
-    total weight of the path candidate
-@param d:
-    direction, used to add rotation penalty to total weight
-@param r:
-    target point distance penalty, part of `w`eight
-        """
+    def __init__(self, xy, ctx = None):
+        super(_PlacingStep, self).__init__(xy)
+        if ctx is not None:
+            self.ctx = ctx
 
-        self.ctx = ctx
-        self.xy = xy
-        self.d = ctx.preferred_dir if d is None else d
-        if r is None:
-            tx, ty = ctx.target_xy
-            x, y = xy
-            r = abs(tx - x) + abs(ty - y)
-            w += r
-        self.r = r
-        self.w = w
+    @lazy
+    def ctx(self):
+        return self.__a_prev__.ctx
 
-    def co_a_star(self):
-        yield co_a_star(self)
+    def d_to_target(self, x, y):
+        tx, ty = self.ctx.target_xy
+        return abs(tx - x) + abs(ty - y)
+
+    @lazy
+    def r(self):
+        return self.d_to_target(*self.p)
+
+    @lazy
+    def d(self):
+        p = self.__a_prev__
+        if p is None:
+            return self.ctx.preferred_dir
+        x, y = self.p
+        px, py = p.p
+        return x - px, y - py
 
     def __co_try_end__(self):
         return self.ctx._co_try_end(self)
 
     def __str__(self):
-        return repr(self.xy)
+        return repr(self.p)
 
-    def __lt__(self, step):
-        return self.w < step.w
-
-    def __iter_steps__(self):
-        # print(self.w + self.r, self.a_star_path_str())
-
-        c = self.ctx
-        x, y = self.xy
-        tx, ty = c.target_xy
-        reached = c.reached
-
+    def __iter_points__(self):
+        x, y = self.p
         for sd in iter_8_dirs():
             sdx, sdy = sd  # step direction
-            sx = x + sdx
-            sy = y + sdy
-            s = sx, sy
+            px = x + sdx
+            py = y + sdy
+            yield px, py
 
-            sr = abs(sx - tx) + abs(sy - ty)
+    def __iter_steps__(self):
+        c = self.ctx
+        reached = c.reached
 
-            try:
-                sw = self.w + self.__step_penalty__(s, sd)
-            except _StepForbidden:
-                continue
-
-            sw += sr - self.r
-
+        for s in super(_PlacingStep, self).__iter_steps__():
+            p = s.p
+            w = s.w
             # drop paths those reach the point `s` not having less `w`eight
-            if s in reached:
-                if reached[s] <= sw:
+            if p in reached:
+                if reached[p] <= w:
                     continue
 
-            reached[s] = sw
+            reached[p] = w
+            yield s
 
-            yield type(self)(c, s, sw, sd, sr)
-
-    def __step_penalty__(self, s, sd):
-        """
-@param s:
-    (x, y) of step
-@param sd:
-    (dx, dy) of step relative to self.xy
-    I.e. sd = s - self.xy
-@return penalty to total weight of path candidate
-@raise _StepForbidden:
-    The step is inacceptible.
-        """
-        raise NotImplementedError
+    def _close_penalty(self, s):
+        return self.d_to_target(*s) - self.r
 
     def _step_position_penalty(self, s):
         # cache
@@ -560,20 +538,26 @@ class _PlacingStep(CoAStep):
                 p += P_EDGE_INTERSECTION
             elif s != txy:
                 # node touching is forbiddent, except target node
-                raise _StepForbidden
+                raise CoStepForbidden
 
         if self._touch_tail(s):
-            raise _StepForbidden
+            raise CoStepForbidden
 
         return p
 
     def _touch_tail(self, xy):
-        for s in a_iter_reversed(self.__a_prev__):
-            if s.xy == xy:
+        p = self.__a_prev__
+        if p is None:
+            return False
+        for s in p.iter_reversed():
+            if s.p == xy:
                 return True
 
-    def _step_rotation_penalty(self, sdx, sdy):
+    def _step_rotation_penalty(self, sx, sy):
         # cache
+        x, y = self.p
+        sdx = sx - x
+        sdy = sy - y
         dx, dy = self.d
 
         p = 0
@@ -588,25 +572,30 @@ class _PlacingStep(CoAStep):
                 p += self.ctx.placer.P_45_TURN
             elif scalar:  # scalar < 0
                 # sw += 50  # 135 degrees turn
-                raise _StepForbidden
+                raise CoStepForbidden
             else:  # scalar == 0
                 p += self.ctx.placer.P_90_TURN
         else:
             # collinear
             if scalar < 0:
                 # sw += 100  # 180 degrees turn
-                raise _StepForbidden
+                raise CoStepForbidden
             else:
                 p += self.ctx.placer.P_FORWARD
 
         return p
 
-    def _step_direction_penalty(self, sdx, sdy):
+    def _step_direction_penalty(self, sx, sy):
         # account prefered direction
 
         # cache
         c = self.ctx
+
         pdx, pdy = c.preferred_dir
+
+        x, y = self.p
+        sdx = sx - x
+        sdy = sy - y
 
         p = 0
         # analyze edge line rotation
@@ -633,7 +622,7 @@ class _NodeJoiningContext(_PlacingContext):
     def _co_try_end(self, s):
         txy = self.target_xy
 
-        if s.xy != txy:
+        if s.p != txy:
             return
 
         e = (yield self._co_place_edge(s))
@@ -650,10 +639,11 @@ class _NodeJoiningContext(_PlacingContext):
 
 class _NodeJoiningStep(_PlacingStep):
 
-    def __step_penalty__(self, s, sd):
+    def __step_penalty__(self, s):
         return (
             self._step_position_penalty(s)
-          + self._step_rotation_penalty(*sd)
+          + self._step_rotation_penalty(*s)
+          + self._close_penalty(s)
         )
 
 
@@ -679,7 +669,7 @@ class _ComponentPlacingContext(_PlacingContext):
         self.bind_offset = what._nodes[end]
 
     def _co_try_end(self, s):
-        x, y = s.xy
+        x, y = s.p
 
         # Only place nodes on even positions.
         # So, an edge can always be routed event if a node is surrounded by
@@ -730,12 +720,13 @@ class _ComponentPlacingContext(_PlacingContext):
 
 class _ComponentPlacingStep(_PlacingStep):
 
-    def __step_penalty__(self, s, sd):
+    def __step_penalty__(self, s):
         return (
             self._step_position_penalty(s)
-          + self._step_rotation_penalty(*sd)
-          + self._step_direction_penalty(*sd)
+          + self._step_rotation_penalty(*s)
+          + self._step_direction_penalty(*s)
           + self._bound_grid_overlapping_penalty(*s)
+          + self._close_penalty(s)
         )
 
     def _bound_grid_overlapping_penalty(self, sx, sy):
@@ -754,9 +745,9 @@ when the `s`tep is made.
         b0x = sx - box
         b0y = sy - boy
 
-        for ts in a_iter_reversed(self):
+        for ts in self.iter_reversed():
             # coords of step relative to (0, 0) of static grid
-            tsx, tsy = ts.xy
+            tsx, tsy = ts.p
 
             # coords of step relative to (0, 0) of bound grid
             btsx = tsx - b0x
@@ -768,7 +759,7 @@ when the `s`tep is made.
                     p += P_EDGE_INTERSECTION
                 else:
                     # node touching is forbiddent
-                    raise _StepForbidden
+                    raise CoStepForbidden
 
         return p
 
