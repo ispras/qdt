@@ -15,6 +15,9 @@ from qemu import (
     MOp_SetNodeVarNameBase,
     QemuTypeName,
 )
+from .tk_after import (
+    tk_delayed,
+)
 from .var_widgets import (
     VarButton,
     VarLabel,
@@ -86,7 +89,7 @@ class SettingsWidget(GUIFrame):
             sticky = "NESW"
         )
 
-        self.refresh_after = self.after(0, self.__refresh_single__)
+        self._refresh_single = 1
 
         self.bind("<Destroy>", self.__on_destroy__)
 
@@ -122,19 +125,16 @@ class SettingsWidget(GUIFrame):
         else:
             return self.mach.id2node[nid]
 
-    def __refresh_single__(self):
+    @tk_delayed
+    def _refresh_single(self):
         self.refresh()
-        del self.refresh_after
 
     def __on_destroy__(self, *args):
         if self.mht is not None:
             # the listener is not assigned in snapshot mode
             self.mht.unwatch_changed(self.on_changed)
 
-        try:
-            self.after_cancel(self.refresh_after)
-        except AttributeError:
-            pass
+        del self._refresh_single
 
 
 class QOMInstanceSettingsWidget(SettingsWidget):

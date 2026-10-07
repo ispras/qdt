@@ -2,23 +2,24 @@ __all__ = [
     "TextCanvas"
 ]
 
-from six.moves.tkinter import (
-    IntVar,
-    Canvas,
-    RIGHT,
-    LEFT,
-)
-from six.moves.tkinter_font import (
-    Font,
-    NORMAL,
-    BOLD,
-)
 from common import (
     bind_mouse_wheel,
     LineIndex,
 )
 from .hotkey import (
     CurrentKeyboard,
+)
+
+from six.moves.tkinter import (
+    Canvas,
+    IntVar,
+    LEFT,
+    RIGHT,
+)
+from six.moves.tkinter_font import (
+    BOLD,
+    Font,
+    NORMAL,
 )
 
 
@@ -597,6 +598,11 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
             self._sel_start = self._sel_limit = None
             self.draw()
 
+        if not self._picked_lines:
+            # Text view is fully scrolled to the end.
+            # No lines are displayed.
+            # Nothing to select.
+            return
         self._state = selecting_started
         self._sel_start_point = e.x, e.y
 
