@@ -9,6 +9,10 @@ from common import (
     trie_find,
     intervalmap
 )
+from .rpath import (
+    rpath2path,
+)
+
 from os.path import (
     join
 )
@@ -239,18 +243,22 @@ pyelftools's `DWARFInfo`.
     def find_line_map(self, file_name):
         rpath = tuple(reversed(file_name.split(bsep)))
         try:
-            lm, __ = trie_find(self.srcmap, rpath)
-        except KeyError:
-            try:
-                cu = self.get_CU_by_reversed_path(rpath)
-            except (KeyError, ValueError):
-                # XXX: headers are not supported yet
-                raise ValueError("Cannot find line program for file %s" % (
-                    file_name
-                ))
-
-            self.account_line_program_CU(cu)
-            lm, __ = trie_find(self.srcmap, rpath)
+            while True:
+                # Not a loop.
+                # Catching ValueError from several `trie_find` calls.
+                try:
+                    lm, __ = trie_find(self.srcmap, rpath)
+                except KeyError:
+                    try:
+                        for cu in self.iter_CUs_by_reversed_path(rpath):
+                            self.account_line_program_CU(cu)
+                    except ValueError:
+                        # XXX: headers are not supported yet
+                        raise RuntimeError(
+                    "Cannot find line program for file %s" % (file_name)
+                        )
+                    lm, __ = trie_find(self.srcmap, rpath)
+                break
         except ValueError:
             raise ValueError("File name suffix '%s' is not long enough to"
                 " unambiguously identify line map" % file_name)
@@ -274,6 +282,12 @@ pyelftools's `DWARFInfo`.
     def account_line_program_CU(self, cu):
         lp = self.di.line_program_for_CU(cu)
 
+        files = []
+        self.cu_off2files[cu.cu_offset] = files
+
+        if lp is None:
+            return
+
         entries = lp.get_entries()
 
         # Note that program entries must be parsed before header file list
@@ -285,7 +299,6 @@ pyelftools's `DWARFInfo`.
         dnames = hdr["include_directory"] # include_directories
 
         # first reconstruct contributing file paths
-        files = []
         for f in fentries:
             dir_index = f["dir_index"]
             if dir_index == 0:
@@ -297,8 +310,6 @@ pyelftools's `DWARFInfo`.
             name = f["name"].split(bsep)
             _path = _dir + name
             files.append(_path)
-
-        self.cu_off2files[cu.cu_offset] = files
 
         srcmap = self.srcmap
 
@@ -319,6 +330,11 @@ pyelftools's `DWARFInfo`.
                 continue
 
             file_idx = s.file - 1
+            if len(files) <= file_idx:
+                print(
+    "There is no file with index %d. A malformed line program?" % file_idx
+                )
+                continue
             line_map = line_maps[file_idx]
 
             if line_map is None:
@@ -374,22 +390,19 @@ pyelftools's `DWARFInfo`.
 
         for cu in citer:
             idx2cu.append(cu)
-            name = cu.get_top_DIE().attributes["DW_AT_name"].value
+            die = cu.get_top_DIE()
+            try:
+                tag = die.attributes["DW_AT_name"]
+            except KeyError:
+                print("A nameless CU found. A malformed debug info")
+                continue
+            name = tag.value
             parts = name.split(bsep)
             rparts = tuple(reversed(parts))
-            self._account_cu_by_reversed_name(rparts, cu)
+            # print("Accounting %s" % str(rparts))
+            trie_add(self.name2cu, rparts, []).append(cu)
 
             yield cu, rparts
-
-    def _account_cu_by_reversed_name(self, rparts, cu):
-        # print("Accounting %s" % str(rparts))
-
-        if trie_add(self.name2cu, rparts, cu) is not cu:
-            print("CU with path %s is already accounted, first one will be"
-                " used only" % (
-                    cu.get_top_DIE().attributes["DW_AT_name"].value
-                )
-            )
 
     def get_CU_by_idx(self, idx):
         idx2cu = self.idx2cu
@@ -406,15 +419,11 @@ pyelftools's `DWARFInfo`.
 
         return cu
 
-    def get_CU_by_name(self, suffix):
-        parts = suffix.split(bsep)
-        rparts = tuple(reversed(parts))
-        return self.get_CU_by_reversed_path(rparts)
-
-    def get_CU_by_reversed_path(self, rpath):
+    def iter_CUs_by_reversed_path(self, rpath):
         rparts = rpath
 
         d = self.name2cu
+        CUs_idx = 0
 
         # scan suffix tree, starting from file name
         for i, p in enumerate(rparts, 1):
@@ -430,16 +439,27 @@ pyelftools's `DWARFInfo`.
             v = d[p]
 
             if isinstance(v, dict):
-                # There are several CUs with such suffix. Try next suffix part.
+                # There are several CUs with such suffix. Try next path part.
                 d = v
                 continue
 
-            # There is only one parsed CU with such suffix in the tree.
-            cu, cu_rparts = v
+            CUs, cu_rparts = v
 
             # Check parts of suffix those are not in the tree yet.
             if cu_rparts[:len(rparts) - i] == rparts[i:]:
-                return cu
+                while True:
+                    if CUs_idx == len(CUs):
+                        # There could be several CUs with same path.
+                        # Sume compillers do the things...
+                        for __ in self._cu_parser_state:
+                            if CUs_idx < len(CUs):
+                                break
+                        else:
+                            if CUs_idx == len(CUs):
+                                # Parsing ended. No more CU.
+                                return
+                    yield CUs[CUs_idx]
+                    CUs_idx += 1
             else:
                 # Some parts differs. Continue DWARF info parsing. It is
                 # possible that the CU being looked for is not yet parsed.
@@ -459,12 +479,12 @@ pyelftools's `DWARFInfo`.
                 return d[None]
 
             raise ValueError("Given name suffix %s is not long enough to look"
-                " CU up. There are several CUs with such suffix." % join(
-                    *reversed(rpath)
+                " CU up. There are several CUs with such suffix." % rpath2path(
+                    rpath
                 )
             )
 
-        raise KeyError("No CU with name suffix %s" % join(*reversed(rpath)))
+        raise KeyError("No CU with name suffix %s" % rpath2path(rpath))
 
     def iter_CUs(self):
         idx2cu = self.idx2cu
