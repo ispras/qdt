@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include "common.h"
 
 int main(void) {
     volatile uint32_t a = 0xABCDEF, b = 0x12345678, c = 0, i;
@@ -18,15 +18,18 @@ int main(void) {
         c = b & a; //$ch
 
         // check just value of 'c' on the first iteration
+        FLUSH_PIPELINE;
         c = b | a; //$ch.c
 
         // check just value of 'c' on the all iterations
+        FLUSH_PIPELINE;
         c = b ^ a; //$chc.c
 
         /* combination of commands is possible
             on the first iteration: check line number, values of 'a' and 'b'
             on the all iterations: check value of 'c'
         */
+        FLUSH_PIPELINE;
         c = 0; //$br, chc.c, ch.a, ch.b
     }
 

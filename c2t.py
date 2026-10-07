@@ -14,6 +14,7 @@ from common import (
     filefilter,
     HelpFormatter,
     makedirs,
+    prefix_std,
     pypath,
     qdtdirs,
 )
@@ -102,7 +103,7 @@ C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg}\n"
 def c2t_exit(msg, prog = __file__):
     print(C2T_ERRMSG_FORMAT.format(
         prog = basename(prog),
-        msg = msg.decode(),
+        msg = msg,
     ))
     killpg(0, SIGKILL)
 
@@ -117,6 +118,8 @@ ORACLE_CPU = machine()
 
 c2t_cfg = None
 
+re_size = compile("_(?:[uf]?(\\d+))")
+size_search = re_size.search
 
 class DebugSession(object):
     """ This class manages debugging session """
@@ -191,10 +194,12 @@ class DebugSession(object):
         self.chc_line2var = defaultdict(list)
 
     def set_br_by_line(self, lineno, cb):
-        line_map = self.rt.dic.find_line_map(bstr(basename(self.srcfile)))
-        line_descs = line_map[lineno]
+        raw_file_name = bstr(basename(self.srcfile))
+        addrs = tuple(self.rt.dic.iter_line_addrs(raw_file_name, lineno,
+            no_stmt = False
+        ))
 
-        if len(line_descs) < 1:
+        if len(addrs) < 1:
             raise RuntimeError(
                 "No breakpoint addresses for line %s:%d (%s)" % (
                     self.srcfile, lineno, self.session_type
@@ -206,34 +211,41 @@ class DebugSession(object):
         # `DebugComparator`. However, some statements (like `return`) can
         # be duplicated in several addresses. So, breakpoints are set on all
         # addresses to catch the control flow everywhere.
-        if self.verbose and 1 < len(line_descs):
-            print("Breakpoint at %s:%d has many addresses in %s session."
+        if self.verbose or 1 < len(addrs):
+            print("Breakpoint at %s:%d has many addresses."
                 " The test may be incorrect." % (
-                    self.srcfile, lineno, self.session_type
+                    self.srcfile, lineno
                 )
             )
 
-        for desc in line_descs:
-            addr = self.rt.target.reg_fmt % desc.state.address
+        for addr_int in addrs:
+            addr = self.rt.target.reg_fmt % addr_int
             self.addr2line[addr] = lineno
+            if self.verbose:
+                print("%s:%d > %s" % (self.srcfile, lineno, addr))
             self.rt.add_br(addr, cb)
 
     def _execute_debug_comment(self):
         lineno = 1
 
         with open(self.srcfile, 'r') as f:
-            re_comment = compile("^.*//\$(.+)$")
+            re_comment = compile("^.*//[$](.+)$")
             for line in f:
                 mi = re_comment.match(line)
                 if mi:
                     glob = DebugCommandExecutor(locals(), lineno)
-                    exec(mi.group(1), glob)
+                    try:
+                        exec(mi.group(1), glob)
+                    except:
+                        print("%r: executing line comment: %r" % (
+                            self.srcfile, line)
+                        )
+                        raise
                 lineno += 1
 
     @property
     def _var_size(self):
-        re_size = compile("^.+_(?:u?(\d+))_.+$")
-        size_str = re_size.match(basename(self.srcfile)).group(1)
+        size_str = size_search(basename(self.srcfile)).group(1)
         return int(size_str) // 8
 
     def _dump_var(self, addr, lineno, var_names):
@@ -242,6 +254,7 @@ class DebugSession(object):
             addr = addr,
             lineno = lineno,
             vars = dict(
+                # TODO: `debug.value.Value.fetch` can get fetch size by self
                 map(lambda x: (x, self.rt[x].fetch(self._var_size)),
                     var_names if var_names else self.rt
                 )
@@ -376,6 +389,15 @@ class ProcessWithErrCatching(Thread):
         # If the process has been explicitly wiped, do not `c2t_exit`
         if not self._wiped:
             if process.returncode != 0:
+                if not isinstance(err, str):
+                    try:
+                        err = err.decode("utf-8")
+                    except:
+                        try:
+                            err = err.decode("charmap")
+                        except:
+                            err = repr(err)
+
                 c2t_exit(err, prog = self.prog)
 
     def wipe(self):
@@ -401,6 +423,8 @@ class ProcessWithErrCatching(Thread):
 def oracle_tests_run(tests_queue, port_queue, res_queue, is_finish, verbose,
     timeout
 ):
+    prefix_std("oracle: ")
+
     while True:
         try:
             test_src, test_elf = tests_queue.get(timeout = 0.1)
@@ -462,6 +486,8 @@ def run_qemu(test_elf, qemu_port, qmp_port, verbose):
 def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
     verbose, timeout
 ):
+    prefix_std("target: ")
+
     qemu = None
     session = None
     qmp_port = None
@@ -484,17 +510,18 @@ def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
                 session.reset(test_src, test_elf)
             else:
                 qemu_port = port_queue.get(block = True)
-                if (not c2t_cfg.rsp_target.user
-                    and (reuse or c2t_cfg.rsp_target.qemu_reset)
-                ):
-                    qmp_port = port_queue.get(block = True)
+                qmp_port = port_queue.get(block = True)
 
                 qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
 
-                if not wait_for_tcp_port(qemu_port):
-                    c2t_exit("qemu malfunction")
+                # Hint.
+                # To get permissions to debug `qemu` process:
+                # sudo sysctl -w kernel.yama.ptrace_scope=0
 
-                if qmp_port and wait_for_tcp_port(qmp_port):
+                if not wait_for_tcp_port(qemu_port):
+                    c2t_exit("qemu (gdbstub) tcp:%d malfunction" % qemu_port)
+
+                if wait_for_tcp_port(qmp_port):
                     qmp = QMP(qmp_port)
 
                 session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
@@ -518,7 +545,18 @@ def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
                 qmp = None
             else:
                 if not reuse:
-                    session.kill()
+                    # Sometimes, it's required that VMChangeStateHandler is
+                    # to be called for RUN_STATE_SHUTDOWN.
+                    # E.g. for instruction count (coverage) file update.
+                    # `session.kill()` or just `qmp("quit")` is not enough
+                    # because of Qemu implementation.
+                    # See `gdbstub.c:gdb_handle_packet` for 'k' packet handling
+                    # and `softmmu/cpus.c:do_vm_stop`.
+                    # The second requires `runstate_is_running()` to
+                    # `vm_state_notify`.
+                    # So, Qemu is first to be "cont"inued before "quit".
+                    qmp("cont")
+                    qmp("quit")
                     qemu.join()
                     session.port_close()
 
@@ -657,6 +695,8 @@ def start_cpu_testing(tests, jobs, reuse, verbose,
         oracle_trp.start()
         target_trp.start()
 
+    prefixers = prefix_std("C2T: ")
+
     # Tests we are waiting for
     tests_left = set(tests)
 
@@ -674,12 +714,16 @@ def start_cpu_testing(tests, jobs, reuse, verbose,
             if errors2stop == 0:
                 killpg(0, SIGKILL)
 
-    oracle_tb.join()
-    target_tb.join()
-    pf.join()
+    prefixers.revert()
+
     for oracle_trp, target_trp in tests_run_processes:
         oracle_trp.join()
         target_trp.join()
+
+    pf.join()
+
+    oracle_tb.join()
+    target_tb.join()
 
     if with_logs:
         logs_dir = join(
@@ -770,7 +814,7 @@ def main():
             )
         )
     )
-    DEFAULT_REGEXPS = testfilter([(testfilter.RE_INCLD, ".*\.c"),])
+    DEFAULT_REGEXPS = testfilter([(testfilter.RE_INCLD, ".*[.]c"),])
     arg("-t", "--include",
         type = str,
         metavar = "RE_INCLD",
@@ -843,7 +887,7 @@ def main():
     try:
         execfile(config, glob)
     except Exception as e:
-        c2t_exit(e, prog = config)
+        c2t_exit(str(e), prog = config)
     else:
         global c2t_cfg
         for val in glob.values():
