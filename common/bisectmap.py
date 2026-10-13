@@ -100,6 +100,13 @@ The implementation is only requires this comparison.
             _keys.insert(i, k)
             self._values.insert(i, v)
 
+    def get_ge(self, k):
+        _keys = self._keys
+        i = bisect_left(_keys, k)
+        if i == len(_keys):
+            raise KeyError(k)
+        return self._values[i]
+
     def __getitem__(self, k):
         _keys = self._keys
         i = bisect_left(_keys, k)
