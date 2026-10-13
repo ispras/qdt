@@ -19,7 +19,7 @@ def _no_factory(key):
 
 class BisectMap(object):
     """
-Keys is only required to be `bisect` compatible.
+A key is only required to be `bisect` compatible.
 I.e. implement `__lt__`.
 The implementation is only requires this comparison.
     """
