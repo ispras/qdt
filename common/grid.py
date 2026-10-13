@@ -13,9 +13,6 @@ from .events import (
     dismiss,
     notify,
 )
-from .lazy import (
-    lazy,
-)
 
 from itertools import (
     chain,
@@ -48,11 +45,11 @@ class _GridAxisSliceSlot(object):
         changed = tuple(self._set_size_iter_changed_slices(v))
         if not changed:
             return
-        # `notify`cation may result in immediate access to `@lazy` attributes
+        # `notify`cation may result in immediate poll of offsets
         # of any changed axis.
         # They must be invalidated first.
         for slc in changed:
-            del slc.axis.offs
+            slc.axis.offsets_valid = False
 
         # Grid reference is same for all `a`xis.
         g = slc.axis.g
@@ -126,12 +123,13 @@ All slots have same `coord` along the `axis`.
 Sizes are along the `axis` too.
     """
 
-    __slots__ = ("axis", "coord",)
+    __slots__ = ("axis", "coord", "offset")
 
     def __init__(self, axis, coord):
         super(_GridSlice, self).__init__(factory = _zero)
         self.axis = axis
         self.coord = coord
+        self.offset = 0
 
 
 class _GridAxis(AttributeChangeNotifier):
@@ -141,34 +139,40 @@ class _GridAxis(AttributeChangeNotifier):
         self.i = i
         # Key is coordinate along the axis.
         self.slices = BisectMap(self._gen_slice)
+        self.offsets_valid = True
+        self.size = 0
 
     def _gen_slice(self, coord):
         return _GridSlice(self, coord)
 
-    def iter_offs(self):
-        slices = self.slices
-        ni = slices.min()
-        if ni is None:
-            # Grid is empty.
+    def _update_offsets(self):
+        if self.offsets_valid:
             return
-        ni -= 1
-        off = 0
-        for i, s in slices.items():
-            while ni < i:
-                yield off
-                ni += 1
-            if s:
-                off += s.max()
-        # Last offset is virtual.
-        # This is position just after last object along the axis.
-        yield off
 
-    @lazy
-    def offs(self):
-        return tuple(self.iter_offs())
+        off = 0
+        for s in self.slices.values():
+            s.offset = off
+            off += s.max() or 0
+
+        self.size = off
+        self.offsets_valid = True
+
+    def offset_of(self, coord):
+        self._update_offsets()
+        try:
+            s = self.slices.get_ge(coord)
+        except KeyError:
+            return self.size
+        else:
+            return s.offset
 
 
 class Grid(object):
+    """
+Slot (cell) coordinates are only required to be `bisect` compatible.
+I.e. implement `__lt__`.
+The implementation is only relies this comparison.
+    """
 
     def __init__(self, dimensions = 2):
         self._axises = tuple(_GridAxis(self, i) for i in range(dimensions))
@@ -212,8 +216,8 @@ class Grid(object):
         slt._set_size(self._zeros)
 
     def iter_cell_offs(self, coords):
-        for i, a in zip(coords, self._axises):
-            yield a.offs[i - a.slices.min()]
+        for c, a in zip(coords, self._axises):
+            yield a.offset_of(c)
 
     def __call__(self, coords):
         return tuple(self.iter_cell_offs(coords))
