@@ -5,6 +5,9 @@ __all__ = [
 from bisect import (
     bisect_left,
 )
+from itertools import (
+    islice,
+)
 from six.moves import (
     zip,
 )
@@ -34,7 +37,7 @@ The implementation is only requires this comparison.
     def iter_ge_items(self, key):
         keys = self._keys
         i = bisect_left(keys, key)
-        return zip(keys[i:], self._values[i:])
+        return zip(islice(keys, i, None), islice(self._values, i, None))
 
     def __reversed__(self):
         return reversed(self._keys)
