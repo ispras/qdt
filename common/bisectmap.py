@@ -54,11 +54,23 @@ The implementation is only requires this comparison.
         except IndexError:
             return None
 
+    def value_of_max(self):
+        try:
+            return self._values[-1]
+        except IndexError:
+            raise KeyError
+
     def min(self):
         try:
             return self._keys[0]
         except IndexError:
             return None
+
+    def value_of_min(self):
+        try:
+            return self._values[0]
+        except IndexError:
+            raise KeyError
 
     def __bool__(self):
         return bool(self._keys)
