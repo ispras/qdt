@@ -15,6 +15,11 @@ def _no_factory(key):
 
 
 class BisectMap(object):
+    """
+Keys is only required to be `bisect` compatible.
+I.e. implement `__lt__`.
+The implementation is only requires this comparison.
+    """
 
     __slots__ = ("_keys", "_values", "_factory")
 
@@ -64,11 +69,11 @@ class BisectMap(object):
         if i == len(_keys):
             _keys.append(k)
             self._values.append(v)
-        elif _keys[i] == k:
-            self._values[i] = v
-        else:
+        elif k < _keys[i]:
             _keys.insert(i, k)
             self._values.insert(i, v)
+        else:
+            self._values[i] = v
 
     def setdefault(self, k, v):
         _keys = self._keys
@@ -76,14 +81,14 @@ class BisectMap(object):
         if i == len(_keys):
             _keys.append(k)
             self._values.append(v)
-        elif _keys[i] != k:
+        elif k < _keys[i]:
             _keys.insert(i, k)
             self._values.insert(i, v)
 
     def __getitem__(self, k):
         _keys = self._keys
         i = bisect_left(_keys, k)
-        if i == len(_keys) or _keys[i] != k:
+        if i == len(_keys) or k < _keys[i]:
             v = self._factory(k)
             _keys.insert(i, k)
             self._values.insert(i, v)
@@ -94,7 +99,7 @@ class BisectMap(object):
     def __delitem__(self, k):
         _keys = self._keys
         i = bisect_left(_keys, k)
-        if i == len(_keys) or _keys[i] != k:
+        if i == len(_keys) or k < _keys[i]:
             raise KeyError(k)
         _keys.pop(i)
         self._values.pop(i)
@@ -102,14 +107,14 @@ class BisectMap(object):
     def get(self, k, default = None):
         _keys = self._keys
         i = bisect_left(_keys, k)
-        if i == len(_keys) or _keys[i] != k:
+        if i == len(_keys) or k < _keys[i]:
             return default
         return self._values[i]
 
     def pop(self, k, *default):
         _keys = self._keys
         i = bisect_left(_keys, k)
-        if i == len(_keys) or _keys[i] != k:
+        if i == len(_keys) or k < _keys[i]:
             if default:
                 return default[0]
             else:
