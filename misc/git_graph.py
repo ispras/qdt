@@ -210,12 +210,22 @@ class _GridLinePoint(GridRect, _CanvasItem):
 
 class GridLine(object):
 
+    LINE_NORMAL = dict(
+        smooth = True,
+        dash = (5, 5),
+    )
+
+    LINE_HIGHLIGHTED = dict(LINE_NORMAL)
+    LINE_HIGHLIGHTED.update(
+        dash = "",
+    )
+
     def __init__(self, canvas, gcoords):
         self._c = canvas
         gcoords_len = len(gcoords)
         self._liid = liid = canvas.create_line(
             *list(range(gcoords_len)),
-            **dict(smooth = True)
+            **self.LINE_NORMAL
         )
         canvas.lower(liid)
         points = []
@@ -225,6 +235,38 @@ class GridLine(object):
             j = next(gciter)
             point(_GridLinePoint(self, coordi, gcoords = (i, j)))
         self._points = points
+
+    @property
+    def highlighted(self):
+        return self._highlighted
+
+    _highlighted = False
+
+    @highlighted.setter
+    def highlighted(self, highlighted):
+        highlighted = bool(highlighted)
+        if self._highlighted is highlighted:
+            return
+        self._highlighted = highlighted
+        self._c.itemconfig(self._liid, **(
+            self.LINE_HIGHLIGHTED if highlighted else self.LINE_NORMAL
+        ))
+
+    @property
+    def highlights(self):
+        """ Use bits as different highlight requests.
+Do not set `highlighted` directly if `highlights` are used.
+        """
+        return self._highlights
+
+    _highlights = 0
+
+    @highlights.setter
+    def highlights(self, highlights):
+        if self._highlights == highlights:
+            return
+        self._highlights = highlights
+        self.highlighted = highlights
 
     def set_gcoords(self, gcoords):
         gciter = iter(gcoords)
@@ -314,20 +356,39 @@ class GGVWidget(GUIFrame):
         if edge is cur_edge:
             return
 
+        oid2b = self._oid2b
+
         # `edge` is a `GitMgEdge`, it corresponds to a box (node) on canvas.
         # I.e. it is not a line (edge) on canvas identified by two `id`s.
 
         if cur_edge is not None:
-            b = self._oid2b[id(cur_edge)]
+            b = oid2b[id(cur_edge)]
             b.set_styles(self.EDGE_TEXT_NORMAL, self.EDGE_RECT_NORMAL)
+            for lid in self._iter_edge_line_ids(cur_edge):
+                try:
+                    l = oid2b[lid]
+                except KeyError:
+                    continue
+                l.highlights &= ~1
 
         if edge is not None:
-            b = self._oid2b[id(edge)]
+            b = oid2b[id(edge)]
             b.set_styles(self.EDGE_TEXT_SELECTED, self.EDGE_RECT_SELECTED)
+            for lid in self._iter_edge_line_ids(edge):
+                try:
+                    l = oid2b[lid]
+                except KeyError:
+                    continue
+                l.highlights |= 1
 
         self._edge = edge
 
         self.event_generate("<<Edge>>")
+
+    def _iter_edge_line_ids(self, e):
+        eid = id(e)
+        yield (id(e._descendant), eid)
+        yield (eid, id(e._ancestor))
 
     @property
     def node(self):
@@ -339,17 +400,44 @@ class GGVWidget(GUIFrame):
         if node is cur_node:
             return
 
+        oid2b = self._oid2b
+
         if cur_node is not None:
             b = self._oid2b[id(cur_node)]
             b.set_styles(self.NODE_TEXT_NORMAL, self.NODE_RECT_NORMAL)
+            for lid in self._iter_node_line_ids(cur_node):
+                try:
+                    l = oid2b[lid]
+                except KeyError:
+                    continue
+                l.highlights &= ~2
 
         if node is not None:
             b = self._oid2b[id(node)]
             b.set_styles(self.NODE_TEXT_SELECTED, self.NODE_RECT_SELECTED)
+            for lid in self._iter_node_line_ids(node):
+                try:
+                    l = oid2b[lid]
+                except KeyError:
+                    continue
+                l.highlights |= 2
 
         self._node = node
 
         self.event_generate("<<Node>>")
+
+    def _iter_node_line_ids(self, n):
+        nid = id(n)
+        for p in n.parents:
+            if p.is_macronode:
+                yield (nid, id(p))
+            else:
+                yield (nid, id(p._edge))
+        for c in n.children:
+            if c.is_macronode:
+                yield (id(c), nid)
+            else:
+                yield (id(c._edge), nid)
 
     @property
     def repo_path(self):
