@@ -683,7 +683,7 @@ class _ComponentPlacingContext(_PlacingContext):
         sg = self.grid  # static grid
 
         for i, ((nx, ny), objs) in enumerate(bg.items()):
-            if i & 0x40:  # pause
+            if not (i & 0x3F):  # pause
                 yield True
 
             if not objs:
