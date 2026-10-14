@@ -671,11 +671,12 @@ class _ComponentPlacingContext(_PlacingContext):
     def _co_try_end(self, s):
         x, y = s.p
 
-        # Only place nodes on even positions.
+        # Always reserve space between nodes for edges.
         # So, an edge can always be routed event if a node is surrounded by
         # 8 nodes.
         # Reminder, an edge cannot pass thorough a node.
-        if x & 1 or y & 1:
+        mask = self.placer.P_EDGE_COORD_MASK
+        if x & mask or y & mask:
             return
 
         box, boy = self.bind_offset
@@ -795,6 +796,8 @@ class DynamicGraphPlacer2D(object):
 
     # mathhack: use preferred_direction = (0, 0)
     #           to ignore preferred direction deviation penalties
+
+    P_EDGE_COORD_MASK = 0x3
 
     def __init__(self):
         # `n`odes & `e`dges accounting queues
