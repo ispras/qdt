@@ -166,6 +166,14 @@ class _GridAxis(AttributeChangeNotifier):
         else:
             return s.offset
 
+    def size_of(self, coord):
+        try:
+            s = self.slices.get_ge(coord)
+        except KeyError:
+            return 0
+        else:
+            return s.max()
+
 
 class Grid(object):
     """
@@ -218,6 +226,10 @@ The implementation is only relies this comparison.
     def iter_cell_offs(self, coords):
         for c, a in zip(coords, self._axises):
             yield a.offset_of(c)
+
+    def iter_cell_size(self, coords):
+        for c, a in zip(coords, self._axises):
+            yield a.size_of(c)
 
     def __call__(self, coords):
         return tuple(self.iter_cell_offs(coords))
