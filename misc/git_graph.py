@@ -149,11 +149,10 @@ class TextGridBox(GridRect, _CanvasItem):
 
         x, y = coords
 
-        i, j = gcoords
-        x1, y1 = g((i + 1, j + 1))
+        cw, ch = g.iter_cell_size(gcoords)
 
-        x = (x + x1) / 2
-        y = (y + y1) / 2
+        x += cw / 2
+        y += ch / 2
 
         w, h = self._size
         w_2 = w / 2
@@ -192,11 +191,11 @@ class _GridLinePoint(GridRect, _CanvasItem):
             return
 
         x, y = coords
-        i, j = gcoords
-        x1, y1 = self._g((i + 1, j + 1))
 
-        x = (x + x1) / 2
-        y = (y + y1) / 2
+        cw, ch = self._g.iter_cell_size(gcoords)
+
+        x += cw / 2
+        y += ch / 2
 
         c = self._c
         iid = self._l._liid
