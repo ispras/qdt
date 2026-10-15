@@ -8,11 +8,16 @@ from .compat import (
 from .extensible import (
     Extensible,
 )
+from .os_wrappers import (
+    makedirs,
+)
 from .pygen import (
     pythonize,
 )
 
 from os.path import (
+    abspath,
+    dirname,
     isfile,
 )
 
@@ -68,7 +73,10 @@ persistent object. See `common.pygen.pythonizable`.
         )
 
     def _save(self):
-        pythonize(self, self._file_name)
+        f = self._file_name
+        d = dirname(abspath(f))
+        makedirs(d, exist_ok = True)
+        pythonize(self, f)
 
     def __gen_code__(self, g):
         ctx = self._dict
