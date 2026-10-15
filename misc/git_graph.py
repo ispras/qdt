@@ -3,6 +3,8 @@ from common import (
     dismiss,
     DynamicGraphPlacer2D,
     ee,
+    Extensible,
+    FormatVar,
     Grid,
     GridRect,
     listen,
@@ -12,14 +14,18 @@ from common import (
 )
 from widgets import (
     add_scrollbars_native,
+    askyesno,
     CanvasDnD,
     CommitInfoToplevel,
+    EntryDialog,
     GUIFrame,
     GUITk,
     GUIToplevel,
     HideShowBinding,
+    LineSelectDialog,
     MenuBuilder,
     PatchEditorFrame,
+    QDTUserSettings,
     TkPopupHelper,
     VarMenu,
     VarTreeview,
@@ -42,6 +48,10 @@ from git import (
 from itertools import (
     count,
 )
+from os.path import (
+    abspath,
+    join,
+)
 from six.moves import (
     zip,
 )
@@ -50,6 +60,7 @@ from six.moves.tkinter import (
     BOTH,
     BooleanVar,
     BROWSE,
+    StringVar,
 )
 with pypath("..unidiff"):
     from unidiff import (
@@ -59,6 +70,29 @@ with pypath("..unidiff"):
 
 # Set this env. var. to output macrograph to file in Graphviz format.
 DOT_FILE_NAME = ee("GIT_GRAPH_DOT_FILE_NAME", "None")
+
+
+class GitGraphSettings(QDTUserSettings):
+    _suffix = join("GitGraph", "settings.py")
+
+    def __init__(self):
+        super(GitGraphSettings, self).__init__(
+            glob = globals(),
+            version = 0.1,
+            projects = [],
+        )
+
+
+class GitGraphProject(Extensible):
+
+    def __init__(self,
+        repo_path = None,
+        name = "",
+        **kw
+    ):
+        super(GitGraphProject, self).__init__(**kw)
+        self.repo_path = repo_path
+        self.name = name
 
 
 class _CanvasItem:
@@ -959,9 +993,19 @@ _recursion = object()
 
 class GGVWindow(GUITk):
 
-    def __init__(self, repo):
+    def __init__(self, settings, repo):
         GUITk.__init__(self)
-        self.title(_("Git Graph Viewer"))
+
+        self._settings = settings
+
+        self._v_name = v_name = StringVar(self)
+        self._v_repo_path = v_repo_path = StringVar(self)
+        v_title = FormatVar(value = "%s: %s - %s") % (
+            v_name,
+            v_repo_path,
+            _("Git Graph Viewer")
+        )
+        self.title(v_title)
 
         self._ggvw = ggvw = GGVWidget(self, sizegrip = True)
         ggvw.pack(fill = BOTH, expand = True)
@@ -976,10 +1020,24 @@ class GGVWindow(GUITk):
             topmost = True,
         )
 
-        # print("repo = " + repo)
-        ggvw.repo_path = repo
-
         with MenuBuilder(self) as menubar:
+            with menubar(_("Project")) as project_menu:
+                project_menu(_("Rename"),
+                    command = self._on_project_rename,
+                )
+
+                project_menu()
+
+                project_menu(_("New"),
+                    command = self._on_project_new,
+                )
+                project_menu(_("Select"),
+                    command = self._on_project_select,
+                )
+                project_menu(_("Delete"),
+                    command = self._on_project_delete,
+                )
+
             with menubar(_("Windows")) as windows_menu:
                 self._v_gevw = v = BooleanVar(self)
                 windows_menu(gevw.title(), variable = v)
@@ -990,6 +1048,87 @@ class GGVWindow(GUITk):
                 HideShowBinding(cit, v)
 
         self._commit = None
+        self._provide_project(repo)
+
+    __proj = None
+    @property
+    def _proj(self):
+        return self.__proj
+
+    @_proj.setter
+    def _proj(self, _proj):
+        if self.__proj is _proj:
+            return
+        self.__proj = _proj
+        self.commit = None
+        self._v_name.set(_proj.name or _("nameless").get())
+        repo_path = _proj.repo_path
+        self._v_repo_path.set(repo_path)
+        # print("repo = " + repo_path)
+        self._ggvw.repo_path = repo_path
+
+    def _on_project_rename(self):
+        new_name = EntryDialog(
+            title = _("Enter project name"),
+            value = self.__proj.name,
+        ).wait()
+        self.__proj.name = new_name
+        self._v_name.set(new_name or _("nameless").get())
+
+    def _on_project_new(self):
+        proj = GitGraphProject(
+            repo_path = self.__proj.repo_path,
+        )
+        self._settings.projects.append(proj)
+        self._proj = proj
+
+    def _on_project_select(self):
+        cur_proj = self.__proj
+        line2proj = {}
+        for proj in self._settings.projects:
+            if proj is cur_proj:
+                continue
+            l =  proj.repo_path + " : " + (proj.name or _("nameless").get())
+            while l in line2proj:
+                # User is self responsible for it...
+                l += " "
+            line2proj[l] = proj
+        if not line2proj:
+            return
+        selected_line = LineSelectDialog(
+            title = _("Select another project"),
+            lines = sorted(line2proj),
+            getline = True,
+        ).wait()
+        self._proj = line2proj.get(selected_line, cur_proj)
+
+    def _on_project_delete(self):
+        cur_proj = self.__proj
+        if not askyesno(self,
+            _("Delete current project?"),
+            _("Name: %s\nRepo: %s") % (
+                cur_proj.name or _("nameless"), cur_proj.repo_path
+            ),
+        ):
+            return
+        cur_repo_path = cur_proj.repo_path
+        self._settings.projects.remove(cur_proj)
+        self._provide_project(cur_repo_path)
+
+    def _provide_project(self, repo_path):
+        settings = self._settings
+
+        repo = abspath(repo_path)
+        for proj in settings.projects:
+            if proj.repo_path == repo:
+                break
+        else:
+            proj = GitGraphProject(
+                repo_path = repo,
+            )
+            settings.projects.append(proj)
+
+        self._proj = proj
 
     @property
     def commit(self):
@@ -1043,9 +1182,14 @@ def main():
 
     args = ap.parse_args()
 
-    root = GGVWindow(**vars(args))
-    root.geometry("900x900")
-    root.mainloop()
+    with GitGraphSettings() as settings:
+        print("settings: " + settings.file_name)
+        root = GGVWindow(
+            settings,
+            **vars(args)
+        )
+        root.geometry("900x900")
+        root.mainloop()
 
 
 if __name__ == "__main__":
