@@ -5,6 +5,8 @@ __all__ = [
   , "path2tuple"
   , "ee"
   , "bsep"
+  , "iter_file_name_safe"
+      , "file_name_safe"
   , "cli_repr"
   , "bind_all_mouse_wheel"
   , "bind_mouse_wheel"
@@ -94,6 +96,25 @@ if PY2:
 # OS file path separator in binary type
 bsep = bstr(sep)
 
+
+def iter_file_name_safe(s,
+    replace = lambda __ : "_",
+    allowed = " .,'()_!-=+&^%#@`[]{}",
+    forbidden = "",
+):
+    for c in s:
+        if c in forbidden:
+            yield replace(c)
+        elif c.isalnum():
+            yield c
+        # https://stackoverflow.com/a/31976060
+        elif c in allowed:
+            yield c
+        else:
+            yield replace(c)
+
+def file_name_safe(s, *a, **kw):
+    return "".join(iter_file_name_safe(s, *a, **kw))
 
 
 def remove_file(file_name):
