@@ -32,13 +32,20 @@ from six.moves.tkinter import (
 
 
 class LineSelectDialog(GUIDialog):
-    "Allows a user to select one of options presented by `lines`."
+    """Allows a user to select one of options presented by `lines`.
+
+@param getline:
+    `wait()` will `return` selected line literally, as provided in `lines`.
+    By default, `wait()` `return`s index of selected line.
+    """
 
     def __init__(self, *a, **kw):
         # properties
         self._lines = None
 
         lines = kw.pop("lines", None)
+        getline = kw.pop("getline", False)
+
         GUIDialog.__init__(self, *a, **kw)
 
         self._tv = tv = AutoVarTreeview(self,
@@ -70,6 +77,7 @@ class LineSelectDialog(GUIDialog):
         )
 
         self.lines = lines
+        self._getline = getline
 
     @property
     def lines(self):
@@ -98,7 +106,10 @@ class LineSelectDialog(GUIDialog):
     def _on_ok(self):
         tv = self._tv
 
-        self._result = tv.index(tv.selection()[0])
+        res = tv.index(tv.selection()[0])
+        if self._getline:
+            res = self._lines[res]
+        self._result = res
 
         self.destroy()
 
