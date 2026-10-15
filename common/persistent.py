@@ -40,6 +40,10 @@ persistent object. See `common.pygen.pythonizable`.
         self._globals = {} if glob is None else dict(glob)
         self._version = version
 
+    @property
+    def file_name(self):
+        return self._file_name
+
     def _load(self):
         if not isfile(self._file_name):
             return
