@@ -14,7 +14,12 @@ from .var_widgets import (
 class GUIToplevel(VarToplevel, object):
 
     def __init__(self, *args, **kw):
+        title = kw.pop("title", None)
+
         VarToplevel.__init__(self, *args, **kw)
+
+        if title is not None:
+            self.title(title)
 
         set_logo(self)
 
