@@ -2,17 +2,18 @@ __all__ = [
     "Persistent"
 ]
 
-from os.path import (
-    isfile
-)
-from .pygen import (
-    pythonize
-)
 from .compat import (
-    execfile
+    execfile,
 )
 from .extensible import (
-    Extensible
+    Extensible,
+)
+from .pygen import (
+    pythonize,
+)
+
+from os.path import (
+    isfile,
 )
 
 
