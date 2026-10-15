@@ -60,6 +60,7 @@ persistent object. See `common.pygen.pythonizable`.
                     break
             else:
                 print("No persistent data found in " + self._file_name)
+                ctx = {}
 
         ctx_version = ctx.pop("_version", self._version)
 
