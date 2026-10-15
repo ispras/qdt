@@ -4,7 +4,7 @@ from common import (
     mlget as _
 )
 from widgets import (
-    GUIDialog,
+    EntryDialog,
     bbox_center,
     DnDGroup,
     VarButton,
@@ -405,61 +405,27 @@ class ConstWgt(Wgt):
         return []
 
 
-class ConstEdit(GUIDialog):
+class ConstEdit(EntryDialog):
     def __init__(self, const_wgt, *a, **kw):
-        GUIDialog.__init__(self, *a, **kw)
-
-        self.title(_("Edit constant"))
+        kw["title"] = _("Edit constant")
+        val = const_wgt.inst.str_value
+        if val is None:
+            val = ""
+        elif val == "":
+            val = '""'
+        else:
+            val = val
+        kw["value"] = val
+        EntryDialog.__init__(self, *a, **kw)
 
         self.cw = const_wgt
 
-        self.grid()
-        self.rowconfigure(0, weight = 1)
-        self.rowconfigure(1, weight = 0)
-        self.columnconfigure(0, weight = 1)
-        self.columnconfigure(1, weight = 1)
+    def _on_ok(self, *a):
+        EntryDialog._on_ok(self, *a)
 
-        v = self.var = StringVar()
-        e = self.entry = HKEntry(self, textvariable = v)
-        e.grid(row = 0, column = 0, columnspan = 2, sticky = "NESW")
-
-        e.focus_set()
-
-        val = const_wgt.inst.str_value
-
-        if val is None:
-            v.set("")
-        elif val == "":
-            v.set('""')
-        else:
-            v.set(val)
-
-        VarButton(self, text = _(u"Ok"), command = self.on_ok).grid(
-            row = 1, column = 0, sticky = "W"
-        )
-        VarButton(self, text = _(u"Cancel"), command = self.on_cancel).grid(
-            row = 1, column = 1, sticky = "E"
-        )
-
-        self.bind("<Return>", self.on_ok, "+")
-        self.bind("<Escape>", self.on_cancel, "+")
-
-        self.after(10, self.after_init)
-
-    def after_init(self):
-        e = self.entry
-
-        e.selection_range(0, END)
-        e.icursor(END)
-
-    def on_cancel(self, __ = None):
-        # __ is required to use this as a keyboard event key handler
-        self.destroy()
-
-    def on_ok(self, __ = None):
+        val = self._result
         cw = self.cw
 
-        val = self.var.get()
         if val == "":
             cw.inst.str_value = None
         elif val == '""' or val == "''" or val == '""""""' or val == "''''''":
@@ -468,7 +434,6 @@ class ConstEdit(GUIDialog):
             cw.inst.str_value = val
 
         cw.__g_update__(self.master)
-        self.destroy()
 
 
 OPERATORS = [x for x in globals().values() if (
