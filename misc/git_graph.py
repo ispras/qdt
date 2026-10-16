@@ -4,16 +4,19 @@ from common import (
     DynamicGraphPlacer2D,
     ee,
     Extensible,
+    file_name_safe,
     FormatVar,
     Grid,
     GridRect,
     listen,
+    makedirs,
     mlget as _,
     pypath,
     REFS_ORDER_RECENT_FIRST,
 )
 from widgets import (
     add_scrollbars_native,
+    asksaveas,
     askyesno,
     CanvasDnD,
     CommitInfoToplevel,
@@ -50,6 +53,8 @@ from itertools import (
 )
 from os.path import (
     abspath,
+    dirname,
+    isdir,
     join,
 )
 from six.moves import (
@@ -918,9 +923,75 @@ class ExCommitInfoToplevel(
             label = _("Diff Tool"),
             command = self._on_file_difftool
         )
+
+        with MenuBuilder(self) as menu:
+            with menu(_("Patch")) as patch_menu:
+                patch_menu(_("Save"), command = self._on_patch_save)
+
         self._difftool_processes = []
 
     _base_commit = CommitInfoToplevel.commit
+
+    def _on_patch_save(self):
+        data = self._get_pretty_patch_data()
+        if not data:
+            return
+
+        commit = self.commit
+
+        for l in data.splitlines():
+            if l.startswith(b"Subject:"):
+                base_name = l[8:].strip().decode("utf-8", "surrogateescape")
+                base_name = file_name_safe(base_name, forbidden = " ")
+                break
+        else:
+            base_name = commit.hexsha + ".patch"
+
+        proj = self.master._proj
+
+        save_patch_dir = getattr(proj, "save_patch_dir", None)
+        if save_patch_dir is None or not isdir(save_patch_dir):
+            save_patch_dir = commit.repo.working_tree_dir
+        initial_file = join(save_patch_dir, base_name + ".patch")
+
+        prev_topmost = self.topmost
+        if prev_topmost:
+            self.topmost = False
+
+        try:
+            file_path = asksaveas(self,
+                [(_("Git patch"), ".patch")],
+                title = _("Save patch to file"),
+                initial_file = initial_file,
+            )
+        finally:
+            if prev_topmost:
+                self.topmost = True
+
+        if not file_path:
+            return
+        save_patch_dir = dirname(file_path)
+        proj.save_patch_dir = save_patch_dir
+        makedirs(save_patch_dir, exist_ok = True)
+        with open(file_path, "wb") as f:
+            f.write(data)
+
+    def _get_pretty_patch_data(self):
+        commit = self.commit
+        if commit is None:
+            return
+        data = commit.repo.git.diff_tree(commit,
+            stdout_as_string = False,
+            pretty = "email",
+            color = False,
+            patch = True,
+            textconv = True,
+            find_copies = True,
+            commit_id = False,
+            unified = 3,
+            root = True,
+        )
+        return data
 
     def _on_b3_file(self, __):
         self.show_popup(
