@@ -128,6 +128,7 @@ class CommitInfoFrame(
             wrap = NONE,
         )
         t.grid(sticky = "NESW")
+        t.configure(height = 10)
         add_scrollbars_native(f, t, sizegrip = sizegrip)
 
     def _read_commit(self):
