@@ -1,5 +1,7 @@
 from common import (
+    KWInit,
     MurMur,
+    ready,
 )
 
 from functools import (
@@ -293,6 +295,63 @@ def get_color_generator(
     return ColorGenerator(RNGClass(), metric = metric)
 
 
+class Spot(KWInit):
+
+    def __kwinit__(self):
+        try:
+            self.fill
+        except AttributeError:
+            self.fill = "#%02X%02X%02X" % next(get_color_generator())
+        try:
+            self.outline
+        except AttributeError:
+            self.outline = "black"
+        try:
+            self.align
+        except AttributeError:
+            self.align = CENTER
+        try:
+            self.base
+        except AttributeError:
+            self.base = HEXAGON
+        try:
+            self.scale
+        except AttributeError:
+            self.scale = 10.0
+        try:
+            self.offset
+        except AttributeError:
+            self.offset = (0, 0)
+
+    @ready
+    def iid(self, ready):
+        if ready:
+            return self._canvas.create_polygon(self._coords,
+                fill = self._fill,
+                outline = self._outline,
+            )
+        else:
+            self._canvas.delete(self.iid)
+
+    canvas = iid.bit()
+    fill = iid.bit()
+    outline = iid.bit()
+    _coords = iid.bit()
+
+    @ready
+    def coords(self, ready):
+        if ready:
+            return gen_poly(self._base,
+                scale = self._scale,
+                align = self._align,
+                offset = self._offset,
+            )
+
+    base = coords.bit()
+    scale = coords.bit()
+    align = coords.bit()
+    offset = coords.bit()
+
 
 def main():
     from six.moves.tkinter import (
@@ -319,18 +378,15 @@ def main():
     cg0 = ColorGenerator(MurMur(), metric = RGB_DST_SQ)
     cg1 = ColorGenerator(MurMur(), metric = HSL_DST_SQ)
 
-    polygon = c.create_polygon
     line = c.create_line
     for i, base in enumerate(POLY_BASES):
         for a in ALIGNMENTS:
-            polygon(
-                gen_poly(base,
-                    scale = SCALE,
-                    align = a,
-                    offset = (x, y),
-                ),
+            Spot(
+                base = base,
+                align = a,
+                offset = (x, y),
                 fill = "#%02X%02X%02X" % (next(cg1 if (i & 1) else cg0)),
-                outline = "#000000",
+                canvas = c,
             )
             line((x - 10, y, x + 10, y))
             line((x, y - 10, x, y + 10))
