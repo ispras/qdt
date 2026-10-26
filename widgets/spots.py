@@ -268,21 +268,29 @@ ALIGNMENTS = (
 )
 
 @lru_cache
-def gen_poly(p,
+def gen_poly_at_O(p,
     scale = 1.0,
     align = CENTER,
-    offset = (0., 0.)
 ):
     base = gen_poly_base(*p)
     return tuple(
-        iter_add(
-            iter_mul(
-                iter_add(
-                    base,
-                    *align(base)
-                ),
-                scale, scale
+        iter_mul(
+            iter_add(
+                base,
+                *align(base)
             ),
+            scale, scale
+        )
+    )
+
+@lru_cache
+def gen_poly(p,
+    offset = (0., 0.),
+    **kw
+):
+    return tuple(
+        iter_add(
+            gen_poly_at_O(p, **kw),
             *offset
         )
     )
