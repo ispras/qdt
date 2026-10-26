@@ -10,17 +10,18 @@ from .events import (
     dismiss,
     listen,
 )
+from .kwinit import (
+    KWInit,
+)
 
 
-class GridRect(AttributeChangeNotifier):
+class GridRect(AttributeChangeNotifier, KWInit):
     """ Updates its `coords` with respect to its position (`gcoords`) on
 the `g`rid.
     """
 
-    def __init__(self, size, **kw):
+    def __kwinit__(self, size):
         self.size = size
-        for nv in kw.items():
-            setattr(self, *nv)
 
     _g = None
     @property
