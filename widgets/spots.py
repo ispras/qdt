@@ -285,6 +285,14 @@ def gen_poly(p,
         )
     )
 
+@lru_cache
+def get_color_generator(
+    RNGClass = MurMur,
+    metric = RGB_DST_SQ,
+):
+    return ColorGenerator(RNGClass(), metric = metric)
+
+
 
 def main():
     from six.moves.tkinter import (
