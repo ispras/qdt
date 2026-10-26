@@ -2,6 +2,7 @@
 
 from common import (
     bstr,
+    KWInit,
     makedirs,
 )
 
@@ -137,16 +138,12 @@ Helper to compare `git log` (commit summary) of different revisions as text.
                 glog.cleanup()
 
 
-class GitLog(object):
+class GitLog(object, KWInit):
 
     __slots__ = (
         "data",
         "file_name",
     )
-
-    def __init__(self, **kw):
-        for nv in kw.items():
-            setattr(self, *nv)
 
     def normalize(self):
         lines = []
