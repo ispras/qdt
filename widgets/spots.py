@@ -362,6 +362,14 @@ class Spot(KWInit):
 
 
 def main():
+    from common import (
+        RectSpring,
+    )
+
+    from pickle import (
+        loads,
+        dumps,
+    )
     from six.moves.tkinter import (
         BOTH,
         Canvas,
@@ -380,15 +388,26 @@ def main():
     PADDING = 30.
 
     step = SCALE + PADDING
-    x = PADDING
-    y = PADDING
-
     cg0 = ColorGenerator(MurMur(), metric = RGB_DST_SQ)
     cg1 = ColorGenerator(MurMur(), metric = HSL_DST_SQ)
 
+    cgen = RectSpring(step,
+        x = 300, y = 200,
+        w = step * 5,
+        h = step * 2,
+    )
+    px, py = next(cgen)
+
     line = c.create_line
+    lower = c.lower
     for i, base in enumerate(POLY_BASES):
         for a in ALIGNMENTS:
+            x, y = next(cgen)
+            lower(line((px, py, x, y),
+                fill = "#DDDDDD",
+                width = 6,
+            ))
+            px, py = x, y
             Spot(
                 base = base,
                 align = a,
@@ -398,16 +417,16 @@ def main():
             )
             line((x - 10, y, x + 10, y))
             line((x, y - 10, x, y + 10))
-            x += step
-        x = PADDING
-        y += step
+        cgen = loads(dumps(cgen))
 
     b = AABB(iter_by2(c.bbox(*c.find_all())))
     w, h = b.get_size()
-    w += PADDING
-    h += PADDING
+    w += PADDING * 2
+    h += PADDING * 2
 
     c.configure(width = int(w), height = int(h))
+    c.scan_mark(int(b[0] - PADDING), int(b[1] - PADDING))
+    c.scan_dragto(0, 0, 1)
 
     root.mainloop()
 
