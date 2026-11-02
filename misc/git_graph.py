@@ -379,11 +379,15 @@ class GGVWidget(GUIFrame):
         add_scrollbars_native(self, cnv, sizegrip = sizegrip)
 
         cnv.bind("<<DnDMoved>>", lambda __: cnv.extend_scroll_region(), "+")
-        cnv.tag_bind("e", "<Button-1>", self._on_item_b1, "+")
-        cnv.tag_bind("n", "<Button-1>", self._on_item_b1, "+")
+        self.bind_to_items("<Button-1>", self._on_item_b1, "+")
 
         self._edge = None
         self._node = None
+
+    def bind_to_items(self, *a):
+        cnv = self._cnv
+        cnv.tag_bind("e", *a)
+        cnv.tag_bind("n", *a)
 
     @property
     def edge(self):
