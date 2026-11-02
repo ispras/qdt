@@ -810,6 +810,7 @@ class DynamicGraphPlacer2D(object):
         # `n`odes & `e`dges accounting queues
         self._nqueue = deque()
         self._equeue = deque()
+        self._next_try_equeue = deque()
 
         # `n`ode -> `c`omponent
         self._n2c = {}
@@ -914,6 +915,7 @@ class DynamicGraphPlacer2D(object):
                 if c in self._cqueue:
                     self._cqueue.remove(c)
         remove_edge_with_node(self._equeue, n)
+        remove_edge_with_node(self._next_try_equeue, n)
 
     def add_edge(self, *ab):
         self._equeue.append(ab)
@@ -957,7 +959,7 @@ class DynamicGraphPlacer2D(object):
             next_e = eq.popleft
             yield True
 
-        next_try = []
+        next_try = self._next_try_equeue
 
         while eq:
             a, b = e = next_e()
@@ -1027,6 +1029,7 @@ class DynamicGraphPlacer2D(object):
                     ac.add_edge(e)
 
         eq.extend(next_try)
+        next_try.clear()
 
         if cq:
             yield True
