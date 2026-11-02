@@ -137,9 +137,11 @@ class _CanvasItem:
             self._valid = False
 
             # Note, thi's GGVWidget specific.
-            self._c.master._jobs.append(self._update_canvas_coords)
+            self._c.master.sig_item_invalid(self)
 
-    def _update_canvas_coords(self):
+    def update_canvas_coords(self):
+        if self._valid:
+            return
         del self._valid
         self.__update_canvas_coords__()
 
@@ -384,6 +386,14 @@ class GGVWidget(GUIFrame):
         self._edge = None
         self._node = None
 
+        # master must be GUITk or have SignalDispatcherTask.
+        self.sig_item_invalid = self.master.signal_dispatcher.new_signal(
+            self._on_item_invalid,
+        )
+
+    def _on_item_invalid(self, item):
+        item.update_canvas_coords()
+
     def bind_to_items(self, *a):
         cnv = self._cnv
         cnv.tag_bind("e", *a)
@@ -504,7 +514,6 @@ class GGVWidget(GUIFrame):
             del self._dgp
             dismiss(self._on_node_placed)
             dismiss(self._on_edge_placed)
-            del self._jobs
 
         if p is None:
             return
@@ -514,18 +523,10 @@ class GGVWidget(GUIFrame):
         self._co_visualize = co = self.co_visualize()
         self.enqueue(co)
 
-    def _co_worker(self):
-        jobs = self._jobs
-        pop = jobs.popleft
-        while jobs:
-            yield True
-            pop()()
-
     def co_visualize(self):
         self._oid2b = {}
         self._iid2o = {}
         self._g = Grid()
-        self._jobs = deque()
 
         self._dgp = dgp = DynamicGraphPlacer2D()
 
@@ -545,21 +546,10 @@ class GGVWidget(GUIFrame):
             yield i
             while dgp.has_work:
                 yield dgp.co_place()
-                # do layout updates
-                while self._jobs:
-                    yield self._co_worker()
-            while self._jobs:
-                yield self._co_worker()
 
         # place last added items
         while dgp.has_work:
-            yield self._co_worker()
             yield dgp.co_place()
-
-        print("Doing rest jobs...")
-
-        while self._jobs:
-            yield self._co_worker()
 
         print("Done")
 
