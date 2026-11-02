@@ -34,6 +34,13 @@ class CoAStep:
     def co_a_star(self):
         return co_a_star(self)
 
+    def __no_steps__(self):
+        """No steps are left and `__co_try_end__` not yet succeeded.
+I.e. looks like the search is failed.
+Last known step is given the notification.
+        """
+        raise NotImplementedError
+
 
 def co_a_star(start):
     frontier = [start]
@@ -51,6 +58,8 @@ def co_a_star(start):
             ns.__a_prev__ = s
             insort(frontier, ns)
             yield True
+    else:
+        s.__no_steps__()
 
 
 def a_iter_reversed(s):
