@@ -698,14 +698,7 @@ class GGVWidget(GUIFrame):
                 l.remove()
 
     def _on_item_b1(self, e):
-        iid2o = self._iid2o
-        cnv = self._cnv
-        x = e.x
-        y = e.y
-        x = cnv.canvasx(x)
-        y = cnv.canvasy(y)
-        for iid in cnv.find_overlapping(x, y, x + 1, y + 1):
-            o = iid2o.get(iid)
+        for o in self.iter_items_at(e.x, e.y):
             if isinstance(o, GitMgEdge):
                 self.edge = o
                 break
