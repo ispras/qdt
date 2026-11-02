@@ -696,7 +696,11 @@ class GGVWidget(GUIFrame):
     def _on_item_b1(self, e):
         iid2o = self._iid2o
         cnv = self._cnv
-        for iid in cnv.find_closest(cnv.canvasx(e.x), cnv.canvasy(e.y)):
+        x = e.x
+        y = e.y
+        x = cnv.canvasx(x)
+        y = cnv.canvasy(y)
+        for iid in cnv.find_overlapping(x, y, x + 1, y + 1):
             o = iid2o.get(iid)
             if isinstance(o, GitMgEdge):
                 self.edge = o
