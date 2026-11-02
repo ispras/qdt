@@ -713,6 +713,20 @@ class GGVWidget(GUIFrame):
                 self.node = o
                 break
 
+    def iter_items_at(self, x, y):
+        iid2o = self._iid2o
+        cnv = self._cnv
+        x = cnv.canvasx(x)
+        y = cnv.canvasy(y)
+        checked = set()
+        check = checked.add
+        for iid in cnv.find_overlapping(x, y, x + 1, y + 1):
+            o = iid2o.get(iid)
+            if o in checked:
+                continue
+            check(o)
+            if isinstance(o, (GitMgEdge, GitMgNode)):
+                yield o
 
 
 def gev_col_message(commit):
