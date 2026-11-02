@@ -37,6 +37,13 @@ from itertools import (
 )
 
 
+def remove_edge_with_node(container, node):
+    remove = container.remove
+    for e in tuple(container):
+        if node in e:
+            remove(e)
+
+
 # Private, never use externally.
 _EMPTY_TUPLE = tuple()
 
@@ -174,7 +181,7 @@ class _Component(AttributeChangeNotifier):
 
             notify(p, "node", n)
 
-        self._equeue = deque(e for e in self._equeue if n not in e)
+        remove_edge_with_node(self._equeue, n)
 
     def _check_if_split(self, coords0, coords1):
         node_at = self._node_at
@@ -904,8 +911,9 @@ class DynamicGraphPlacer2D(object):
                 del self._components[c._ij]
                 c._ij = None
                 self._g.remove(c)
-                self._cqueue = deque(c0 for c0 in self._cqueue if c0 is not c)
-        self._equeue = deque(e for e in self._equeue if n not in e)
+                if c in self._cqueue:
+                    self._cqueue.remove(c)
+        remove_edge_with_node(self._equeue, n)
 
     def add_edge(self, *ab):
         self._equeue.append(ab)
