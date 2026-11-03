@@ -277,15 +277,17 @@ class _Component(AttributeChangeNotifier):
 
         mq = self._mqueue
         next_m = mq.popleft
+        delay = mq.append
 
         while mq:
             yield True
             c = next_m()
-
-            self._free_components.add(c)
-
-            while c.has_work:
-                yield c.co_work()
+            yield c.co_work()
+            if c.has_work:
+                # TODO: a dedicated container for "waiting" components?
+                delay(c)
+            else:
+                self._free_components.add(c)
 
         eq = self._equeue
         next_e = eq.popleft
