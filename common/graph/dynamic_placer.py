@@ -315,12 +315,14 @@ class _Component(AttributeChangeNotifier):
                     bc = (yield self._co_find_component_with_node(b))
                     if bc is None:
                         raise RuntimeError("unknown node %s" % b)
+                    assert not bc.has_work
                     yield self._co_route_component(a, b, bc, backward = False)
             elif b in nodes:
                 # a in a component
                 ac = (yield self._co_find_component_with_node(a))
                 if ac is None:
                     raise RuntimeError("unknown node %s" % a)
+                assert not ac.has_work
                 yield self._co_route_component(b, a, ac, backward = True)
             else:
                 # Both nodes are in components.
