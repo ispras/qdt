@@ -62,6 +62,7 @@ class _Component(AttributeChangeNotifier):
         self._edges = set()
 
         self._equeue = deque()
+        self._waiting_equeue = deque()
         self._mqueue = deque()
 
         self.aabb = (
@@ -268,7 +269,13 @@ class _Component(AttributeChangeNotifier):
 
     @property
     def has_work(self):
-        return bool(self._equeue or self._mqueue)
+        return bool(
+            self._equeue
+         or self._mqueue
+        # `_waiting_equeue` is not a work until an edge from `_equeue` merge
+        # a `_Component` with a node of a waiting edge.
+        # or self._waiting_equeue
+        )
 
     # TODO: Is it worth to split different queues processing in
     #       specific `co`routines
@@ -291,6 +298,10 @@ class _Component(AttributeChangeNotifier):
 
         eq = self._equeue
         next_e = eq.popleft
+        weq = self._waiting_equeue
+        delay = weq.append
+        eq.extend(weq)
+        weq.clear()
 
         while eq:
             yield True
@@ -315,8 +326,7 @@ class _Component(AttributeChangeNotifier):
                 # Both nodes are in components.
                 # Wait until at least one of them is linked with an already
                 # placed nodes
-                # TODO: a dedicated container for "waiting" edges?
-                eq.append(e)
+                delay(e)
 
     def _co_find_component_with_node(self, n):
         for c in self._free_components:
