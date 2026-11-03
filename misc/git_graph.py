@@ -1193,12 +1193,18 @@ class GGVWindow(GUITk):
         self.commit = self._gevw.commit
         self._v_cit.set(True)
 
+    def _on_mg_node(self, mg, mn):
+        self._ggvw.account_mg_node(mg, mn)
+
+    def _on_mg_edge(self, mg, e, split):
+        self._ggvw.account_mg_edge(mg, e, split)
+
     __co_build_mg = None
     def _co_build_mg(self):
         mg = GitMacrograph(self._repo)
 
-        mg.watch_node(self._ggvw.account_mg_node)
-        mg.watch_edge(self._ggvw.account_mg_edge)
+        mg.watch_node(self._on_mg_node)
+        mg.watch_edge(self._on_mg_edge)
 
         print("Building GitMacrograph")
 
