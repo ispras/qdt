@@ -972,6 +972,8 @@ class DynamicGraphPlacer2D(object):
         if eq:
             next_e = eq.popleft
             yield True
+        else:
+            yield self.co_process_components()
 
         next_try = self._next_try_equeue
 
@@ -1042,12 +1044,17 @@ class DynamicGraphPlacer2D(object):
                     enqueue(ac)
                     ac.add_edge(e)
 
+            yield self.co_process_components()
+
         eq.extend(next_try)
         next_try.clear()
 
+    def co_process_components(self):
+        cq = self._cqueue
         if cq:
             yield True
             next_c = cq.popleft
+            enqueue = cq.append
 
         while cq:
             c = next_c()
@@ -1055,6 +1062,7 @@ class DynamicGraphPlacer2D(object):
             if c.has_work:
                 enqueue(c)
 
+        components = self._components
         rnq = self._rnqueue
         next_rn = rnq.popleft
 
