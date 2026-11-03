@@ -1055,6 +1055,8 @@ class DynamicGraphPlacer2D(object):
             yield True
             next_c = cq.popleft
             enqueue = cq.append
+        else:
+            yield self.co_notify()
 
         while cq:
             c = next_c()
@@ -1062,6 +1064,9 @@ class DynamicGraphPlacer2D(object):
             if c.has_work:
                 enqueue(c)
 
+            yield self.co_notify()
+
+    def co_notify(self):
         components = self._components
         rnq = self._rnqueue
         next_rn = rnq.popleft
