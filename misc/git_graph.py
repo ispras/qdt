@@ -511,28 +511,28 @@ class GGVWidget(GUIFrame):
             self._cnv.update_scroll_region()
             del self._oid2b
             del self._iid2o
+            self._dgp.stop_bg()
             del self._dgp
             dismiss(self._on_node_placed)
             dismiss(self._on_edge_placed)
+            del self._g
 
         if p is None:
             return
 
         self._repo = Repo(p)
+        self._g = Grid()
+        self._oid2b = {}
+        self._iid2o = {}
+        self._dgp = dgp = DynamicGraphPlacer2D()
+        listen(dgp, "node", self._on_node_placed)
+        listen(dgp, "edge", self._on_edge_placed)
+        self.enqueue(dgp.co_place_bg())
 
         self._co_visualize = co = self.co_visualize()
         self.enqueue(co)
 
     def co_visualize(self):
-        self._oid2b = {}
-        self._iid2o = {}
-        self._g = Grid()
-
-        self._dgp = dgp = DynamicGraphPlacer2D()
-
-        listen(dgp, "node", self._on_node_placed)
-        listen(dgp, "edge", self._on_edge_placed)
-
         mg = GitMacrograph(self._repo)
 
         mg.watch_node(self._on_mg_node)
@@ -540,16 +540,9 @@ class GGVWidget(GUIFrame):
 
         print("Building GitMacrograph")
 
-        for i in mg.co_build(
+        yield mg.co_build(
             refs_iter_func = REFS_ORDER_RECENT_FIRST,
-        ):
-            yield i
-            while dgp.has_work:
-                yield dgp.co_place()
-
-        # place last added items
-        while dgp.has_work:
-            yield dgp.co_place()
+        )
 
         print("Done")
 
