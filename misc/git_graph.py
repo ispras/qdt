@@ -507,10 +507,10 @@ class GGVWidget(GUIFrame):
         listen(dgp, "edge", self._on_edge_placed)
         self.enqueue(dgp.co_place_bg())
 
-    def account_mg_node(self, mg, mn):
+    def account_mg_node(self, mn):
         self._dgp.add_node(mn)
 
-    def account_mg_edge(self, mg, e, split):
+    def account_mg_edge(self, e, split):
         p = self._dgp
 
         if split is not None:
@@ -1194,10 +1194,10 @@ class GGVWindow(GUITk):
         self._v_cit.set(True)
 
     def _on_mg_node(self, mg, mn):
-        self._ggvw.account_mg_node(mg, mn)
+        self._ggvw.account_mg_node(mn)
 
     def _on_mg_edge(self, mg, e, split):
-        self._ggvw.account_mg_edge(mg, e, split)
+        self._ggvw.account_mg_edge(e, split)
 
     __co_build_mg = None
     def _co_build_mg(self):
