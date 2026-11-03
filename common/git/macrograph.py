@@ -278,7 +278,7 @@ class GitMacrograph(object):
         e2b = self._edges2build
 
         if mn not in edges:
-            print("macronode: ", mn.sha, " total: ", len(edges) + 1)
+            # print("macronode: ", mn.sha, " total: ", len(edges) + 1)
             self.__notify_node(self, mn)
 
         # edges from macronode `mn` to its descendant macronodes
