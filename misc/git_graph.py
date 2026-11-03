@@ -370,9 +370,6 @@ class GGVWidget(GUIFrame):
 
         GUIFrame.__init__(self, *a, **kw)
 
-        self._repo_path = None
-        self._co_visualize = None
-
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
         self._cnv = cnv = CanvasDnD(self)
@@ -492,35 +489,19 @@ class GGVWidget(GUIFrame):
             else:
                 yield (id(c._edge), nid)
 
-    @property
-    def repo_path(self):
-        return self._repo_path
+    _dgp = None
+    def reset(self):
+        self.edge = None
 
-    @repo_path.setter
-    def repo_path(self, p):
-        if p == self._repo_path:
-            return
-        self._repo_path = p
-
-        co = self._co_visualize
-        if co is not None:
-            self.edge = None
-            self._co_visualize = None
-            self.cancel_task(co)
-            self._cnv.delete(ALL)
-            self._cnv.update_scroll_region()
-            del self._oid2b
-            del self._iid2o
-            self._dgp.stop_bg()
-            del self._dgp
+        dgp = self._dgp
+        if dgp is not None:
+            dgp.stop_bg()
             dismiss(self._on_node_placed)
             dismiss(self._on_edge_placed)
-            del self._g
 
-        if p is None:
-            return
+        self._cnv.delete(ALL)
+        self._cnv.update_scroll_region()
 
-        self._repo = Repo(p)
         self._g = Grid()
         self._oid2b = {}
         self._iid2o = {}
@@ -529,47 +510,10 @@ class GGVWidget(GUIFrame):
         listen(dgp, "edge", self._on_edge_placed)
         self.enqueue(dgp.co_place_bg())
 
-        self._co_visualize = co = self.co_visualize()
-        self.enqueue(co)
-
-    def co_visualize(self):
-        mg = GitMacrograph(self._repo)
-
-        mg.watch_node(self._on_mg_node)
-        mg.watch_edge(self._on_mg_edge)
-
-        print("Building GitMacrograph")
-
-        yield mg.co_build(
-            refs_iter_func = REFS_ORDER_RECENT_FIRST,
-        )
-
-        print("Done")
-
-        tags_n = len(mg._edges)
-        for c in mg._edges:
-            if c.is_merge or c.is_fork or c.is_leaf or c.is_root:
-                tags_n -= 1
-
-        print(
-            "total: ", len(mg._edges),
-            " tags: ",  tags_n,
-            " other: ", len(mg._edges) - tags_n,
-        )
-
-        if DOT_FILE_NAME is not None:
-            yield True
-            print("Writing Graphviz file: " + DOT_FILE_NAME)
-            src = mg.gen_gv().source
-            yield True
-            with open(DOT_FILE_NAME, "w") as f:
-                f.write(src)
-            print("Done")
-
-    def _on_mg_node(self, mg, mn):
+    def account_mg_node(self, mg, mn):
         self._dgp.add_node(mn)
 
-    def _on_mg_edge(self, mg, e, split):
+    def account_mg_edge(self, mg, e, split):
         p = self._dgp
 
         if split is not None:
@@ -1132,9 +1076,17 @@ class GGVWindow(GUITk):
         self.commit = None
         self._v_name.set(_proj.name or _("nameless").get())
         repo_path = _proj.repo_path
-        self._v_repo_path.set(repo_path)
+        v_repo_path = self._v_repo_path
+        if v_repo_path.get() != repo_path:
+            v_repo_path.set(repo_path)
+            co = self.__co_build_mg
+            if co is not None:
+                self.cancel_task(co)
+            self._ggvw.reset()
+            self._repo = Repo(repo_path)
+            self.__co_build_mg = co = self._co_build_mg()
+            self.enqueue(co)
         # print("repo = " + repo_path)
-        self._ggvw.repo_path = repo_path
 
     def _on_project_rename(self):
         new_name = EntryDialog(
@@ -1243,6 +1195,41 @@ class GGVWindow(GUITk):
     def _on_commit(self, e):
         self.commit = self._gevw.commit
         self._v_cit.set(True)
+
+    __co_build_mg = None
+    def _co_build_mg(self):
+        mg = GitMacrograph(self._repo)
+
+        mg.watch_node(self._ggvw.account_mg_node)
+        mg.watch_edge(self._ggvw.account_mg_edge)
+
+        print("Building GitMacrograph")
+
+        yield mg.co_build(
+            refs_iter_func = REFS_ORDER_RECENT_FIRST,
+        )
+
+        print("Done")
+
+        tags_n = len(mg._edges)
+        for c in mg._edges:
+            if c.is_merge or c.is_fork or c.is_leaf or c.is_root:
+                tags_n -= 1
+
+        print(
+            "total: ", len(mg._edges),
+            " tags: ",  tags_n,
+            " other: ", len(mg._edges) - tags_n,
+        )
+
+        if DOT_FILE_NAME is not None:
+            yield True
+            print("Writing Graphviz file: " + DOT_FILE_NAME)
+            src = mg.gen_gv().source
+            yield True
+            with open(DOT_FILE_NAME, "w") as f:
+                f.write(src)
+            print("Done")
 
 
 def main():
