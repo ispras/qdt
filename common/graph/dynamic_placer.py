@@ -1062,7 +1062,11 @@ class DynamicGraphPlacer2D(object):
     @property
     def has_work(self):
         return bool(
-            self._cqueue or self._nqueue or self._equeue or self._rnqueue
+            self._nqueue
+         or self._equeue
+         or self._rnqueue
+         or self._next_try_equeue
+         or self._cqueue
         )
 
     _bg_working = False
