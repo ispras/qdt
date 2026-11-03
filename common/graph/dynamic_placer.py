@@ -1061,7 +1061,7 @@ class DynamicGraphPlacer2D(object):
         while rnq:
             axis, coord = next_rn()
 
-            for ij, c in components.items():
+            for ij, c in tuple(components.items()):
                 if coord < ij[axis]:
                     node_at = c._node_at
 
