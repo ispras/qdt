@@ -1078,11 +1078,11 @@ class DynamicGraphPlacer2D(object):
                 if coord < ij[axis]:
                     node_at = c._node_at
 
-                    for n in c._nodes:
+                    for n in tuple(c._nodes):
                         yield True
                         notify(self, "node", n)
 
-                    for e in c._edges:
+                    for e in tuple(c._edges):
                         yield True
                         notify(self, "edge", node_at(e[0]), node_at(e[-1]))
 
