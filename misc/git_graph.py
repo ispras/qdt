@@ -42,9 +42,6 @@ from common.git.macrograph import (
 from argparse import (
     ArgumentParser,
 )
-from collections import (
-    deque,
-)
 from git import (
     Repo,
 )
