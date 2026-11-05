@@ -193,17 +193,17 @@ Features (+) implemented, (-) TODO:
         else:
             self._visit_fields(attr)
 
-    def _visit(self, attr):
+    def _visit(self, o):
         try:
-            self.__visit__(attr)
+            self.__visit__(o)
         except SkipVisiting:
             return
         except StopVisiting:
             raise
         else:
-            self._visit_items(attr)
+            self._visit_items(o)
         finally:
-            self.__leave__(attr)
+            self.__leave__(o)
 
     def _visit_set(self, attr):
         for e in sorted(attr):
