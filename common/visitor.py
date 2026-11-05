@@ -4,6 +4,7 @@ __all__ = [
   , "StopVisiting"
 ]
 
+_EMPTY_TUPLE = ()
 
 # Not an `Exception`. It's (ab)using of `try` logic.
 class SkipVisiting(BaseException):
@@ -159,22 +160,20 @@ Features (+) implemented, (-) TODO:
         self.path.pop()
         self.cur = self.path[-1][0]
 
+    def iter_attrs(self, o):
+        return iter(getattr(o, self.__field_name__, _EMPTY_TUPLE))
+
     def _visit_fields(self, obj):
-        try:
-            visitable_list = getattr(obj, self.__field_name__)
-        except AttributeError:
-            pass
-        else:
-            for attribute_name in visitable_list:
-                attr = getattr(obj, attribute_name)
-                self._push(attr, attribute_name)
-                try:
-                    self._visit(attr)
-                except StopVisiting:
-                    # TODO: try to move `_pop` to `finally` block, below too
-                    self._pop()
-                    raise
+        for attribute_name in self.iter_attrs(obj):
+            attr = getattr(obj, attribute_name)
+            self._push(attr, attribute_name)
+            try:
+                self._visit(attr)
+            except StopVisiting:
+                # TODO: try to move `_pop` to `finally` block, below too
                 self._pop()
+                raise
+            self._pop()
 
     def visit(self):
         try:
