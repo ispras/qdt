@@ -45,10 +45,10 @@ The target attribute is `__delete__`-d.
                 bit,
             ))
         self.mask = mask | flag
-        return _Ready(flag, bitfield = self)
+        return _ReadyBit(flag, bitfield = self)
 
 
-class _Ready:
+class _ReadyBit:
 
     def __init__(self, mask, bitfield):
         self.mask = mask
