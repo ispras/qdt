@@ -189,20 +189,20 @@ class TextGridBox(GridRect, _CanvasItem):
 
         cw, ch = g.iter_cell_size(gcoords)
 
-        x += cw / 2
-        y += ch / 2
+        x += cw // 2
+        y += ch // 2
 
         w, h = self._size
-        w_2 = w / 2
-        h_2 = h / 2
+        w_2 = (w - 6) // 2
+        h_2 = (h - 6) // 2
 
         c.coords(tiid, x, y)
 
         c.coords(riid,
-            x - w_2 + 3,
-            y - h_2 + 3,
-            x + w_2 - 3,
-            y + h_2 - 3,
+            x - w_2,
+            y - h_2,
+            x + w_2,
+            y + h_2,
         )
 
 
