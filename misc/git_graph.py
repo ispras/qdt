@@ -28,6 +28,7 @@ from widgets import (
     MenuBuilder,
     PatchEditorFrame,
     QDTUserSettings,
+    tk_delayed,
     TkPopupHelper,
     VarMenu,
     VarTreeview,
@@ -204,8 +205,6 @@ class TextGridBox(GridRect, _CanvasItem):
             y + h_2 - 3,
         )
 
-        c.extend_scroll_region()
-
 
 class _GridLinePoint(GridRect, _CanvasItem):
 
@@ -241,8 +240,6 @@ class _GridLinePoint(GridRect, _CanvasItem):
         lcoords = c.coords(iid)
         lcoords[ci : ci + 2] = (x, y)
         c.coords(iid, *lcoords)
-
-        c.extend_scroll_region()
 
 
 class GridLine(object):
@@ -373,7 +370,7 @@ class GGVWidget(GUIFrame):
 
         add_scrollbars_native(self, cnv, sizegrip = sizegrip)
 
-        cnv.bind("<<DnDMoved>>", lambda __: cnv.extend_scroll_region(), "+")
+        cnv.bind("<<DnDMoved>>", self._on_dnd_moved, "+")
         self.bind_to_items("<Button-1>", self._on_item_b1, "+")
 
         self._edge = None
@@ -384,8 +381,16 @@ class GGVWidget(GUIFrame):
             self._on_item_invalid,
         )
 
+    @tk_delayed
+    def _update_canvas_scroll_region(self):
+        self._cnv.extend_scroll_region()
+
+    def _on_dnd_moved(self, __):
+        self._update_canvas_scroll_region = -100
+
     def _on_item_invalid(self, item):
         item.update_canvas_coords()
+        self._update_canvas_scroll_region = -100
 
     def bind_to_items(self, *a):
         cnv = self._cnv
