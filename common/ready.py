@@ -68,7 +68,6 @@ class _Ready:
     def __set__(self, o, v):
         bf = self.bitfield
         f = bf.ready
-        ready_mask = bf.mask
         private = self.private
         try:
             getattr(o, private)
@@ -77,7 +76,7 @@ class _Ready:
         else:
             mask = getattr(o, f)
             setattr(o, f, mask & self.clear)
-            if mask == ready_mask:
+            if mask == bf.mask:
                 bf.handler(o, False)
                 delattr(o, bf.private)
         setattr(o, private, v)
