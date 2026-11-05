@@ -89,7 +89,7 @@ class _Ready:
         bf = self.bitfield
         private = self.private
         if hasattr(o, private):
-            f = bf.public
+            f = bf.ready
             mask = getattr(o, f)
             if mask == bf.mask:
                 bf.handler(o, False)
