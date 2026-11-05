@@ -563,10 +563,10 @@ class GGVWidget(GUIFrame):
         else:
             if lxy is None:
                 # removed
-                b.delete()
                 del oid2b[nid]
                 for iid in b.iter_iids():
                     del iid2o[iid]
+                b.delete()
 
                 return
 
