@@ -61,6 +61,38 @@ class PyGenDepsVisitor(ObjectVisitor):
 
     __field_name__ = "__pygen_deps__"
 
+    def iter_attrs(self, o):
+        attrs = getattr(o, self.__field_name__, None)
+        if attrs is None:
+            return iter_gen_args_names(o)
+        else:
+            return attrs
+
+
+def iter_gen_args_names(obj):
+    pal, kwal = get_class_total_args(type(obj))
+
+    try:
+        get_val = type(obj).__get_init_arg_val__
+    except AttributeError:
+        get_val = getattr
+
+    for pa in pal:
+        yield pa
+
+    for kwa, default in kwal.items():
+        try:
+            v = get_val(obj, kwa)
+        except AttributeError:
+            # If value cannot be obtained, skip the argument generation
+            continue
+
+        # generate only arguments with non-default values
+        if (v is default) or (v == default):
+            continue
+
+        yield kwa
+
 
 IMPORTS_OFF = False
 IMPORTS_IMMEDIATE = True
@@ -682,7 +714,7 @@ class PyGenDepsCatcher(PyGenDepsVisitor):
         self.deps = []
 
     def __visit__(self, cur):
-        if hasattr(cur, "__gen_code__") or hasattr(cur, "__pygen_pass__"):
+        if type(cur) not in pythonizable:
             self.deps.append(cur)
             raise SkipVisiting()
 
