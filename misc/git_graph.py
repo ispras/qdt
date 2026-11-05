@@ -3,7 +3,6 @@ from common import (
     dismiss,
     DynamicGraphPlacer2D,
     ee,
-    Extensible,
     file_name_safe,
     FormatVar,
     Grid,
@@ -85,7 +84,7 @@ class GitGraphSettings(QDTUserSettings):
         )
 
 
-class GitGraphProject(Extensible):
+class GitGraphProject:
 
     def __init__(self,
         repo_path = None,
