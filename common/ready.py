@@ -69,6 +69,9 @@ class _Ready:
         bf = self.bitfield
         f = bf.ready
         private = self.private
+        full_mask = bf.mask
+        target_private = bf.private
+        handler = bf.handler
         try:
             cur = getattr(o, private)
         except AttributeError:
@@ -78,14 +81,14 @@ class _Ready:
                 return
             mask = getattr(o, f)
             setattr(o, f, mask & self.clear)
-            if mask == bf.mask:
-                bf.handler(o, False)
-                delattr(o, bf.private)
+            if mask == full_mask:
+                handler(o, False)
+                delattr(o, target_private)
         setattr(o, private, v)
         mask = getattr(o, f) | self.mask
         setattr(o, f, mask)
-        if mask == bf.mask:
-            setattr(o, bf.private, bf.handler(o, True))
+        if mask == full_mask:
+            setattr(o, target_private, handler(o, True))
 
     def __delete__(self, o):
         bf = self.bitfield
