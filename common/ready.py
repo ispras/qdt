@@ -70,10 +70,12 @@ class _Ready:
         f = bf.ready
         private = self.private
         try:
-            getattr(o, private)
+            cur = getattr(o, private)
         except AttributeError:
             pass  # Has never been set yet.
         else:
+            if cur is v:
+                return
             mask = getattr(o, f)
             setattr(o, f, mask & self.clear)
             if mask == bf.mask:
