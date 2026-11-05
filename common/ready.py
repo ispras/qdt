@@ -86,10 +86,15 @@ class _Ready:
             setattr(o, bf.private, bf.handler(o, True))
 
     def __delete__(self, o):
-        f = self.bitfield.public
+        bf = self.bitfield
         private = self.private
         if hasattr(o, private):
-            setattr(o, f, getattr(o, f) & self.clear)
+            f = bf.public
+            mask = getattr(o, f)
+            if mask == bf.mask:
+                bf.handler(o, False)
+                delattr(o, bf.private)
+            setattr(o, f, mask & self.clear)
             delattr(o, private)
         else:
             raise AttributeError(self.public)
