@@ -3,14 +3,21 @@ from common import (
     dismiss,
     DynamicGraphPlacer2D,
     ee,
+    E_GIT_FOUND,
+    E_GIT_DISCARD_FOUND,
     file_name_safe,
     FormatVar,
+    git_feature_commit_hexsha,
+    GitSearchRequest,
+    GitSearchRuntime,
     Grid,
     GridRect,
     listen,
     makedirs,
     mlget as _,
+    MurMur,
     pypath,
+    RectSpring,
     REFS_ORDER_RECENT_FIRST,
 )
 from widgets import (
@@ -18,16 +25,20 @@ from widgets import (
     asksaveas,
     askyesno,
     CanvasDnD,
+    ColorGenerator,
     CommitInfoToplevel,
     EntryDialog,
     GUIFrame,
     GUITk,
     GUIToplevel,
     HideShowBinding,
+    LEFT_BOTTOM,
     LineSelectDialog,
     MenuBuilder,
     PatchEditorFrame,
+    POLY_BASES,
     QDTUserSettings,
+    Spot,
     tk_delayed,
     TkPopupHelper,
     VarMenu,
@@ -41,6 +52,10 @@ from common.git.macrograph import (
 
 from argparse import (
     ArgumentParser,
+)
+from collections import (
+    defaultdict,
+    namedtuple,
 )
 from git import (
     Repo,
@@ -70,8 +85,45 @@ with pypath("..unidiff"):
     )
 
 
+SpotConfig = namedtuple("SpotConfig", "base fill")
+
+
+class GitHighlighter(GitSearchRequest):
+
+    def __init__(self, features, criteria, spotcfg):
+        super(GitHighlighter, self).__init__(features, criteria)
+        self.spotcfg = spotcfg
+
+
+class SpotGenerator:
+
+    def __init__(self, rng):
+        self.rng = rng
+        self.cg = ColorGenerator(rng)
+        self.skipped = set()
+
+    def __iter__(self):
+        return self
+
+    def skip(self, cfg):
+        self.skipped.add(cfg)
+
+    def __next__(self):
+        rng = self.rng
+        cg = self.cg
+        skipped = self.skipped
+        while True:
+            base = POLY_BASES[next(rng) % len(POLY_BASES)]
+            ret = SpotConfig(base, "#%02X%02X%02X" % next(cg),)
+            if ret not in skipped:
+                break
+        skipped.add(ret)
+        return ret
+
+
 # Set this env. var. to output macrograph to file in Graphviz format.
 DOT_FILE_NAME = ee("GIT_GRAPH_DOT_FILE_NAME", "None")
+SPOT_SIZE = ee("GIT_GRAPH_SPOT_SIZE", "10")
 
 
 class GitGraphSettings(QDTUserSettings):
@@ -90,11 +142,22 @@ class GitGraphProject:
     def __init__(self,
         repo_path = None,
         name = "",
+        highlighters = [],
+        spot_gen = None,
         **kw
     ):
         super(GitGraphProject, self).__init__(**kw)
         self.repo_path = repo_path
         self.name = name
+        self.highlighters = list(highlighters)
+        if spot_gen is None:
+            spot_gen = SpotGenerator(MurMur())
+        self.spot_gen = spot_gen
+
+    def gen_highlighter(self, features, criteria):
+        hl = GitHighlighter(features, criteria, next(self.spot_gen))
+        self.highlighters.append(hl)
+        return hl
 
 
 class _CanvasItem:
@@ -145,13 +208,15 @@ class _CanvasItem:
 
 class TextGridBox(GridRect, _CanvasItem):
 
+    _spot_step = (int(SPOT_SIZE * 1.2) << 1) + 1
+
     def __init__(self, canvas):
         self._c = canvas
         self._riid = canvas.create_rectangle(0, 0, 0, 0)
         self._tiid = canvas.create_text(0, 0, text = "")
 
         super(TextGridBox, self).__init__((0, 0))
-
+        self._spots = []
 
     def iter_iids(self):
         yield self._riid
@@ -204,6 +269,14 @@ class TextGridBox(GridRect, _CanvasItem):
             x + w_2,
             y + h_2,
         )
+
+        spots = self._spots
+        if not spots:
+            return
+
+        cgen = RectSpring(self._spot_step, x - w // 2, y - h // 2, w, h)
+        for spot in spots:
+            spot.offset = next(cgen)
 
 
 class _GridLinePoint(GridRect, _CanvasItem):
@@ -332,6 +405,9 @@ class GGVWidget(GUIFrame):
     """Git Graph View Widget
     """
 
+    _spot_align = staticmethod(LEFT_BOTTOM)
+    _spot_outline = "black"
+
     EDGE_RECT_NORMAL = dict(
         tags = "e",
         fill = "white",
@@ -376,10 +452,40 @@ class GGVWidget(GUIFrame):
         self._edge = None
         self._node = None
 
+        self._oid2spots = defaultdict(list)
+        self._s2oid = {}
+
         # master must be GUITk or have SignalDispatcherTask.
         self.sig_item_invalid = self.master.signal_dispatcher.new_signal(
             self._on_item_invalid,
         )
+
+    def add_spot(self, o, spotcfg):
+        oid = id(o)
+        oid2b = self._oid2b
+        s = Spot(
+            align = self._spot_align,
+            outline = self._spot_outline,
+            scale = SPOT_SIZE,
+            **spotcfg._asdict()
+        )
+        self._oid2spots[oid].append(s)
+        b = oid2b.get(oid, None)
+        if b is not None:
+            s.canvas = self._cnv
+            b._spots.append(s)
+            b._invalidate()
+        self._s2oid[s] = oid
+        return s
+
+    def remove_spot(self, s):
+        oid = self._s2oid.pop(s)
+        self._oid2spots[oid].remove(s)
+        b = self._oid2b.get(oid, None)
+        if b is not None:
+            del s.canvas
+            b._spots.remove(s)
+            b._invalidate()
 
     @tk_delayed
     def _update_canvas_scroll_region(self):
@@ -547,6 +653,7 @@ class GGVWidget(GUIFrame):
         dgp = self._dgp
         oid2b = self._oid2b
         iid2o = self._iid2o
+        getspots = self._oid2spots.get
 
         # logical coordinates
         lxy = dgp.node_coords(n)
@@ -560,6 +667,11 @@ class GGVWidget(GUIFrame):
                 # removed
                 return
             b = TextGridBox(cnv)
+            spots = getspots(nid)
+            if spots:
+                for s in spots:
+                    s.canvas = cnv
+                b._spots.extend(spots)
             oid2b[nid] = b
             b.g = self._g
             for iid in b.iter_iids():
@@ -572,7 +684,8 @@ class GGVWidget(GUIFrame):
                 for iid in b.iter_iids():
                     del iid2o[iid]
                 b.delete()
-
+                for s in b._spots:
+                    del s.canvas
                 return
 
         if isinstance(n, GitMgNode):
@@ -1006,7 +1119,7 @@ class ExCommitInfoToplevel(
 
 _recursion = object()
 
-class GGVWindow(GUITk):
+class GGVWindow(GUITk, TkPopupHelper):
 
     def __init__(self, settings, repo):
         GUITk.__init__(self)
@@ -1027,6 +1140,7 @@ class GGVWindow(GUITk):
 
         ggvw.bind("<<Edge>>", self._on_edge, "+")
         ggvw.bind("<<Node>>", self._on_node, "+")
+        ggvw.bind_to_items("<ButtonRelease-3>", self._on_ggvw_item_b3, "+")
 
         self._gevw = gevw = GEVWindow(self)
         gevw.bind("<<Commit>>", self._on_commit, "+")
@@ -1062,8 +1176,41 @@ class GGVWindow(GUITk):
                 windows_menu(cit.title(), variable = v)
                 HideShowBinding(cit, v)
 
+        with MenuBuilder(self, assign = False, tearoff = False) as menu:
+            self._popup_ggvw_node = menu.menu
+            menu(_("Highlight"),
+                command = self._on_popup_ggvw_node_highlight,
+            )
+
         self._commit = None
+
+        self._cosr = cosr = GitSearchRuntime(self)
+        listen(cosr, E_GIT_FOUND, self._on_git_found)
+        listen(cosr, E_GIT_DISCARD_FOUND, self._on_git_discard_found)
+
+        self._hexsha2mn = {}
+        self._res2spot = {}
+
         self._provide_project(repo)
+
+    def _on_popup_ggvw_node_highlight(self):
+        n = self.current_popup_tag
+        self.add_highlighter(git_feature_commit_hexsha,
+            hexsha = n.sha,
+        )
+        self.notify_popup_command()
+
+    def _on_ggvw_item_b3(self, e):
+        for o in self._ggvw.iter_items_at(e.x, e.y):
+            if isinstance(o, GitMgNode):
+                break
+        else:
+            return
+        self.show_popup(e.x_root, e.y_root, self._popup_ggvw_node, o)
+
+    def add_highlighter(self, *features, **criteria):
+        hl = self._proj.gen_highlighter(features, criteria)
+        self._cosr.account_request(hl)
 
     __proj = None
     @property
@@ -1074,12 +1221,14 @@ class GGVWindow(GUITk):
     def _proj(self, _proj):
         if self.__proj is _proj:
             return
+        cosr = self._cosr
         self.__proj = _proj
         self.commit = None
         self._v_name.set(_proj.name or _("nameless").get())
         repo_path = _proj.repo_path
         v_repo_path = self._v_repo_path
         if v_repo_path.get() != repo_path:
+            cosr.cleanup()
             v_repo_path.set(repo_path)
             co = self.__co_build_mg
             if co is not None:
@@ -1088,7 +1237,10 @@ class GGVWindow(GUITk):
             self._repo = Repo(repo_path)
             self.__co_build_mg = co = self._co_build_mg()
             self.enqueue(co)
+        else:
+            cosr.remove_all_requests()
         # print("repo = " + repo_path)
+        cosr.account_requests(*_proj.highlighters)
 
     def _on_project_rename(self):
         new_name = EntryDialog(
@@ -1198,11 +1350,59 @@ class GGVWindow(GUITk):
         self.commit = self._gevw.commit
         self._v_cit.set(True)
 
+    def _on_git_found(self, result):
+        hexsha = result.commit.hexsha
+        mn = self._hexsha2mn[hexsha]
+        if False:
+            print("highlight", hexsha, type(mn).__name__, id(mn))
+        self._res2spot[result] = self._ggvw.add_spot(mn, result.req.spotcfg)
+
+    def _on_git_discard_found(self, result):
+        if False:
+            hexsha = result.commit.hexsha
+            mn = self._hexsha2mn[hexsha]
+            print("highligh cancel", hexsha, mn.__type__.__name__, id(mn))
+        s = self._res2spot.pop(result)
+        self._ggvw.remove_spot(s)
+
     def _on_mg_node(self, mg, mn):
         self._ggvw.account_mg_node(mn)
+        commit = mn.commit
+        self._hexsha2mn[commit.hexsha] = mn
+        self._cosr.account_commits(commit)
 
     def _on_mg_edge(self, mg, e, split):
         self._ggvw.account_mg_edge(e, split)
+        commits = tuple(mn.commit for mn in e)
+        h2mn = self._hexsha2mn
+        cosr = self._cosr
+        account_commits = cosr.account_commits
+        get_ress = cosr.get_commit_results
+        if split is None:
+            account_commits(*commits)
+            for c in commits:
+                h2mn[c.hexsha] = e
+        else:
+            add_spot = self._ggvw.add_spot
+            remove_spot = self._ggvw.remove_spot
+            res2spot = self._res2spot
+            for c in commits:
+                hexsha = c.hexsha
+                prev_e = h2mn[hexsha]
+                assert prev_e is split
+                h2mn[hexsha] = e
+                ress = get_ress(c)
+                if not ress:
+                    continue
+                if False:
+                    print("move highlight", hexsha,
+                        type(prev_e).__name__, id(prev_e),
+                        "to",
+                        type(e).__name__, id(e)
+                    )
+                for res in ress:
+                    remove_spot(res2spot.pop(res))
+                    res2spot[res] = add_spot(e, res.req.spotcfg)
 
     __co_build_mg = None
     def _co_build_mg(self):
