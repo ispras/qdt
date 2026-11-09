@@ -162,52 +162,6 @@ class GitGraphProject:
         return hl
 
 
-class _CanvasItem:
-
-    _size = None
-    @property
-    def size(self):
-        return self._size
-
-    @size.setter
-    def size(self, size):
-        if self._size == size:
-            return
-        self._size = size
-        self._invalidate()
-
-    _coords = None
-    @property
-    def coords(self):
-        return self._coords
-
-    @coords.setter
-    def coords(self, coords):
-        if self._coords == coords:
-            return
-        self._coords = coords
-        self._invalidate()
-
-    @coords.deleter
-    def coords(self):
-        del self._coords
-        self._invalidate()
-
-    _valid = True
-    def _invalidate(self):
-        if self._valid:
-            self._valid = False
-
-            # Note, thi's GGVWidget specific.
-            self._c.master.sig_item_invalid(self)
-
-    def update_canvas_coords(self):
-        if self._valid:
-            return
-        del self._valid
-        self.__update_canvas_coords__()
-
-
 class TextGridBox(GridRect):
 
     _spot_step = (int(SPOT_SIZE * 1.2) << 1) + 1
