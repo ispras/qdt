@@ -178,6 +178,8 @@ class TextGridBox(GridRect):
     def iids(self, ready):
         iid2b = self._iid2b
         canvas = self._c
+        icfg = canvas.itemconfig
+
         if not ready:
             # Note, thi's GGVWidget specific.
             canvas.master.sig_item_invalid(self)
@@ -185,16 +187,11 @@ class TextGridBox(GridRect):
             # Do not re-create items each time.
             del self.delayed_valid
 
-            iids = self._iids
-            canvas.delete(*iids)
-            for iid in iids:
-                del iid2b[iid]
-            for spot in self._spots:
-                try:
-                    del spot.offset
-                except AttributeError:
-                    # self.__update_canvas_coords__ has never been called
-                    continue
+            self._prev_iids = riid, tiid = self._iids
+            # Highlight obsolete configuration items with grey color.
+            # So, the canvas does not look empty most of time.
+            icfg(riid, outline = "grey")
+            icfg(tiid, fill = "grey")
             return
 
         x, y = self._coords
@@ -208,20 +205,34 @@ class TextGridBox(GridRect):
         w_2 = (w - 6) // 2
         h_2 = (h - 6) // 2
 
-        riid = canvas.create_rectangle(
+        coords = (
             x - w_2,
             y - h_2,
             x + w_2,
-            y + h_2,
-            **self._rect_style
+            y + h_2
         )
-        iid2b[riid] = self
 
-        tiid = canvas.create_text(x, y,
-            text = self._text,
-            **self._text_style
-        )
-        iid2b[tiid] = self
+        try:
+            riid, tiid = ret = self._prev_iids
+        except AttributeError:
+            riid = canvas.create_rectangle(
+                *coords,
+                **self._rect_style
+            )
+            iid2b[riid] = self
+
+            tiid = canvas.create_text(x, y,
+                text = self._text,
+                **self._text_style
+            )
+            iid2b[tiid] = self
+            ret = (riid, tiid)
+        else:
+            icfg(riid, **self._rect_style)
+            icfg(tiid, text = self._text, **self._text_style)
+            icoords = canvas.coords
+            icoords(riid, *coords)
+            icoords(tiid, x, y)
 
         spots = self._spots
         if spots:
@@ -229,7 +240,7 @@ class TextGridBox(GridRect):
             for spot in spots:
                 spot.offset = next(cgen)
 
-        return (riid, tiid)
+        return ret
 
     coords = iids.bit()
     size = iids.bit()
@@ -249,6 +260,23 @@ class TextGridBox(GridRect):
 
     def update_canvas_coords(self):
         self.delayed_valid = True
+        if self._g is not None:
+            return
+        try:
+            iids = self._prev_iids
+        except AttributeError:
+            return
+        del self._prev_iids
+        iid2b = self._iid2b
+        canvas = self._c
+        canvas.delete(*iids)
+        for iid in iids:
+            del iid2b[iid]
+        for spot in self._spots:
+            try:
+                del spot.offset
+            except AttributeError:
+                continue
 
 
 class _GridLinePoint(GridRect):
@@ -271,6 +299,7 @@ class GridLine(object):
     LINE_NORMAL = dict(
         smooth = True,
         dash = (5, 5),
+        fill = "black",
     )
 
     LINE_HIGHLIGHTED = dict(LINE_NORMAL)
@@ -290,11 +319,15 @@ class GridLine(object):
     @ready
     def iid(self, ready):
         canvas = self._c
+        icfg = canvas.itemconfig
         if not ready:
             # Note, thi's GGVWidget specific.
             canvas.master.sig_item_invalid(self)
             del self.delayed_valid
-            canvas.delete(self._iid)
+            self._prev_iid = iid = self._iid
+            # Highlight obsolete configuration lines with grey color.
+            # So, the canvas does not look empty most of time.
+            icfg(iid, fill = "grey")
             return
 
         all_coords = []
@@ -306,11 +339,17 @@ class GridLine(object):
             y += ch / 2
             all_coords.extend((x, y))
 
-        iid = canvas.create_line(
-            *all_coords,
-            **self._line_style
-        )
-        canvas.lower(iid)
+        try:
+            iid = self._prev_iid
+        except AttributeError:
+            iid = canvas.create_line(
+                *all_coords,
+                **self._line_style
+            )
+            canvas.lower(iid)
+        else:
+            canvas.coords(iid, *all_coords)
+            icfg(iid, **self._line_style)
         return iid
 
     all_points_valid = iid.bit()
@@ -375,6 +414,13 @@ Do not set `highlighted` directly if `highlights` are used.
                 point(p)
             return points
         else:
+            try:
+                iid = self._prev_iid
+            except AttributeError:
+                pass
+            else:
+                del self._prev_iid
+                self._c.delete(iid)
             for p in self._points:
                 p.g = None
 
@@ -736,12 +782,17 @@ class GGVWidget(GUIFrame, CanvasTextMeasurer):
         checked = set()
         check = checked.add
         get_box = self._iid2b.get
-        b2o = self._b2o
+        get_obj = self._b2o.get
         for iid in cnv.find_overlapping(x, y, x + 1, y + 1):
             b = get_box(iid)
             if b is None:
                 continue
-            o = b2o[b]
+            o = get_obj(b)
+            # Because of co_signal delayed update, the box to object mapping
+            # can already be removed while a grey box is still visible on
+            # the canvas.
+            # In that case, `o is None`.
+            # Look for `_prev_ids`.
             if o in checked:
                 continue
             check(o)
