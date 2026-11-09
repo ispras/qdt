@@ -25,6 +25,7 @@ from widgets import (
     asksaveas,
     askyesno,
     CanvasDnD,
+    CanvasTextMeasurer,
     ColorGenerator,
     CommitInfoToplevel,
     EntryDialog,
@@ -237,8 +238,8 @@ class TextGridBox(GridRect, _CanvasItem):
         c = self._c
         tiid = self._tiid
         c.itemconfig(tiid, text = text)
-        l, t, r, b = c.bbox(tiid)
-        self.size = (r - l + 12, b - t + 12)
+        w, h = c.master.get_text_size(text)
+        self.size = (w + 12, h + 12)
 
     def set_styles(self, text_style, rect_style):
         icfg = self._c.itemconfig
@@ -409,7 +410,7 @@ Do not set `highlighted` directly if `highlights` are used.
         self._c.delete(self._liid)
 
 
-class GGVWidget(GUIFrame):
+class GGVWidget(GUIFrame, CanvasTextMeasurer):
     """Git Graph View Widget
     """
 
