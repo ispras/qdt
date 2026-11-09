@@ -31,7 +31,10 @@ The target attribute is `__delete__`-d.
         setattr(o, ready, 0)
 
     def __get__(self, o, t = None):
-        return getattr(o, self.private)
+        try:
+            return getattr(o, self.private)
+        except AttributeError:
+            raise AttributeError(self.public)
 
     def bit(self, bit = None):
         if bit is None:
