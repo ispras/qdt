@@ -278,9 +278,8 @@ class GridLine(object):
         dash = "",
     )
 
-    def __init__(self, canvas, gcoords):
+    def __init__(self, canvas):
         self._c = canvas
-        self.gcoords = gcoords
         self.valid_points = 0
         self.line_style = self.LINE_NORMAL
         self.delayed_valid = True
@@ -381,9 +380,6 @@ Do not set `highlighted` directly if `highlights` are used.
 
     gcoords = points.bit()
     g = points.bit()
-
-    def set_gcoords(self, gcoords):
-        self.gcoords = gcoords
 
 
 class GGVWidget(GUIFrame, CanvasTextMeasurer):
@@ -714,11 +710,10 @@ class GGVWidget(GUIFrame, CanvasTextMeasurer):
             try:
                 l = oid2b[eids]
             except KeyError:
-                l = GridLine(self._cnv, gcoords)
+                l = GridLine(self._cnv)
                 oid2b[eids] = l
                 l.g = self._g
-            else:
-                l.set_gcoords(gcoords)
+            l.gcoords = gcoords
         else:
             # removed
             l = oid2b.pop(eids, None)
