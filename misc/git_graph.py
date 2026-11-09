@@ -469,6 +469,8 @@ class GGVWidget(GUIFrame):
             scale = SPOT_SIZE,
             **spotcfg._asdict()
         )
+        # do not create it on the canvas immediately
+        del s.offset
         self._oid2spots[oid].append(s)
         b = oid2b.get(oid, None)
         if b is not None:
