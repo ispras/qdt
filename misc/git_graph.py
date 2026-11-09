@@ -17,6 +17,7 @@ from common import (
     mlget as _,
     MurMur,
     pypath,
+    ready,
     RectSpring,
     REFS_ORDER_RECENT_FIRST,
 )
@@ -207,61 +208,44 @@ class _CanvasItem:
         self.__update_canvas_coords__()
 
 
-class TextGridBox(GridRect, _CanvasItem):
+class TextGridBox(GridRect):
 
     _spot_step = (int(SPOT_SIZE * 1.2) << 1) + 1
 
     def __init__(self, canvas, iid2b):
         self._c = canvas
         self._iid2b = iid2b
-        self._riid = iid = canvas.create_rectangle(0, 0, 0, 0)
-        iid2b[iid] = self
-        self._tiid = iid = canvas.create_text(0, 0, text = "")
-        iid2b[iid] = self
-
         super(TextGridBox, self).__init__((0, 0))
         self._spots = []
+        # First time create items as soon as all ready.
+        self.delayed_valid = True
 
-    def delete(self):
+    @ready
+    def iids(self, ready):
         iid2b = self._iid2b
-        del iid2b[self._riid]
-        del iid2b[self._tiid]
-        self._c.delete(self._riid, self._tiid)
-        for spot in self._spots:
-            try:
-                del spot.offset
-            except AttributeError:
-                # self.__update_canvas_coords__ has never been called
-                continue
+        canvas = self._c
+        if not ready:
+            # Note, thi's GGVWidget specific.
+            canvas.master.sig_item_invalid(self)
 
-    def set_text(self, text):
-        c = self._c
-        tiid = self._tiid
-        c.itemconfig(tiid, text = text)
-        w, h = c.master.get_text_size(text)
-        self.size = (w + 12, h + 12)
+            # Do not re-create items each time.
+            del self.delayed_valid
 
-    def set_styles(self, text_style, rect_style):
-        icfg = self._c.itemconfig
-        icfg(self._tiid, **text_style)
-        icfg(self._riid, **rect_style)
-
-    def __update_canvas_coords__(self):
-        gcoords = self._gcoords
-        if gcoords is None:
-            return
-        coords = self._coords
-        if coords is None:
+            iids = self._iids
+            canvas.delete(*iids)
+            for iid in iids:
+                del iid2b[iid]
+            for spot in self._spots:
+                try:
+                    del spot.offset
+                except AttributeError:
+                    # self.__update_canvas_coords__ has never been called
+                    continue
             return
 
-        c = self._c
-        riid = self._riid
-        tiid = self._tiid
-        g = self._g
+        x, y = self._coords
 
-        x, y = coords
-
-        cw, ch = g.iter_cell_size(gcoords)
+        cw, ch = self._g.iter_cell_size(self._gcoords)
 
         x += cw // 2
         y += ch // 2
@@ -270,22 +254,53 @@ class TextGridBox(GridRect, _CanvasItem):
         w_2 = (w - 6) // 2
         h_2 = (h - 6) // 2
 
-        c.coords(tiid, x, y)
-
-        c.coords(riid,
+        riid = canvas.create_rectangle(
             x - w_2,
             y - h_2,
             x + w_2,
             y + h_2,
+            **self._rect_style
         )
+        iid2b[riid] = self
+
+        tiid = canvas.create_text(x, y,
+            text = self._text,
+            **self._text_style
+        )
+        iid2b[tiid] = self
 
         spots = self._spots
-        if not spots:
-            return
+        if spots:
+            cgen = RectSpring(self._spot_step, x - w // 2, y - h // 2, w, h)
+            for spot in spots:
+                spot.offset = next(cgen)
 
-        cgen = RectSpring(self._spot_step, x - w // 2, y - h // 2, w, h)
-        for spot in spots:
-            spot.offset = next(cgen)
+        return (riid, tiid)
+
+    coords = iids.bit()
+    size = iids.bit()
+    rect_style = iids.bit()
+    text_style = iids.bit()
+    text = iids.bit()
+    delayed_valid = iids.bit()
+
+    def delete(self):
+        try:
+            del self.delayed_valid
+        except AttributeError:
+            pass
+
+    def set_text(self, text):
+        self.text = text
+        w, h = self._c.master.get_text_size(text)
+        self.size = (w + 12, h + 12)
+
+    def set_styles(self, text_style, rect_style):
+        self.text_style = text_style
+        self.rect_style = rect_style
+
+    def update_canvas_coords(self):
+        self.delayed_valid = True
 
 
 class _GridLinePoint(GridRect, _CanvasItem):
