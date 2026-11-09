@@ -303,40 +303,19 @@ class TextGridBox(GridRect):
         self.delayed_valid = True
 
 
-class _GridLinePoint(GridRect, _CanvasItem):
+class _GridLinePoint(GridRect):
 
-    def __init__(self, line, coordi, size = 10, **kw):
+    def __init__(self, line, size = 10, **kw):
         self._l = line
-        self._ci = coordi
-
         super(_GridLinePoint, self).__init__((size, size), **kw)
 
-    @property
-    def _c(self):
-        return self._l._c
+    @ready
+    def master_line_updater(self, ready):
+        # Note, thi's GGVWidget specific.
+        l = self._l
+        l.valid_points += 1 if ready else -1
 
-    def __update_canvas_coords__(self):
-        gcoords = self._gcoords
-        if gcoords is None:
-            return
-        coords = self._coords
-        if coords is None:
-            return
-
-        x, y = coords
-
-        cw, ch = self._g.iter_cell_size(gcoords)
-
-        x += cw / 2
-        y += ch / 2
-
-        c = self._c
-        iid = self._l._liid
-
-        ci = self._ci
-        lcoords = c.coords(iid)
-        lcoords[ci : ci + 2] = (x, y)
-        c.coords(iid, *lcoords)
+    coords = master_line_updater.bit()
 
 
 class GridLine(object):
@@ -353,19 +332,61 @@ class GridLine(object):
 
     def __init__(self, canvas, gcoords):
         self._c = canvas
-        gcoords_len = len(gcoords)
-        self._liid = liid = canvas.create_line(
-            *list(range(gcoords_len)),
-            **self.LINE_NORMAL
-        )
-        canvas.lower(liid)
         points = []
         point = points.append
         gciter = iter(gcoords)
-        for coordi, i in zip(count(0, 2), gciter):
+        for i in gciter:
             j = next(gciter)
-            point(_GridLinePoint(self, coordi, gcoords = (i, j)))
+            point(_GridLinePoint(self, gcoords = (i, j)))
         self._points = points
+        self.valid_points = 0
+        self.line_style = self.LINE_NORMAL
+        self.delayed_valid = True
+
+    def update_canvas_coords(self):
+        self.delayed_valid = True
+
+    @ready
+    def iid(self, ready):
+        canvas = self._c
+        if not ready:
+            # Note, thi's GGVWidget specific.
+            canvas.master.sig_item_invalid(self)
+            del self.delayed_valid
+            canvas.delete(self._iid)
+            return
+
+        all_coords = []
+        for p in self._points:
+            gcoords = p.gcoords
+            cw, ch = self._g.iter_cell_size(gcoords)
+            x, y = p.coords
+            x += cw / 2
+            y += ch / 2
+            all_coords.extend((x, y))
+
+        iid = canvas.create_line(
+            *all_coords,
+            **self._line_style
+        )
+        canvas.lower(iid)
+        return iid
+
+    all_points_valid = iid.bit()
+    line_style = iid.bit()
+    delayed_valid = iid.bit()
+
+    @ready
+    def validity_updater(self, ready):
+        if ready:
+            if self._valid_points == len(self._points):
+                self.all_points_valid = True
+                return True
+        else:
+            if self._validity_updater:
+                del self.all_points_valid
+
+    valid_points = validity_updater.bit()
 
     @property
     def highlighted(self):
@@ -379,9 +400,8 @@ class GridLine(object):
         if self._highlighted is highlighted:
             return
         self._highlighted = highlighted
-        self._c.itemconfig(self._liid, **(
-            self.LINE_HIGHLIGHTED if highlighted else self.LINE_NORMAL
-        ))
+        self.line_style \
+            = self.LINE_HIGHLIGHTED if highlighted else self.LINE_NORMAL
 
     @property
     def highlights(self):
@@ -422,7 +442,10 @@ Do not set `highlighted` directly if `highlights` are used.
 
     def remove(self):
         self.g = None
-        self._c.delete(self._liid)
+        try:
+            del self.delayed_valid
+        except AttributeError:
+            pass
 
 
 class GGVWidget(GUIFrame, CanvasTextMeasurer):
