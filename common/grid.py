@@ -172,7 +172,7 @@ class _GridAxis(AttributeChangeNotifier):
         except KeyError:
             return 0
         else:
-            return s.max()
+            return s.max() or 0
 
 
 class Grid(object):
