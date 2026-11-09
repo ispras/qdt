@@ -280,13 +280,7 @@ class GridLine(object):
 
     def __init__(self, canvas, gcoords):
         self._c = canvas
-        points = []
-        point = points.append
-        gciter = iter(gcoords)
-        for i in gciter:
-            j = next(gciter)
-            point(_GridLinePoint(self, gcoords = (i, j)))
-        self._points = points
+        self.gcoords = gcoords
         self.valid_points = 0
         self.line_style = self.LINE_NORMAL
         self.delayed_valid = True
@@ -334,6 +328,7 @@ class GridLine(object):
             if self._validity_updater:
                 del self.all_points_valid
 
+    _points = validity_updater.bit()
     valid_points = validity_updater.bit()
 
     @property
@@ -367,26 +362,28 @@ Do not set `highlighted` directly if `highlights` are used.
         self._highlights = highlights
         self.highlighted = highlights
 
-    def set_gcoords(self, gcoords):
-        gciter = iter(gcoords)
-        for p in self._points:
-            p.gcoords = (next(gciter), next(gciter))
-
-    _g = None
-    @property
-    def g(self):
-        return self._g
-
-    @g.setter
-    def g(self, g):
-        if g is self._g:
-            return
-        if g is None:
-            del self._g
+    @ready
+    def points(self, ready):
+        if ready:
+            g = self._g
+            points = []
+            point = points.append
+            gciter = iter(self._gcoords)
+            for i in gciter:
+                j = next(gciter)
+                p = _GridLinePoint(self, gcoords = (i, j))
+                p.g = g
+                point(p)
+            return points
         else:
-            self._g = g
-        for p in self._points:
-            p.g = g
+            for p in self._points:
+                p.g = None
+
+    gcoords = points.bit()
+    g = points.bit()
+
+    def set_gcoords(self, gcoords):
+        self.gcoords = gcoords
 
 
 class GGVWidget(GUIFrame, CanvasTextMeasurer):
