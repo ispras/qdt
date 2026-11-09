@@ -238,12 +238,6 @@ class TextGridBox(GridRect):
     text = iids.bit()
     delayed_valid = iids.bit()
 
-    def delete(self):
-        try:
-            del self.delayed_valid
-        except AttributeError:
-            pass
-
     def set_text(self, text):
         self.text = text
         w, h = self._c.master.get_text_size(text)
@@ -686,7 +680,6 @@ class GGVWidget(GUIFrame, CanvasTextMeasurer):
                 b.g = None
                 del oid2b[nid]
                 del b2o[b]
-                b.delete()
                 for s in b._spots:
                     del s.canvas
                 return
