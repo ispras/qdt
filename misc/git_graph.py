@@ -210,20 +210,28 @@ class TextGridBox(GridRect, _CanvasItem):
 
     _spot_step = (int(SPOT_SIZE * 1.2) << 1) + 1
 
-    def __init__(self, canvas):
+    def __init__(self, canvas, iid2b):
         self._c = canvas
-        self._riid = canvas.create_rectangle(0, 0, 0, 0)
-        self._tiid = canvas.create_text(0, 0, text = "")
+        self._iid2b = iid2b
+        self._riid = iid = canvas.create_rectangle(0, 0, 0, 0)
+        iid2b[iid] = self
+        self._tiid = iid = canvas.create_text(0, 0, text = "")
+        iid2b[iid] = self
 
         super(TextGridBox, self).__init__((0, 0))
         self._spots = []
 
-    def iter_iids(self):
-        yield self._riid
-        yield self._tiid
-
     def delete(self):
-        self._c.delete(*self.iter_iids())
+        iid2b = self._iid2b
+        del iid2b[self._riid]
+        del iid2b[self._tiid]
+        self._c.delete(self._riid, self._tiid)
+        for spot in self._spots:
+            try:
+                del spot.offset
+            except AttributeError:
+                # self.__update_canvas_coords__ has never been called
+                continue
 
     def set_text(self, text):
         c = self._c
@@ -613,7 +621,8 @@ class GGVWidget(GUIFrame):
 
         self._g = Grid()
         self._oid2b = {}
-        self._iid2o = {}
+        self._b2o = {}
+        self._iid2b = {}
         self._dgp = dgp = DynamicGraphPlacer2D()
         listen(dgp, "node", self._on_node_placed)
         listen(dgp, "edge", self._on_edge_placed)
@@ -653,8 +662,9 @@ class GGVWidget(GUIFrame):
     def _on_node_placed(self, n):
         cnv = self._cnv
         dgp = self._dgp
+        b2o = self._b2o
         oid2b = self._oid2b
-        iid2o = self._iid2o
+        iid2b = self._iid2b
         getspots = self._oid2spots.get
 
         # logical coordinates
@@ -668,23 +678,21 @@ class GGVWidget(GUIFrame):
             if lxy is None:
                 # removed
                 return
-            b = TextGridBox(cnv)
+            b = TextGridBox(cnv, iid2b)
             spots = getspots(nid)
             if spots:
                 for s in spots:
                     s.canvas = cnv
                 b._spots.extend(spots)
             oid2b[nid] = b
+            b2o[b] = n
             b.g = self._g
-            for iid in b.iter_iids():
-                iid2o[iid] = n
         else:
             if lxy is None:
                 # removed
                 b.g = None
                 del oid2b[nid]
-                for iid in b.iter_iids():
-                    del iid2o[iid]
+                del b2o[b]
                 b.delete()
                 for s in b._spots:
                     del s.canvas
@@ -751,14 +759,18 @@ class GGVWidget(GUIFrame):
                 break
 
     def iter_items_at(self, x, y):
-        iid2o = self._iid2o
         cnv = self._cnv
         x = cnv.canvasx(x)
         y = cnv.canvasy(y)
         checked = set()
         check = checked.add
+        get_box = self._iid2b.get
+        b2o = self._b2o
         for iid in cnv.find_overlapping(x, y, x + 1, y + 1):
-            o = iid2o.get(iid)
+            b = get_box(iid)
+            if b is None:
+                continue
+            o = b2o[b]
             if o in checked:
                 continue
             check(o)
