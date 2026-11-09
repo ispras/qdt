@@ -83,6 +83,8 @@ class _ReadyBit:
             if cur is v:
                 return
             mask = getattr(o, f)
+            # Handler may del/set other bit.
+            # Clear this bit now to prevent infinite recursion.
             setattr(o, f, mask & self.clear)
             if mask == full_mask:
                 handler(o, False)
@@ -99,10 +101,12 @@ class _ReadyBit:
         if hasattr(o, private):
             f = bf.ready
             mask = getattr(o, f)
+            # Handler may del/set other bit.
+            # Clear this bit now to prevent infinite recursion.
+            setattr(o, f, mask & self.clear)
             if mask == bf.mask:
                 bf.handler(o, False)
                 delattr(o, bf.private)
-            setattr(o, f, mask & self.clear)
             delattr(o, private)
         else:
             raise AttributeError(self.public)
