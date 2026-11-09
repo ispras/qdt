@@ -212,10 +212,10 @@ class TextGridBox(GridRect):
 
     _spot_step = (int(SPOT_SIZE * 1.2) << 1) + 1
 
-    def __init__(self, canvas, iid2b):
+    def __kwinit__(self, canvas, iid2b):
+        super(TextGridBox, self).__kwinit__((0, 0))
         self._c = canvas
         self._iid2b = iid2b
-        super(TextGridBox, self).__init__((0, 0))
         self._spots = []
         # First time create items as soon as all ready.
         self.delayed_valid = True
