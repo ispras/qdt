@@ -388,13 +388,6 @@ Do not set `highlighted` directly if `highlights` are used.
         for p in self._points:
             p.g = g
 
-    def remove(self):
-        self.g = None
-        try:
-            del self.delayed_valid
-        except AttributeError:
-            pass
-
 
 class GGVWidget(GUIFrame, CanvasTextMeasurer):
     """Git Graph View Widget
@@ -733,7 +726,7 @@ class GGVWidget(GUIFrame, CanvasTextMeasurer):
             # removed
             l = oid2b.pop(eids, None)
             if l is not None:
-                l.remove()
+                l.g = None
 
     def _on_item_b1(self, e):
         for o in self.iter_items_at(e.x, e.y):
