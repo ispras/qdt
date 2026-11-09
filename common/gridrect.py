@@ -63,10 +63,11 @@ the `g`rid.
             if g is not None:
                 g.remove(self)
         else:
+            # `coords` accessor may expect `_gcoords` are valid.
+            self._gcoords = gcoords
             if g is not None:
                 g.add(gcoords, self)
                 self.coords = g(gcoords)
-            self._gcoords = gcoords
 
     def _on_grid_resized(self, axis, coord):
         gcoords = self._gcoords
