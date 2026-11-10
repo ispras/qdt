@@ -980,8 +980,6 @@ class FSNode(Image):
                 return getattr(self, name)
             return getattr(stat(path), name)
 
-    BYTE_MULTS = ("B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB")
-
     def __summary_str__(self):
         path = self.path
         fs = self.fs
@@ -990,20 +988,7 @@ class FSNode(Image):
 
         if isfile(path):
             st = fs.stat(path)
-            sz = st.st_size
-            prev_sz = 0
-            scale = 0
-            while sz >= 1024:
-                prev_sz = sz & 0x3FF
-                sz >>= 10
-                scale += 1
-
-            try:
-                ss = self.BYTE_MULTS[scale]
-            except IndexError:
-                ss = "!iB"
-
-            return "F %.1f%s" % (sz + prev_sz / 1024.0, ss)
+            return "F " + format_size(st.st_size)
 
         if isdir(path):
             nf, nd, nt = 0, 0, 0
@@ -1098,6 +1083,26 @@ class TkImageViewWidget(ImageViewWidget):
     def show_image(self):
         self.__show_image__()
         self.observe()
+
+
+
+
+BYTE_MULTS = ("B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB")
+
+def format_size(sz):
+    prev_sz = 0
+    scale = 0
+    while sz >= 1024:
+        prev_sz = sz & 0x3FF
+        sz >>= 10
+        scale += 1
+
+    try:
+        ss = BYTE_MULTS[scale]
+    except IndexError:
+        ss = "!iB"
+
+    return "%.1f%s" % (sz + prev_sz / 1024.0, ss)
 
 
 class StatFrame(GUIFrame, TkImageViewWidget):
