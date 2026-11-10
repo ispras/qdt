@@ -1,6 +1,7 @@
 __all__ = [
     "get_default_args"
   , "get_class_total_args"
+  , "common_supers"
 ]
 
 from .compat import (
@@ -96,6 +97,37 @@ def get_class_total_args(Class):
                 break
 
     return total_pa, total_kwa
+
+
+FS_EMPTY = frozenset()
+
+def common_supers(*class_iterables):
+    i = iter(class_iterables)
+    for classes in i:
+        common = set(classes)
+        break
+    else:
+        return FS_EMPTY
+
+    while common:
+        for classes in i:
+            for ccls in tuple(common):
+                for icls in classes:
+                    if ccls is icls:
+                        break
+                    if issubclass(icls, ccls):
+                        break
+                    if issubclass(ccls, icls):
+                        # icls is common base for (icls, rcls)
+                        common.add(icls)
+                else:
+                    common.remove(ccls)
+            break
+        else:
+            break
+
+    return common
+
 
 if __name__ == "__main__":
     class Elder(object):
