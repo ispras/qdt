@@ -1318,6 +1318,7 @@ class ImgviewFrame(GUIFrame):
 
         apw = self._apw_img_widgets
         unused = set(apw.winfo_children())
+        used = []
 
         if img is not None:
             WCls2w = dict((type(w), w) for w in unused)
@@ -1350,14 +1351,19 @@ class ImgviewFrame(GUIFrame):
                         self._on_enter_subimage
                     )
 
-                apw.add(img_w)
+                used.append(img_w)
                 img_w.image = img
 
         for img_w in unused:
             assert img_w is self._img_w_cache.setdefault(
                 type(img_w), img_w
             )
-            apw.remove(img_w)
+
+        for c in apw.winfo_children():
+            apw.remove(c)
+
+        for img_w in used:
+            apw.add(img_w)
 
     def _on_enter_subimage(self, e):
         siname = e.widget.subimage_name
