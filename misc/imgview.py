@@ -12,6 +12,7 @@ PYTHONPATH.insert(0, dirname(DIR))
 
 from common import (
     byN,
+    common_supers,
     DedicatedObjects,
     ObjectObserver,
 )
@@ -67,36 +68,6 @@ from time import (
 # temp debug stuff
 import linecache
 import tracemalloc
-
-
-FS_EMPTY = frozenset()
-
-def common_supers(*class_iterables):
-    i = iter(class_iterables)
-    for classes in i:
-        common = set(classes)
-        break
-    else:
-        return FS_EMPTY
-
-    while common:
-        for classes in i:
-            for ccls in tuple(common):
-                for icls in classes:
-                    if ccls is icls:
-                        break
-                    if issubclass(icls, ccls):
-                        break
-                    if issubclass(ccls, icls):
-                        # icls is common base for (icls, rcls)
-                        common.add(icls)
-                else:
-                    common.remove(ccls)
-            break
-        else:
-            break
-
-    return common
 
 
 obs = ObjectObserver()
