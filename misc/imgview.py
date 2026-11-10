@@ -59,6 +59,8 @@ from six.moves.tkinter_ttk import (
     Treeview,
 )
 from time import (
+    gmtime,
+    strftime,
     time,
 )
 
@@ -1085,11 +1087,22 @@ class TkImageViewWidget(ImageViewWidget):
         self.observe()
 
 
+def format_time(t):
+    if t is None:
+        return "-"
+    if isinstance(t, str):
+        return t
+    return strftime("%Y.%m.%d %H:%M:%S", gmtime(t))
 
 
 BYTE_MULTS = ("B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB")
 
 def format_size(sz):
+    if sz is None:
+        return "-"
+    if isinstance(sz, str):
+        return sz
+
     prev_sz = 0
     scale = 0
     while sz >= 1024:
@@ -1105,7 +1118,21 @@ def format_size(sz):
     return "%.1f%s" % (sz + prev_sz / 1024.0, ss)
 
 
+def default_value_formatter(t):
+    if t is None:
+        return "-"
+    return str(t)
+
+
 class StatFrame(GUIFrame, TkImageViewWidget):
+
+    __value_formatter__ = dict(
+        st_atime = format_time,
+        st_ctime = format_time,
+        st_mtime = format_time,
+        st_size = format_size,
+        st_blksize = format_size,
+    )
 
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
@@ -1141,6 +1168,8 @@ class StatFrame(GUIFrame, TkImageViewWidget):
 
         tv.configure(columns = [""] * max_cols)
 
+        get_formatter = self.__value_formatter__.get
+
         for name, ciid in zip_longest(
             names,
             tv.get_children("")
@@ -1160,9 +1189,11 @@ class StatFrame(GUIFrame, TkImageViewWidget):
             if not isinstance(val, (tuple, list)):
                 val = (val,)
 
+            formatter = get_formatter(name, default_value_formatter)
+
             cfg = dict(
                 text = name,
-                values = tuple(("-" if n is None else n) for n in val),
+                values = tuple(map(formatter, val)),
             )
 
             tv.item(ciid, **cfg)
