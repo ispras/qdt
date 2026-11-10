@@ -64,11 +64,12 @@ class IOException(IOError): pass
 
 
 class CoTask(object):
+
     def __init__(self,
-                 generator,
-                 enqueued = False,
-                 description = _("Coroutine based task without description")
-        ):
+        generator,
+        enqueued = False,
+        description = _("Coroutine based task without description"),
+    ):
         self.generator = generator
         self.enqueued = enqueued
         self.description = description
