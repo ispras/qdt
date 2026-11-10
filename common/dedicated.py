@@ -56,19 +56,9 @@ a `Dedicated` `Process`.
         code, res, *tail = res
         if code is TargetReturned:
             return res
-        if code is InternalFailure:
-            raise code(res, *tail)
-        else:  # TargetFailed
-            # If `TargetFailed`, original exception should be `raise`d.
-            # `res` is the original exception class.
-            # The `*tail` should not be passed to original exception
-            # constructor beecause it has arbitrary nature.
-            # Hence to provide the `*tail` to a user, the exceptions are
-            # stacked.
-            try:
-                raise code(res, *tail)
-            except:
-                raise res
+        assert code in (TargetFailed, InternalFailure), code
+        print(tail[0])
+        raise res
 
     def roll(self):
         while self._running:
@@ -114,6 +104,7 @@ a `Dedicated` `Process`.
             except BaseException as e:
                 try:
                     send((TargetFailed, type(e), format_exc()))
+                    continue
                 except:
                     print_exc()
                     break
