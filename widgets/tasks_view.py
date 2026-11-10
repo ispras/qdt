@@ -19,6 +19,9 @@ from .gui_toplevel import (
 from .scrollframe import (
     add_scrollbars_native,
 )
+from .tk_after import (
+    tk_periodic,
+)
 
 from collections import (
     defaultdict,
@@ -131,12 +134,13 @@ class TasksFrame(GUIFrame):
             background = "#FFFFFF",
         )
 
-    def update_tree(self, co_disp):
+    @tk_periodic
+    def update_tree(self):
         tv = self._tv
         cache = self._tv_cache
         iid2t, t2iid = self._iid2t, self._t2iid
 
-        nodes, roots = gen_task_graph(co_disp)
+        nodes, roots = gen_task_graph(self._co_disp)
         used = set()
         use = used.add
 
@@ -182,17 +186,12 @@ class TasksFrame(GUIFrame):
                 tv.detach(iid)
                 del iid2t[iid]
 
-    _after__periodic_update = None
     def start_periodic_update(self, co_disp, period = 100):
-        if self._after__periodic_update:
-            self.after_cancel(self._after__periodic_update)
-        def periodic_update():
-            self.update_tree(co_disp)
-            self._after__periodic_update = self.after(period, periodic_update)
-        self._after__periodic_update = self.after(period, periodic_update)
+        self._co_disp = co_disp
+        self.update_tree = period
 
     def stop_periodic_update(self):
-        self.after_cancel(self._after__periodic_update)
+        del self.update_tree
 
 
 class TasksWindow(GUIToplevel):
