@@ -402,15 +402,18 @@ Do not set `highlighted` directly if `highlights` are used.
                 point(p)
             return points
         else:
+            for p in self._points:
+                p.g = None
             try:
                 iid = self._prev_iid
             except AttributeError:
-                pass
+                try:
+                    iid = self._iid
+                except AttributeError:
+                    return
             else:
                 del self._prev_iid
-                self._c.delete(iid)
-            for p in self._points:
-                p.g = None
+            self._c.delete(iid)
 
     gcoords = points.bit()
     g = points.bit()
