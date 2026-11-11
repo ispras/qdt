@@ -38,6 +38,7 @@ the `g`rid.
             if gcoords is not None:
                 self._g.remove(self)
                 del self.coords
+                del self.cell_size
         if g is None:
             del self._g
         else:
@@ -45,6 +46,7 @@ the `g`rid.
             if gcoords is not None:
                 g.add(gcoords, self)
                 self.coords = g(gcoords)
+                self.cell_size = tuple(g.iter_cell_size(gcoords))
             listen(g, "resized", self._on_grid_resized)
 
     _gcoords = None
@@ -60,6 +62,7 @@ the `g`rid.
         if gcoords is None:
             del self._gcoords
             del self.coords
+            del self.cell_size
             if g is not None:
                 g.remove(self)
         else:
@@ -68,10 +71,14 @@ the `g`rid.
             if g is not None:
                 g.add(gcoords, self)
                 self.coords = g(gcoords)
+                self.cell_size = tuple(g.iter_cell_size(gcoords))
 
     def _on_grid_resized(self, axis, coord):
         gcoords = self._gcoords
         if gcoords is None:
             return
-        if coord < gcoords[axis]:
+        self_coord = gcoords[axis]
+        if coord < self_coord:
             self.coords = self._g(gcoords)
+        elif coord == self_coord:
+            self.cell_size = tuple(self._g.iter_cell_size(gcoords))
