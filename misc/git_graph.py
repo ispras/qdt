@@ -62,17 +62,11 @@ from collections import (
 from git import (
     Repo,
 )
-from itertools import (
-    count,
-)
 from os.path import (
     abspath,
     dirname,
     isdir,
     join,
-)
-from six.moves import (
-    zip,
 )
 from six.moves.tkinter import (
     ALL,
