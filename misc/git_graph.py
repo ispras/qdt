@@ -190,7 +190,7 @@ class TextGridBox(GridRect):
 
         x, y = self._coords
 
-        cw, ch = self._g.iter_cell_size(self._gcoords)
+        cw, ch = self._cell_size
 
         x += cw // 2
         y += ch // 2
@@ -237,6 +237,7 @@ class TextGridBox(GridRect):
         return ret
 
     coords = iids.bit()
+    cell_size = iids.bit()
     size = iids.bit()
     rect_style = iids.bit()
     text_style = iids.bit()
@@ -286,6 +287,7 @@ class _GridLinePoint(GridRect):
         l.valid_points += 1 if ready else -1
 
     coords = master_line_updater.bit()
+    cell_size = master_line_updater.bit()
 
 
 class GridLine(object):
@@ -326,8 +328,7 @@ class GridLine(object):
 
         all_coords = []
         for p in self._points:
-            gcoords = p.gcoords
-            cw, ch = self._g.iter_cell_size(gcoords)
+            cw, ch = p._cell_size
             x, y = p.coords
             x += cw / 2
             y += ch / 2
