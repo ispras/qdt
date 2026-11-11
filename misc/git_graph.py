@@ -282,9 +282,7 @@ class _GridLinePoint(GridRect):
 
     @ready
     def master_line_updater(self, ready):
-        # Note, thi's GGVWidget specific.
-        l = self._l
-        l.valid_points += 1 if ready else -1
+        self._l.valid_points += 1 if ready else -1
 
     coords = master_line_updater.bit()
     cell_size = master_line_updater.bit()
