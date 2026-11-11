@@ -1200,6 +1200,11 @@ class GGVWindow(GUITk, TkPopupHelper):
                 windows_menu(cit.title(), variable = v)
                 HideShowBinding(cit, v)
 
+            with menubar(_("Debug")) as debug_menu:
+                debug_menu(_("pydevd"),
+                    command = self._on_debug_pydevd,
+                )
+
         with MenuBuilder(self, assign = False, tearoff = False) as menu:
             self._popup_ggvw_node = menu.menu
             menu(_("Highlight"),
@@ -1216,6 +1221,10 @@ class GGVWindow(GUITk, TkPopupHelper):
         self._res2spot = {}
 
         self._provide_project(repo)
+
+    def _on_debug_pydevd(self):
+        from pydevd import settrace
+        settrace()
 
     def _on_popup_ggvw_node_highlight(self):
         n = self.current_popup_tag
