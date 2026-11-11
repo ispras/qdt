@@ -282,7 +282,7 @@ class _GridLinePoint(GridRect):
 
     @ready
     def master_line_updater(self, ready):
-        self._l.valid_points += 1 if ready else -1
+        self._l.ready_points += 1 if ready else -1
 
     coords = master_line_updater.bit()
     cell_size = master_line_updater.bit()
@@ -303,7 +303,7 @@ class GridLine(object):
 
     def __init__(self, canvas):
         self._c = canvas
-        self.valid_points = 0
+        self.ready_points = 0
         self.line_style = self.LINE_NORMAL
         self.delayed_valid = True
 
@@ -315,17 +315,24 @@ class GridLine(object):
         canvas = self._c
         icfg = canvas.itemconfig
         if not ready:
+            iid = self._iid
+            if iid is None:
+                return
             # Note, thi's GGVWidget specific.
             canvas.master.sig_item_invalid(self)
             del self.delayed_valid
-            self._prev_iid = iid = self._iid
+            self._prev_iid = iid
             # Highlight obsolete configuration lines with grey color.
             # So, the canvas does not look empty most of time.
             icfg(iid, fill = "grey")
             return
 
+        points = self._points
+        if len(points) != self._ready_points:
+            return
+
         all_coords = []
-        for p in self._points:
+        for p in points:
             cw, ch = p._cell_size
             x, y = p.coords
             x += cw / 2
@@ -345,22 +352,10 @@ class GridLine(object):
             icfg(iid, **self._line_style)
         return iid
 
-    all_points_valid = iid.bit()
     line_style = iid.bit()
     delayed_valid = iid.bit()
-
-    @ready
-    def validity_updater(self, ready):
-        if ready:
-            if self._valid_points == len(self._points):
-                self.all_points_valid = True
-                return True
-        else:
-            if self._validity_updater:
-                del self.all_points_valid
-
-    _points = validity_updater.bit()
-    valid_points = validity_updater.bit()
+    _points = iid.bit()
+    ready_points = iid.bit()
 
     @property
     def highlighted(self):
