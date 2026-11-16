@@ -134,7 +134,6 @@ class PyFBDrawer(object):
 
     def fill_poly(self, *points):
         self._points = points
-        print(points)
         self._fb.draw_fragments(self._fill_poly_shader)
 
     def _fill_poly_shader(self, x, y):
