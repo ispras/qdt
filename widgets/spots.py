@@ -373,6 +373,13 @@ def main():
     from common import (
         RectSpring,
     )
+    from graphics import (
+        PyFrameBuffer,
+        PyFBDrawer,
+    )
+    from widgets import (
+        gen_ppm_photo_image,
+    )
 
     from pickle import (
         loads,
@@ -381,7 +388,11 @@ def main():
     from six.moves.tkinter import (
         BOTH,
         Canvas,
+        END,
         Tk,
+    )
+    from six.moves.tkinter_ttk import (
+        Treeview,
     )
 
     root = Tk()
@@ -406,6 +417,9 @@ def main():
     )
     px, py = next(cgen)
 
+    spots = []
+    append = spots.append
+
     line = c.create_line
     lower = c.lower
     for i, base in enumerate(POLY_BASES):
@@ -416,13 +430,13 @@ def main():
                 width = 6,
             ))
             px, py = x, y
-            Spot(
+            append(Spot(
                 base = base,
                 align = a,
                 offset = (x, y),
                 fill = "#%02X%02X%02X" % (next(cg1 if (i & 1) else cg0)),
                 canvas = c,
-            )
+            ))
             line((x - 10, y, x + 10, y))
             line((x, y - 10, x, y + 10))
         cgen = loads(dumps(cgen))
@@ -435,6 +449,33 @@ def main():
     c.configure(width = int(w), height = int(h))
     c.scan_mark(int(b[0] - PADDING), int(b[1] - PADDING))
     c.scan_dragto(0, 0, 1)
+
+    tv = Treeview(root)
+    tv.pack(fill = BOTH, expand = True)
+
+    fb = PyFrameBuffer(int(SCALE) << 1, int(SCALE) << 1,
+        fill = (255, 255, 255),
+    )
+    d = PyFBDrawer(fb)
+    imgs = []
+    append = imgs.append
+
+    for spot in spots:
+        ox, oy, r, b = aabb(spot.coords)
+        ox -= (fb._w - int(r - ox)) >> 1
+        oy -= (fb._h - int(b - oy)) >> 1
+        points = tuple(iter_mul(iter_sub(spot.coords, ox, oy), 0.9, 0.9))
+
+        d.color = spot.get_fill_rgb() + (255,)
+        d.fill_poly(*points)
+        d.color = (0, 0, 0, 255)
+        d.poly(*points)
+
+        spot_img = gen_ppm_photo_image(fb.fb, fb._w)
+        append(spot_img)
+
+        tv.insert("", END, image = spot_img, text = "spot")
+        fb.clear()
 
     root.mainloop()
 
