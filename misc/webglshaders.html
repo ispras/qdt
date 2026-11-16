@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>WebGL Shaders Example</title>
+    <style>
+body {
+    margin: 0;
+    overflow: hidden;
+}
+canvas {
+    width: 100vw;
+    height: 100vh;
+}
+    </style>
+  </head>
+  <body>
+    <canvas id="glcanvas"></canvas>
+
+    <script id="vs" type="x-shader/x-vertex">#version 300 es
+
+in vec4 a_p;
+out vec2 uv;
+void main() {
+    gl_Position = a_p;
+    uv = (a_p.xy + 1.0) * 0.5; // UV 0..1
+}
+    </script>
+
+    <script id="fs" type="x-shader/x-fragment">#version 300 es
+
+precision mediump float;
+
+in vec2 uv;
+out vec4 out_color;
+
+uniform float pxsz;
+
+float EPS = 0.00001;
+
+float distToSegment(vec2 P, vec2 A, vec2 B) {
+    // dAB = d * |AB|, d is AB direction
+    vec2 dAB = B - A;
+    // \d\ == 1.0 => dAB * dAB = d * |AB|^2
+    float AB2 = dot(dAB, dAB);
+    if (AB2 < EPS) {
+        // the segment is point
+        return length(P - A);
+    }
+    /*
+d is n (normal vector) of line AC, perpendicular to AB
+Exact C coordinates are not significant.
+P` is projection of P on AB
+AP * d = |AP`| <= normal equation of line AC
+|AP`| is distance between P and AC
+t = |AP`|/|AB|
+t is relative position of P` on segment AB
+t < 0 or 1 < t => P` is beyond AB
+d = dAB / |dAB| (|d| == 1.0)
+  = dAB / |AB|
+t = AP * d / |AB|
+  = (AP * dAB) / (|AB| * |AB|)
+    */
+    float t = dot(P - A, dAB) / AB2;
+    vec2 closest = A + dAB * clamp(t, 0., 1.);
+    return length(P - closest);
+}
+
+float distToCircle(vec2 p, vec2 o, float r) {
+    return abs(r - length(p - o));
+}
+
+vec4 mixcolor(vec4 c0, vec4 c1)
+{
+    return vec4(mix(c0.xyz, c1.xyz, c1.w), c0.w);
+}
+
+float width = 0.005;
+vec4 color = vec4(1.);
+
+void segment(vec2 p1, vec2 p2)
+{
+    out_color = mixcolor(out_color, vec4(
+        color.xyz,
+        color.w * (1.0 - smoothstep(0., width, distToSegment(uv, p1, p2)))
+    ));
+}
+
+void circle(vec2 p, float r) {
+    out_color = mixcolor(out_color, vec4(
+        color.xyz,
+        color.w * (1.0 - smoothstep(0., width, distToCircle(uv, p, r)))
+    ));
+}
+
+// input buffer of points for polygon related function
+vec2[32] pp;
+
+bool pointInPoly(vec2 p, int n)
+{
+    bool inside = false;
+    int j = n - 1;
+    for (int i = 0; i < n; j = i, i++) {
+        // The edge crosses h-ray if its points are to the both sides.
+        bool crossY = (pp[i].y > p.y) != (pp[j].y > p.y);
+        if (crossY) {
+            // x coord if cross point
+            float xCross = pp[j].x
+                + (p.y - pp[j].y) * (pp[i].x - pp[j].x) / (pp[i].y - pp[j].y);
+            if (p.x < xCross) inside = !inside;
+        }
+    }
+    return inside;
+}
+
+void fillPoly(int n)
+{
+    if (pointInPoly(uv, n))
+        out_color = mixcolor(out_color, vec4(color.xyz, color.w));
+}
+
+void poly(int n)
+{
+    for (int i = 0, j = n - 1; i < n; j = i++) {
+        segment(pp[j], pp[i]);
+    }
+}
+
+void star16()
+{
+    pp[0]  = vec2( 1.0000,  0.5000);
+    pp[1]  = vec2( 0.7488,  0.5245);
+    pp[2]  = vec2( 0.9904,  0.5975);
+    pp[3]  = vec2( 0.7392,  0.5726);
+    pp[4]  = vec2( 0.9619,  0.6913);
+    pp[5]  = vec2( 0.7205,  0.6178);
+    pp[6]  = vec2( 0.9157,  0.7778);
+    pp[7]  = vec2( 0.6933,  0.6586);
+    pp[8]  = vec2( 0.8536,  0.8536);
+    pp[9]  = vec2( 0.6586,  0.6933);
+    pp[10] = vec2( 0.7778,  0.9157);
+    pp[11] = vec2( 0.6178,  0.7205);
+    pp[12] = vec2( 0.6913,  0.9619);
+    pp[13] = vec2( 0.5726,  0.7392);
+    pp[14] = vec2( 0.5975,  0.9904);
+    pp[15] = vec2( 0.5245,  0.7488);
+    pp[16] = vec2( 0.5000,  1.0000);
+    pp[17] = vec2( 0.4755,  0.7488);
+    pp[18] = vec2( 0.4025,  0.9904);
+    pp[19] = vec2( 0.4274,  0.7392);
+    pp[20] = vec2( 0.3087,  0.9619);
+    pp[21] = vec2( 0.3822,  0.7205);
+    pp[22] = vec2( 0.2222,  0.9157);
+    pp[23] = vec2( 0.3414,  0.6933);
+    pp[24] = vec2( 0.1464,  0.8536);
+    pp[25] = vec2( 0.3067,  0.6586);
+    pp[26] = vec2( 0.0843,  0.7778);
+    pp[27] = vec2( 0.2795,  0.6178);
+    pp[28] = vec2( 0.0381,  0.6913);
+    pp[29] = vec2( 0.2608,  0.5726);
+    pp[30] = vec2( 0.0096,  0.5975);
+    pp[31] = vec2( 0.2512,  0.5245);
+}
+
+void picture()
+{
+    width = 10.0 * pxsz;
+
+    pp[0] = vec2(0.1, 0.9);
+    pp[1] = vec2(0.9, 0.9);
+    pp[2] = vec2(0.5, 0.1);
+    color = vec4(1, 0.5, 0, 0.2);
+    fillPoly(3);
+
+    color = vec4(0.5, 0, 0.5, 0.2);
+    star16();
+    fillPoly(32);
+
+    color = vec4(1, 0, 0, 1);
+    segment(vec2(0.2, 0.2), vec2(0.8, 0.8));
+
+    color = vec4(0, 1, 0, 0.5);
+    circle(vec2(0.5, 0.6), 0.1);
+
+    color = vec4(0, 0, 1, 0.8);
+    pp[0] = vec2(0.1, 0.1);
+    pp[1] = vec2(0.9, 0.1);
+    pp[2] = vec2(0.5, 0.9);
+    poly(3);
+}
+
+
+void main(){
+    out_color = vec4(0.0, 0.0, 0.0, 1.0);
+    picture();
+}
+    </script>
+
+    <script>
+const canvas = document.getElementById('glcanvas');
+const gl = canvas.getContext('webgl2');
+
+function createShader(gl, type, source) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, source);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(s));
+        return null;
+    }
+    return s;
+}
+function createProgram(gl, vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, vs);
+    gl.attachShader(p, fs);
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+        console.error(gl.getProgramInfoLog(p));
+        return null;
+    }
+    return p;
+}
+
+const vsSource = document.getElementById('vs').text;
+const fsSource = document.getElementById('fs').text;
+const vertexShader = createShader(gl, gl.VERTEX_SHADER, vsSource);
+const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+const program = createProgram(gl, vertexShader, fragmentShader);
+gl.useProgram(program);
+
+const positions = new Float32Array([
+    -1, -1,  1, -1, -1,  1,
+    -1,  1,  1, -1,  1,  1
+]);
+const buffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+const posLoc = gl.getAttribLocation(program, 'a_p');
+gl.enableVertexAttribArray(posLoc);
+gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+const pxszLoc = gl.getUniformLocation(program, 'pxsz');
+
+function resize() {
+    const w = Math.round(canvas.clientWidth);
+    const h = Math.round(canvas.clientHeight);
+    canvas.width = w;
+    canvas.height = h;
+    if (h < w) {
+        gl.viewport((w - h) / 2, 0, h, h);
+        if (h) gl.uniform1f(pxszLoc, 1.0 / h);
+    } else {
+        gl.viewport(0, (h - w) / 2, w, w);
+        if (w) gl.uniform1f(pxszLoc, 1.0 / w);
+    }
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+window.addEventListener('resize', resize);
+resize();
+    </script>
+  </body>
+</html>
