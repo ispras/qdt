@@ -360,6 +360,14 @@ class Spot(KWInit):
     align = coords.bit()
     offset = coords.bit()
 
+    def get_fill_rgb(self):
+        c = self.fill[1:]
+        return (
+            int(c[:2], base = 16),
+            int(c[2:4], base = 16),
+            int(c[4:], base = 16)
+        )
+
 
 def main():
     from common import (
