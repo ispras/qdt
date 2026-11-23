@@ -3,6 +3,11 @@ from common import (
     MurMur,
     ready,
 )
+from graphics import (
+    blit,
+    PyFrameBuffer,
+    PyFBDrawer,
+)
 
 from functools import (
     lru_cache,
@@ -369,13 +374,54 @@ class Spot(KWInit):
         )
 
 
+def rasterize_spots_row(spots, height,
+    spacing = 0.1,
+    interval = None,
+    background = (255, 255, 255),
+):
+    if not isinstance(spacing, int):
+        spacing = int(height * spacing)
+    if interval is None:
+        interval = spacing
+    if not isinstance(interval, int):
+        interval = int(height * interval)
+
+    spot_size = height - (spacing << 1)
+    spot_size_2 = spot_size >> 1
+    n_spots = len(spots)
+
+    # Shading a big buffer in Python is too expensive.
+    # Draw each spot into its own small frame buffer.
+    # Than blit those buffers onto a big result buffer.
+    width = 2 * spacing + interval * (n_spots - 1) + spot_size * n_spots
+    buf = [background] * (width * height)
+    fb = PyFrameBuffer(height, height,
+        fill = background,
+    )
+    d = PyFBDrawer(fb)
+
+    x = spacing
+    step = spot_size + interval
+    for spot in spots:
+        points = gen_poly(
+            spot.base,
+            scale = spot_size_2,
+            align = LEFT_TOP,
+        )
+        d.color = spot.get_fill_rgb() + (255,)
+        d.fill_poly(*points)
+        d.color = (0, 0, 0, 255)
+        d.poly(*points)
+        blit(buf, width, height, fb.fb, height, height, x, spacing)
+        x += step
+        fb.clear()
+
+    return buf, width, height
+
+
 def main():
     from common import (
         RectSpring,
-    )
-    from graphics import (
-        PyFrameBuffer,
-        PyFBDrawer,
     )
     from widgets import (
         gen_ppm_photo_image,
@@ -453,29 +499,27 @@ def main():
     tv = Treeview(root)
     tv.pack(fill = BOTH, expand = True)
 
-    fb = PyFrameBuffer(int(SCALE) << 1, int(SCALE) << 1,
-        fill = (255, 255, 255),
-    )
-    d = PyFBDrawer(fb)
     imgs = []
     append = imgs.append
+    spots_in_row = 1
+    row_spots = []
+    add_spot = row_spots.append
+    row_height = int(SCALE * 2)
 
     for spot in spots:
-        ox, oy, r, b = aabb(spot.coords)
-        ox -= (fb._w - int(r - ox)) >> 1
-        oy -= (fb._h - int(b - oy)) >> 1
-        points = tuple(iter_mul(iter_sub(spot.coords, ox, oy), 0.9, 0.9))
+        add_spot(spot)
+        if len(row_spots) != spots_in_row:
+            continue
+        buf, w, h = rasterize_spots_row(row_spots, row_height)
+        row_spots *= 0
+        spots_img = gen_ppm_photo_image(buf, w)
+        append(spots_img)
 
-        d.color = spot.get_fill_rgb() + (255,)
-        d.fill_poly(*points)
-        d.color = (0, 0, 0, 255)
-        d.poly(*points)
-
-        spot_img = gen_ppm_photo_image(fb.fb, fb._w)
-        append(spot_img)
-
-        tv.insert("", END, image = spot_img, text = "spot")
-        fb.clear()
+        tv.insert("", END,
+            image = spots_img,
+            text = str(spots_in_row) + " spot(s)",
+        )
+        spots_in_row += 1
 
     root.mainloop()
 
