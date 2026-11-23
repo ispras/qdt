@@ -1,7 +1,12 @@
 __all__ = [
     "PyFrameBuffer"
   , "PyFBDrawer"
+  , "blit"
 ]
+
+from common import (
+    aabb_intersection,
+)
 
 from itertools import (
     count,
@@ -42,6 +47,88 @@ class PyFrameBuffer(object):
 
     def clear(self):
         self.fb = [self._fill] * (self._w * self._h)
+
+
+def blit(d, dw, dh, s, sw, sh, x = 0, y = 0):
+    try:
+        l, t, r, b = aabb_intersection(
+            0, 0, dw, dh,
+            x, y, x + sw, y + sh,
+        )
+    except TypeError:
+        # cannot unpack non-iterable NoneType object
+        # no intersection
+        return
+
+    h = b - t
+
+    d_start_row_offset = t * dw
+    d_start_offset = l + d_start_row_offset
+    d_end_offset = r + d_start_row_offset
+    d_range = h * dw
+
+    s_start_row_offset = (t - y) * sw
+    s_start_offset = l - x + s_start_row_offset
+    s_end_offset = r - x + s_start_row_offset
+    s_range = h * sw
+
+    for ds, de, ss, se in zip(
+        range(d_start_offset, d_start_offset + d_range, dw),
+        range(d_end_offset, d_end_offset + d_range, dw),
+        range(s_start_offset, s_start_offset + s_range, sw),
+        range(s_end_offset, s_end_offset + s_range, sw),
+    ):
+        d[ds:de] = s[ss:se]
+
+
+# TODO: move this to tests
+# Basic blit inside destination
+dst = [0] * (5 * 3)
+src = [
+    1, 2, 3,
+    4, 5, 6,
+]
+blit(dst, 5, 3, src, 3, 2, 1, 1)
+assert dst == [
+    0, 0, 0, 0, 0,
+    0, 1, 2, 3, 0,
+    0, 4, 5, 6, 0,
+]
+
+# Clipped at top-left (negative offset)
+dst = [0] * (4 * 3)
+src = [
+    1, 2, 3,
+    4, 5, 6,
+]
+blit(dst, 4, 3, src, 3, 2, -1, -1)
+assert dst == [
+    5, 6, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+]
+
+# Clipped at bottom-right
+dst = [0] * (4 * 3)
+src = [
+    1, 2, 3,
+    4, 5, 6,
+]
+blit(dst, 4, 3, src, 3, 2, 2, 1)
+assert dst == [
+    0, 0, 0, 0,
+    0, 0, 1, 2,
+    0, 0, 4, 5,
+]
+
+# Fully outside destination
+dst = [0] * (5 * 2)
+src = [7, 8]
+blit(dst, 5, 2, src, 2, 1, 10, 10)
+assert dst == [
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+]
 
 
 def length(x, y):
