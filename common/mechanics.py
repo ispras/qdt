@@ -7,6 +7,7 @@ __all__ = [
       , "PhBox"
       , "PhCircle"
   , "find_empty_aabb"
+  , "aabb_intersection"
 ]
 
 class PhObject(object):
@@ -237,3 +238,37 @@ def find_empty_aabb(objs, minw = 1, minh = 1):
         raise AssertionError("It is not possible mathematically!")
 
     return None, None, None, None
+
+
+def aabb_intersection(
+    l1, t1, r1, b1,
+    l2, t2, r2, b2,
+):
+    # prefer __lt__, don't require more comparisons
+    l = l2 if l1 < l2 else l1  # max
+    r = r1 if r1 < r2 else r2  # min
+    if l < r:
+        t = t2 if t1 < t2 else t1  # max
+        b = b1 if b1 < b2 else b2  # min
+        if t < b:
+            return l, t, r, b
+    # no itersecion, return None
+
+
+# TODO: move this to tests
+# Partial overlap
+assert aabb_intersection(0, 0, 10, 10, 5, 5, 15, 15) == (5, 5, 10, 10)
+# Second box inside the first
+assert aabb_intersection(0, 0, 10, 10, 2, 2, 8, 8) == (2, 2, 8, 8)
+# First box inside the second
+assert aabb_intersection(0, 0, 10, 10, -5, -5, 20, 20) == (0, 0, 10, 10)
+# Identical boxes
+assert aabb_intersection(0, 0, 10, 10, 0, 0, 10, 10) == (0, 0, 10, 10)
+# No intersection
+assert aabb_intersection(0, 0, 10, 10, 20, 20, 30, 30) is None
+# Touching edge
+assert aabb_intersection(0, 0, 10, 10, 10, 0, 20, 10) is None
+# Touching corner
+assert aabb_intersection(0, 0, 10, 10, 10, 10, 20, 20) is None
+# Overlap on the left side
+assert aabb_intersection(0, 0, 10, 10, -5, 2, 5, 8) == (0, 2, 5, 8)
