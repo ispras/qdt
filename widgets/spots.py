@@ -1,4 +1,5 @@
 from common import (
+    AABB,
     by2,
     KWInit,
     MurMur,
@@ -118,43 +119,6 @@ class ColorGenerator:
         generated.add(ret)
 
         return ret
-
-
-def aabb(i):
-    i = iter(i)
-    l, t = r, b = next(i)
-    for x, y in i:
-        if x < l:
-            l = x
-        elif r < x:
-            r = x
-        if y < t:
-            t = y
-        elif b < y:
-            b = y
-    return l, t, r, b
-
-
-class AABB(tuple):
-
-    def __new__(cls, *args):
-        if len(args) == 1:
-            args = aabb(args[0])
-        return tuple.__new__(cls, args)
-
-    def get_size(self):
-        l, t, r, b = self
-        return r - l, b - t
-
-    def get_center(self):
-        l, t, r, b = self
-        return (l + r) / 2, (t + b) / 2
-
-    def get_width(self):
-        return self[2] - self[0]
-
-    def get_height(self):
-        return self[3] - self[1]
 
 
 def iter_poly(n, a = pi / -2.0):
