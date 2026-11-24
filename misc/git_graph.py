@@ -44,6 +44,7 @@ from widgets import (
     PatchEditorFrame,
     QDTUserSettings,
     Spot,
+    SpotImageCache,
     tk_delayed,
     TkPopupHelper,
     VarMenu,
@@ -879,7 +880,31 @@ class GEVWidget(GUIFrame):
         self._iid2c = c2iid.mirror
         self._commit = None
 
+        self._sic = SpotImageCache()
+        self._spot2c = defaultdict(list)
+        self._c2spot = defaultdict(list)
+
         tv.bind("<<TreeviewSelect>>", self._on_tv_select, "+")
+
+    def account_spot(self, commit, spot):
+        self._c2spot[commit].append(spot)
+        self._spot2c[spot].append(commit)
+        if commit in self._c2iid:
+            self._update_rows = 10
+
+    def forget_spot(self, spot):
+        get_spots = self._c2spot.get
+        shown = self._c2iid.__contains__
+        dont_update = True
+        for commit in self._spot2c.pop(spot):
+            spots = get_spots(commit)
+            spots.remove(spot)
+            if not spots:
+                del self._c2spot[commit]
+            if dont_update and shown(commit):
+                dont_update = True
+        if not dont_update:
+            self._update_rows = 10
 
     def _on_tv_select(self, e):
         tv = self._tv
@@ -922,27 +947,39 @@ class GEVWidget(GUIFrame):
         if self._edge is edge:
             return
         self._edge = edge
+        self._update_rows = 10
 
+    @tk_delayed
+    def _update_rows(self):
+        edge = self._edge
         columns = self._columns
-
-        tv = self._tv
-        tv.delete(*tv.get_children())
 
         c2iid = self._c2iid
         c2iid.clear()
 
+        tv = self._tv
+        tv.delete(*tv.get_children())
+
+        get_spots = self._c2spot.get
+
         if edge is not None:
             for c in edge:
                 commit = c._mg._repo.commit(c.sha)
-                c2iid[c] = tv.insert("",
+                kw = dict(
                     index = 0,
                     text = str(c.sha[:8]),
                     values = list(column(commit) for column in columns),
                 )
+                spots = get_spots(commit)
+                if spots:
+                    kw["image"] = self._sic(tuple(spots))
+                c2iid[c] = tv.insert("", **kw)
 
         iid = c2iid.get(self._commit)
         if iid is not None:
             tv.selection_set(iid)
+
+        tv.adjust_widths(hidden = True)
 
 
 class GEVWindow(GUIToplevel):
@@ -961,6 +998,9 @@ class GEVWindow(GUIToplevel):
             fill = BOTH,
             expand = True,
         )
+
+        self.account_spot = gevw.account_spot
+        self.forget_spot = gevw.forget_spot
 
         if topmost is not None:
             self.topmost = topmost
@@ -1389,11 +1429,14 @@ class GGVWindow(GUITk, TkPopupHelper):
         self._v_cit.set(True)
 
     def _on_git_found(self, result):
-        hexsha = result.commit.hexsha
+        commit = result.commit
+        hexsha = commit.hexsha
         mn = self._hexsha2mn[hexsha]
         if False:
             print("highlight", hexsha, type(mn).__name__, id(mn))
-        self._res2spot[result] = self._ggvw.add_spot(mn, result.req.spotcfg)
+        s = self._ggvw.add_spot(mn, result.req.spotcfg)
+        self._res2spot[result] = s
+        self._gevw.account_spot(result.commit, s)
 
     def _on_git_discard_found(self, result):
         if False:
@@ -1401,6 +1444,7 @@ class GGVWindow(GUITk, TkPopupHelper):
             mn = self._hexsha2mn[hexsha]
             print("highligh cancel", hexsha, mn.__type__.__name__, id(mn))
         s = self._res2spot.pop(result)
+        self._gevw.forget_spot(s)
         self._ggvw.remove_spot(s)
 
     def _on_mg_node(self, mg, mn):
@@ -1423,6 +1467,8 @@ class GGVWindow(GUITk, TkPopupHelper):
         else:
             add_spot = self._ggvw.add_spot
             remove_spot = self._ggvw.remove_spot
+            account_spot = self._gevw.account_spot
+            forget_spot = self._gevw.forget_spot
             res2spot = self._res2spot
             for c in commits:
                 hexsha = c.hexsha
@@ -1439,8 +1485,11 @@ class GGVWindow(GUITk, TkPopupHelper):
                         type(e).__name__, id(e)
                     )
                 for res in ress:
-                    remove_spot(res2spot.pop(res))
-                    res2spot[res] = add_spot(e, res.req.spotcfg)
+                    s = res2spot.pop(res)
+                    forget_spot(s)
+                    remove_spot(s)
+                    res2spot[res] = ns = add_spot(e, res.req.spotcfg)
+                    account_spot(res.commit, ns)
 
     __co_build_mg = None
     def _co_build_mg(self):
