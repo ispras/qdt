@@ -30,6 +30,7 @@ from widgets import (
     add_scrollbars_native,
     asksaveas,
     askyesno,
+    AutoVarTreeview,
     CanvasDnD,
     CanvasTextMeasurer,
     CommitInfoToplevel,
@@ -46,7 +47,6 @@ from widgets import (
     tk_delayed,
     TkPopupHelper,
     VarMenu,
-    VarTreeview,
 )
 from common.git.macrograph import (
     GitMacrograph,
@@ -852,7 +852,7 @@ class GEVWidget(GUIFrame):
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
 
-        self._tv = tv = VarTreeview(self,
+        self._tv = tv = AutoVarTreeview(self,
             columns = tuple(c.__name__ for c in columns),
             selectmode = BROWSE,
         )
