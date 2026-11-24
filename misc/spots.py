@@ -2,6 +2,7 @@ from common import (
     AABB,
     ALIGNMENTS,
     by2,
+    mlget as _,
     MurMur,
     RectSpring,
     POLY_BASES,
@@ -12,6 +13,7 @@ from graphics import (
     RGB_DST_SQ,
 )
 from widgets import (
+    AutoVarTreeview,
     Spot,
     SpotImageCache,
 )
@@ -25,9 +27,6 @@ from six.moves.tkinter import (
     Canvas,
     END,
     Tk,
-)
-from six.moves.tkinter_ttk import (
-    Treeview,
 )
 
 
@@ -87,7 +86,13 @@ def main():
     c.scan_mark(int(b[0] - PADDING), int(b[1] - PADDING))
     c.scan_dragto(0, 0, 1)
 
-    tv = Treeview(root)
+    tv = AutoVarTreeview(root,
+        columns = [
+            "q",
+        ],
+    )
+    tv.heading("#0", text = _("Spots"))
+    tv.heading("q", text = _("Quantity"))
     tv.pack(fill = BOTH, expand = True)
 
     sic = SpotImageCache()
@@ -102,11 +107,15 @@ def main():
             continue
         tv.insert("", END,
             image = sic(tuple(row_spots), row_height),
-            text = str(spots_in_row) + " spot(s)",
+            text = "|",
+            values = [
+                spots_in_row,
+            ],
         )
         row_spots *= 0
         spots_in_row += 1
 
+    tv.adjust_widths()
     root.mainloop()
 
 if __name__ == "__main__":
