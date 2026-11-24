@@ -1,3 +1,9 @@
+__all__ = [
+    "Spot"
+  , "rasterize_spots_row"
+]
+
+
 from common import (
     CENTER,
     gen_poly,
