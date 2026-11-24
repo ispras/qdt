@@ -12,9 +12,8 @@ from graphics import (
     RGB_DST_SQ,
 )
 from widgets import (
-    gen_ppm_photo_image,
-    rasterize_spots_row,
     Spot,
+    SpotImageCache,
 )
 
 from pickle import (
@@ -91,8 +90,7 @@ def main():
     tv = Treeview(root)
     tv.pack(fill = BOTH, expand = True)
 
-    imgs = []
-    append = imgs.append
+    sic = SpotImageCache()
     spots_in_row = 1
     row_spots = []
     add_spot = row_spots.append
@@ -102,15 +100,11 @@ def main():
         add_spot(spot)
         if len(row_spots) != spots_in_row:
             continue
-        buf, w, h = rasterize_spots_row(row_spots, row_height)
-        row_spots *= 0
-        spots_img = gen_ppm_photo_image(buf, w)
-        append(spots_img)
-
         tv.insert("", END,
-            image = spots_img,
+            image = sic(tuple(row_spots), row_height),
             text = str(spots_in_row) + " spot(s)",
         )
+        row_spots *= 0
         spots_in_row += 1
 
     root.mainloop()
