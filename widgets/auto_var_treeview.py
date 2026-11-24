@@ -16,5 +16,5 @@ class AutoVarTreeview(VarTreeview, TreeviewWidthHelper):
     def __init__(self, *a, **kw):
         VarTreeview.__init__(self, *a, **kw)
         TreeviewWidthHelper.__init__(self,
-            auto_columns = kw.get("columns", ["#0"])
+            auto_columns = ["#0"] + list(kw.get("columns", []))
         )
