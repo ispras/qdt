@@ -90,7 +90,8 @@ class Spot(KWInit):
         )
 
 
-def rasterize_spots_row(spots, height,
+def rasterize_spots_row(spots,
+    height = 20,
     spacing = 0.1,
     interval = None,
     background = (255, 255, 255),
