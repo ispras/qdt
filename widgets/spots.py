@@ -1,4 +1,5 @@
 from common import (
+    by2,
     KWInit,
     MurMur,
     ready,
@@ -117,16 +118,6 @@ class ColorGenerator:
         generated.add(ret)
 
         return ret
-
-
-def iter_by2(i, fill = None):
-    i = iter(i)
-    for x in i:
-        try:
-            y = next(i)
-        except StopIteration:
-            y = fill
-        yield x, y
 
 
 def aabb(i):
@@ -487,7 +478,7 @@ def main():
             line((x, y - 10, x, y + 10))
         cgen = loads(dumps(cgen))
 
-    b = AABB(iter_by2(c.bbox(*c.find_all())))
+    b = AABB(by2(c.bbox(*c.find_all())))
     w, h = b.get_size()
     w += PADDING * 2
     h += PADDING * 2
