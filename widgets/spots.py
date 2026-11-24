@@ -1,8 +1,12 @@
 __all__ = [
     "Spot"
   , "rasterize_spots_row"
+      , "SpotImageCache"
 ]
 
+from .ppm import (
+    gen_ppm_photo_image,
+)
 
 from common import (
     CENTER,
@@ -131,3 +135,41 @@ def rasterize_spots_row(spots, height,
     return buf, width, height
 
 
+class SpotImageCache:
+
+    def __init__(self):
+        self.settings2image = {}
+
+    def __call__(self, *a, **kw):
+        key = a + tuple(sorted(kw.items()))
+        try:
+            img = self.settings2image[key]
+        except KeyError:
+            buf, w, __ = rasterize_spots_row(*a, **kw)
+            img = gen_ppm_photo_image(buf, w)
+            # Reference to generated PhotoImage must not be garbage collected
+            # while it's used in a Tk Widget.
+            self.settings2image[key] = img
+        return img
+
+    def forget(self, spots):
+        """ forgets all images given `spots` have been used for
+        """
+        s2i = self.settings2image
+        pop = s2i.pop
+        keys = tuple(s2i.keys())
+        for spot in spots:
+            for key in keys:
+                try:
+                    key_spots = key[0]
+                except IndexError:
+                    for n, v in key:
+                        if n == "spots":
+                            key_spots = v
+                            break
+                    else:
+                        raise AssertionError(
+                "`rasterize_spots_row` first argument must be `spots`"
+                        )
+                if spot in key_spots:
+                    pop(key, None)
