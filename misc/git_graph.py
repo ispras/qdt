@@ -21,13 +21,15 @@ from common import (
     RectSpring,
     REFS_ORDER_RECENT_FIRST,
 )
+from graphics import (
+    ColorGenerator,
+)
 from widgets import (
     add_scrollbars_native,
     asksaveas,
     askyesno,
     CanvasDnD,
     CanvasTextMeasurer,
-    ColorGenerator,
     CommitInfoToplevel,
     EntryDialog,
     GUIFrame,
