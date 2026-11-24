@@ -25,10 +25,21 @@ class TreeviewWidthHelper(Treeview):
         self.zero_column_extra_width = zero_column_extra_width
         f = Font()
         self.measure = lru_cache(maxsize = widths_cache_size)(f.measure)
+        self._get_image_width = lru_cache(maxsize = widths_cache_size)(
+            self.get_image_width
+        )
+
+    def get_image_width(self, image_name):
+        return self.tk.call("image", "width", image_name)
 
     def get_max_width(self, iid, col, hidden):
+        max_width = 0
+
         if col == 0:
             cell_val = self.item(iid, "text")
+            image = self.item(iid, "image")
+            if image:
+                max_width += sum(map(self._get_image_width, image))
         else:
             row_vals = self.item(iid, "values")
             try:
@@ -36,7 +47,7 @@ class TreeviewWidthHelper(Treeview):
             except IndexError:
                 cell_val = ""
 
-        max_width = self.measure(cell_val)
+        max_width += self.measure(cell_val)
 
         """ "open" attribute of "" (root) is 0 while it is always opened...
         Hence, iterate root children anyway. """
