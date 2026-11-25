@@ -32,8 +32,22 @@ from sys import (
 )
 
 
-def add_scrollbars_native(outer, inner, row = 0, column = 0, sizegrip = False):
+def add_scrollbars_native(outer, inner,
+    row = 0,
+    column = 0,
+    sizegrip = False,
+    insert_weight = 1,
+    **insert_opts
+):
     "Adds scroll bars to a widget which supports them natively."
+    if insert_weight:
+        outer.rowconfigure(row, weight = insert_weight)
+        outer.columnconfigure(row, weight = insert_weight)
+        default = insert_opts.setdefault
+        default("row", row)
+        default("column", column)
+        default("sticky", "NESW")
+        inner.grid(**insert_opts)
     outer.rowconfigure(row + 1, weight = 0)
     outer.columnconfigure(column + 1, weight = 0)
 
