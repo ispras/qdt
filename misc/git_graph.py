@@ -35,6 +35,7 @@ from widgets import (
     CanvasTextMeasurer,
     CommitInfoToplevel,
     EntryDialog,
+    GitRefFrame,
     GUIFrame,
     GUITk,
     GUIToplevel,
@@ -76,6 +77,8 @@ from six.moves.tkinter import (
     BOTH,
     BooleanVar,
     BROWSE,
+    LEFT,
+    RIGHT,
     StringVar,
 )
 with pypath("..unidiff"):
@@ -1202,8 +1205,11 @@ class GGVWindow(GUITk, TkPopupHelper):
         )
         self.title(v_title)
 
+        self._grf = grf = GitRefFrame(self)
+        grf.pack(fill = BOTH, expand = False, side = LEFT)
+
         self._ggvw = ggvw = GGVWidget(self, sizegrip = True)
-        ggvw.pack(fill = BOTH, expand = True)
+        ggvw.pack(fill = BOTH, expand = True, side = RIGHT)
 
         ggvw.bind("<<Edge>>", self._on_edge, "+")
         ggvw.bind("<<Node>>", self._on_node, "+")
@@ -1310,7 +1316,8 @@ class GGVWindow(GUITk, TkPopupHelper):
             if co is not None:
                 self.cancel_task(co)
             self._ggvw.reset()
-            self._repo = Repo(repo_path)
+            self._repo = repo = Repo(repo_path)
+            self._grf.repo = repo
             self.__co_build_mg = co = self._co_build_mg()
             self.enqueue(co)
         else:
