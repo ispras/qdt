@@ -497,7 +497,6 @@ class GGVWidget(GUIFrame, CanvasTextMeasurer):
         if b is not None:
             s.canvas = self._cnv
             b._spots.append(s)
-            b._invalidate()
         self._s2oid[s] = oid
         return s
 
@@ -508,7 +507,6 @@ class GGVWidget(GUIFrame, CanvasTextMeasurer):
         if b is not None:
             del s.canvas
             b._spots.remove(s)
-            b._invalidate()
 
     @tk_delayed
     def _update_canvas_scroll_region(self):
