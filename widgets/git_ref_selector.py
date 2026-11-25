@@ -29,6 +29,9 @@ from six.moves.tkinter import (
 
 class ShaInfo(object):
 
+    # this is also a presense indicator
+    local_name = None
+
     def __init__(self):
         self.name2origins = defaultdict(list)
 
@@ -46,6 +49,7 @@ class ShaInfo(object):
         else:
             # local, only trigger entry instantiation
             self.name2origins[disp_name]
+            self.local_name = disp_name
 
     def iter_values(self):
         for disp_name, origins in self.name2origins.items():
