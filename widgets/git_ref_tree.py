@@ -43,12 +43,14 @@ class GitRefTree(AutoVarTreeview):
         repo = None,
         sort_order = None,
         sha_width = None,
+        **kw
     ):
         columns = [
             "r",
         ]
         super(GitRefTree, self).__init__(master,
             columns = columns,
+            **kw
         )
 
         self.heading("#0",
