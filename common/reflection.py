@@ -1,5 +1,6 @@
 __all__ = [
     "get_default_args"
+      , "default_args"
   , "get_class_total_args"
   , "common_supers"
 ]
@@ -8,6 +9,9 @@ from .compat import (
     getargspec,
 )
 
+from functools import (
+    lru_cache,
+)
 from inspect import (
     getmro,
 )
@@ -28,6 +32,9 @@ def get_default_args(func):
         return dict(zip(args[-len(defaults):], defaults))
     else:
         return {}
+
+default_args = lru_cache(get_default_args)
+
 
 def get_class_total_args(Class):
     # positional arguments
