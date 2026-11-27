@@ -43,7 +43,7 @@ def GIT_REF_ORDER_NAME(info):
     return sorted(info.name2origins)
 
 
-class GitRefTree(AutoVarTreeview):
+class GitRefTree(AutoVarTreeview, object):
 
     def __init__(self, master,
         repo = None,
@@ -68,6 +68,8 @@ class GitRefTree(AutoVarTreeview):
 
         self._no_loc_name = _("[no local name]")
 
+        self.bind("<<TreeviewSelect>>", self._on_tv_select,  "+")
+
         if repo is not None:
             self.repo = repo
         if sort_order is None:
@@ -76,6 +78,29 @@ class GitRefTree(AutoVarTreeview):
         if sha_width is None:
             sha_width = 8
         self.sha_width = sha_width
+
+    def _on_tv_select(self, __):
+        self.event_generate("<<GitRefTreeSelect>>")
+
+    @property
+    def selected_sha(self):
+        try:
+            iid = self.selection()[0]
+        except IndexError:
+            return
+        else:
+            return self._iid2info[iid].sha
+
+    @selected_sha.setter
+    def selected_sha(self, sha):
+        # A non-top iid of given sha may already be selected.
+        if self.selected_sha == sha:
+            return
+        s2i = self._shainfos
+        if sha in s2i:
+            self.selection_set(s2i[sha].top_iid)
+        else:
+            self.selection_set()
 
     @ready
     def _tree_content(self, ready):
@@ -118,6 +143,7 @@ class GitRefTree(AutoVarTreeview):
                     info.local_name or nln,
                 ),
             )
+            info.top_iid = iid
             iid2info[iid] = info
             for n, os in sorted(info.name2origins.items()):
                 for o in os:
@@ -156,6 +182,7 @@ class GitRefFrame(GUIFrame, object):
     repo = attrof("_tv")
     sort_order = attrof("_tv")
     sha_width = attrof("_tv")
+    selected_sha = attrof("_tv")
 
 
 class GitRefToplevel(GUIToplevel):
@@ -170,3 +197,4 @@ class GitRefToplevel(GUIToplevel):
     repo = attrof("_f")
     sort_order = attrof("_f")
     sha_width = attrof("_f")
+    selected_sha = attrof("_f")
