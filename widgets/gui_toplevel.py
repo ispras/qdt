@@ -15,11 +15,15 @@ class GUIToplevel(VarToplevel, object):
 
     def __init__(self, *args, **kw):
         title = kw.pop("title", None)
+        topmost = kw.pop("topmost", None)
 
         VarToplevel.__init__(self, *args, **kw)
 
         if title is not None:
             self.title(title)
+
+        if topmost is not None:
+            self.topmost = topmost
 
         set_logo(self)
 
