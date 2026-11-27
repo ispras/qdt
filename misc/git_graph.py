@@ -35,7 +35,7 @@ from widgets import (
     CanvasTextMeasurer,
     CommitInfoToplevel,
     EntryDialog,
-    GitRefFrame,
+    GitRefToplevel,
     GUIFrame,
     GUITk,
     GUIToplevel,
@@ -77,7 +77,6 @@ from six.moves.tkinter import (
     BOTH,
     BooleanVar,
     BROWSE,
-    LEFT,
     RIGHT,
     StringVar,
 )
@@ -1205,9 +1204,6 @@ class GGVWindow(GUITk, TkPopupHelper):
         )
         self.title(v_title)
 
-        self._grf = grf = GitRefFrame(self)
-        grf.pack(fill = BOTH, expand = False, side = LEFT)
-
         self._ggvw = ggvw = GGVWidget(self, sizegrip = True)
         ggvw.pack(fill = BOTH, expand = True, side = RIGHT)
 
@@ -1217,6 +1213,11 @@ class GGVWindow(GUITk, TkPopupHelper):
 
         self._gevw = gevw = GEVWindow(self)
         gevw.bind("<<Commit>>", self._on_commit, "+")
+
+        self._grw = grt = GitRefToplevel(self,
+            sizegrip = True,
+            topmost = True,
+        )
 
         self._cit = cit = ExCommitInfoToplevel(self,
             topmost = True,
@@ -1248,6 +1249,10 @@ class GGVWindow(GUITk, TkPopupHelper):
                 self._v_cit = v = BooleanVar(self)
                 windows_menu(cit.title(), variable = v)
                 HideShowBinding(cit, v)
+
+                self._v_grt = v = BooleanVar(self)
+                windows_menu(grt.title(), variable = v)
+                HideShowBinding(grt, v)
 
             with menubar(_("Debug")) as debug_menu:
                 debug_menu(_("pydevd"),
@@ -1317,7 +1322,7 @@ class GGVWindow(GUITk, TkPopupHelper):
                 self.cancel_task(co)
             self._ggvw.reset()
             self._repo = repo = Repo(repo_path)
-            self._grf.repo = repo
+            self._grw.repo = repo
             self.__co_build_mg = co = self._co_build_mg()
             self.enqueue(co)
         else:
