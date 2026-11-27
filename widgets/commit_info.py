@@ -169,12 +169,8 @@ class CommitInfoToplevel(GUIToplevel):
 
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", True)
-        topmost = kw.pop("topmost", None)
 
         GUIToplevel.__init__(self, *a, **kw)
-
-        if topmost is not None:
-            self.topmost = topmost
 
         self.title(_("Git Commit Info"))
 
