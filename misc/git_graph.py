@@ -1218,6 +1218,7 @@ class GGVWindow(GUITk, TkPopupHelper):
             sizegrip = True,
             topmost = True,
         )
+        grt.bind_all("<<GitRefTreeSelect>>", self._on_grt_select, "+")
 
         self._cit = cit = ExCommitInfoToplevel(self,
             topmost = True,
@@ -1275,6 +1276,12 @@ class GGVWindow(GUITk, TkPopupHelper):
         self._res2spot = {}
 
         self._provide_project(repo)
+
+    def _on_grt_select(self, e):
+        sha = e.widget.selected_sha
+        if sha is None:
+            return
+        self.commit = self._hexsha2mn[sha]
 
     def _on_debug_pydevd(self):
         from pydevd import settrace
@@ -1421,6 +1428,8 @@ class GGVWindow(GUITk, TkPopupHelper):
                 ggvw.node = commit
             else:
                 ggvw.node = None
+
+        self._grw.selected_sha = commit.sha
 
         self._commit = commit
 
