@@ -1,6 +1,6 @@
 __all__ = [
     "GitRefTree"
-  , "GitRefFrame"
+      , "GitRefFrame"
 ]
 
 from .auto_var_treeview import (
