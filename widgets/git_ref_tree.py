@@ -21,6 +21,7 @@ from .tk_after import (
 
 from common import (
     attrof,
+    kw_extract,
     mlget as _,
     ready,
 )
@@ -139,15 +140,9 @@ class GitRefFrame(GUIFrame, object):
 
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
-        repo = kw.pop("repo", None)
-        sort_order = kw.pop("sort_order", None)
-        sha_width = kw.pop("sha_width", None)
+        grtkw = kw_extract(kw, GitRefTree)
         super(GitRefFrame, self).__init__(*a, **kw)
-        self._tv = tv = GitRefTree(self,
-            repo = repo,
-            sort_order = sort_order,
-            sha_width = sha_width,
-        )
+        self._tv = tv = GitRefTree(self, **grtkw)
         add_scrollbars_native(self, tv, 0, 0,
             sizegrip = sizegrip,
             insert_weight = 1,
