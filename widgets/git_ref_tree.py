@@ -1,6 +1,7 @@
 __all__ = [
     "GitRefTree"
       , "GitRefFrame"
+          ,  "GitRefToplevel"
 ]
 
 from .auto_var_treeview import (
@@ -11,6 +12,9 @@ from .git_ref_selector import (
 )
 from .gui_frame import (
     GUIFrame,
+)
+from .gui_toplevel import (
+    GUIToplevel,
 )
 from .scrollframe import (
     add_scrollbars_native,
@@ -30,6 +34,7 @@ from collections import (
     defaultdict,
 )
 from six.moves.tkinter import (
+    BOTH,
     END,
 )
 
@@ -151,3 +156,17 @@ class GitRefFrame(GUIFrame, object):
     repo = attrof("_tv")
     sort_order = attrof("_tv")
     sha_width = attrof("_tv")
+
+
+class GitRefToplevel(GUIToplevel):
+
+    def __init__(self, *a, **kw):
+        grfkw = kw_extract(kw, GitRefTree, "sizegrip")
+        kw.setdefault("title", _("Git Heads"))
+        super(GitRefToplevel, self).__init__(*a, **kw)
+        self._f = f = GitRefFrame(self, **grfkw)
+        f.pack(fill = BOTH, expand = True)
+
+    repo = attrof("_f")
+    sort_order = attrof("_f")
+    sha_width = attrof("_f")
